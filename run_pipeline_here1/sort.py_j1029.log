@@ -1,0 +1,14 @@
+Getting Input directories/files
+Input FilePath:/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input
+/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/iepu21dlq_flc.fits
+Copy iepu21dlq_flc.fits to /Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/16799_M31-B33-F06-UVIS
+/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/iepu21dbq_flc.fits
+Copy iepu21dbq_flc.fits to /Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/16799_M31-B33-F06-UVIS
+/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/iepu21ddq_flc.fits
+Copy iepu21ddq_flc.fits to /Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/16799_M31-B33-F06-UVIS
+/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/iepu21dhq_flc.fits
+Copy iepu21dhq_flc.fits to /Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/16799_M31-B33-F06-UVIS
+Firing Job
+['/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/iepu21dlq_flc.fits', '/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/iepu21dbq_flc.fits', '/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/iepu21ddq_flc.fits', '/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/input/Unsorted/iepu21dhq_flc.fits']
+{}
+/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/run_pipeline_here1/build/phast_pypiper_task.py -e 1031 

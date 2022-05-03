@@ -13,11 +13,10 @@ def run_pypiper():
     print('Running run_pypiper task')
     return this_config
 
+
 # def sort_input_by_filter():
 
-
 #     return
-
 
 if __name__ == '__main__':
     # conf_params = wp.ThisJob.config.parameters

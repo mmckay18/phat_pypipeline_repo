@@ -41,9 +41,13 @@ def add_proc_conf_log_default(data_dir_path):
     """
     # Adding default directories to sorted directories
     my_job.logprint(f"Adding default directories to {data_dir_path}")
-    print(os.path.join(data_dir_path, "proc_default"))
-    print(os.path.join(data_dir_path, "conf_default"))
-    print(os.path.join(data_dir_path, "log_default"))
+    proc_default_path = os.path.join(data_dir_path, "proc_default")
+    conf_default_path = os.path.join(data_dir_path, "conf_default")
+    log_default_path = os.path.join(data_dir_path, "log_default")
+
+    os.mkdir(proc_default_path)
+    os.mkdir(conf_default_path)
+    os.mkdir(log_default_path)
 
 
 def sort_fits(unsorted_dir_path):
@@ -101,7 +105,7 @@ if __name__ == "__main__":
 
         # Copy sorted directories to data directory for processing
         copy_sorted_dir_to_data(sorted_dir_path, data_dir_path)
-        add_proc_conf_log_default(data_dir_path)
+        add_proc_conf_log_default(sorted_dir_path)
     # !!! Requirement - Unsorted FITS files must be in a directory with excute permission
     # TODO Add edge case functionality when TARGNAME = ANY in unsorted FITS file header
 

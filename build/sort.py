@@ -11,6 +11,41 @@ def register(task):
     _temp = task.mask(source="*", name="__init__", value="*")
 
 
+def copy_sorted_dir_to_data(sorted_dir_path, data_dir_path):
+    """
+    Copy sorted directory to the data directory for processing using unix command line
+
+    Parameters:
+        sorted_dir_path (str): Sorted directory
+
+        data_dir_path (str): Data directory where the sorted directories are strored for processing
+
+
+    Returns:
+    """
+    my_job.logprint(f"Copy {sorted_dir_path} to {data_dir_path}/")
+    cmd = f"cp -R {sorted_dir_path} {data_dir_path}"
+    os.system(cmd)
+
+
+def add_proc_conf_log_default(data_dir_path):
+    """
+    Description:
+        Adds proc_default, conf_deafalt, and log_deafalt directory
+
+            Parameters:
+                    data_dir_path (str): Path to data directory for processing
+
+            Returns:
+                Writes directories to data_dir_path
+    """
+    # Adding default directories to sorted directories
+    my_job.logprint(f"Adding default directories to {data_dir_path}")
+    print(os.path.join(data_dir_path, "proc_default"))
+    print(os.path.join(data_dir_path, "conf_default"))
+    print(os.path.join(data_dir_path, "log_default"))
+
+
 def sort_fits(unsorted_dir_path):
     """
     Sorts HST WFC3/UVIS targets by plateifu and Target Name from target header and creates/stores in a directory in the parent directory
@@ -19,37 +54,35 @@ def sort_fits(unsorted_dir_path):
                     unsorted_dir_path (str): Path to data directory with HST files
 
             Returns:
-                    None
+                    sorted_dir_path (str): Path to sorted directory with fits files with the same targetname and proposal ID
     """
-
+    # List of unsorted fits files for processing
     unsorted_targ_list = glob.glob(unsorted_dir_path + "/*.fits")
-    print(unsorted_targ_list)
 
     for input_filepath in unsorted_targ_list:
-        my_job.logprint(input_filepath)
         hdu = fits.open(input_filepath)
-        filter_name = hdu[0].header["FILTER"]
         prop_id = str(hdu[0].header["PROPOSID"])
         target_name = hdu[0].header["TARGNAME"]
-        rootname = hdu[0].header["ROOTNAME"]
         filename = hdu[0].header["FILENAME"]
         hdu.close()
 
-        new_dir_name = prop_id + "_" + target_name  # Set varibale for the name
-        field_dir = unsorted_dir_path + "/" + new_dir_name
-        # my_job.logprint(f"Field Directory Path: {field_dir}")
+        # Set varibale for the name
+        new_dir_name = prop_id + "_" + target_name
+        sorted_dir_path = unsorted_dir_path + "/" + new_dir_name
 
-        cmd = f"cp {input_filepath} {field_dir}"  # Unix command(cmd) to copy files to directory
+        cmd = f"cp {input_filepath} {sorted_dir_path}"  # Unix command(cmd) to copy files to directory
 
         # Check if current filename exist and if not create a new dir and copies the current file
-        if os.path.exists(field_dir) == True:
-            my_job.logprint(f"Copy {filename} to {field_dir}")
+        if os.path.exists(sorted_dir_path) == True:
+            my_job.logprint(f"Copy {filename} to {sorted_dir_path}")
             os.system(cmd)  # Run Unix to copy
             pass
         else:
-            my_job.logprint(f"Writing directory: {field_dir}")
-            os.mkdir(field_dir)
+            my_job.logprint(f"Writing directory: {sorted_dir_path}")
+            os.mkdir(sorted_dir_path)
             os.system(cmd)  # Run Unix to copy
+
+    return str(sorted_dir_path)
 
 
 if __name__ == "__main__":
@@ -60,32 +93,18 @@ if __name__ == "__main__":
     input_path = my_pipe.input_root  # input directory path
     my_job.logprint(f"Input FilePath:{input_path}")
     unsorted_input_pathlist = glob.glob(input_path + "/*")
-    # my_job.logprint(f"Unsorted FilePath:{unsorted_input_path}")
+    my_job.logprint("Start Sorting...")
     for unsorted_path in unsorted_input_pathlist:
         # Run sorting function on the unsorted data
-        sort_fits(unsorted_path)
+        sorted_dir_path = sort_fits(unsorted_path)
+        data_dir_path = str(my_pipe.data_root)
 
-    # TODO Make robust to allow the processing of files not in a directory
+        # Copy sorted directories to data directory for processing
+        copy_sorted_dir_to_data(sorted_dir_path, data_dir_path)
+        add_proc_conf_log_default(data_dir_path)
+    # !!! Requirement - Unsorted FITS files must be in a directory with excute permission
+    # TODO Add edge case functionality when TARGNAME = ANY in unsorted FITS file header
 
-    # for unsorted_filepath in unsorted_input_path:
-    #     my_job.logprint(f"Sorting data in {unsorted_filepath}")
-    #     if os.path.isdir(unsorted_filepath) == True:
-    #         my_job.logprint(
-    #             f" {unsorted_filepath} is a directory, {os.path.isdir(unsorted_filepath)}"
-    #         )
-    #         continue
-
-    #     else:
-    #         unsorted_filepath = input_path
-    #         my_job.logprint(f"{unsorted_filepath} is not a directory")
-    #         break
-
-    # i = 0
-    # for my_input in my_pipe.inputs:
-    #     # my_job.logprint(f"{i} Current Input Path: {my_input}")
-
-    #     i += 1
-    #     my_job.logprint(i, "Start Sorting")
-
+    # Fire next event
     my_job.logprint("Firing Job")
-    my_job.child_event("run_pypiper").fire()
+    my_job.child_event("tag_image").fire()

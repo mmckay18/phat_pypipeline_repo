@@ -4,20 +4,17 @@ import numpy as np
 
 
 def register(task):
-    _temp = task.mask(source='*', name='start', value=task.name)
-    _temp = task.mask(source='*', name='run_pypiper', value='*')
+    _temp = task.mask(source="*", name="start", value=task.name)
+    _temp = task.mask(source="*", name="tag_image", value="*")
 
 
 def get_inputpath():
-    """
-    
-    
-    """
+    """ """
 
 
 def run_pypiper():
     this_config = wp.ThisJob.config
-    print('Running run_pypiper task')
+    print("Running run_pypiper task")
     return this_config
 
 
@@ -25,6 +22,6 @@ def run_pypiper():
 
 #     return
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # conf_params = wp.ThisJob.config.parameters
     run_pypiper()

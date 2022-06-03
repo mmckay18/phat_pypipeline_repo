@@ -5,7 +5,7 @@ import numpy as np
 
 def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
-    _temp = task.mask(source="*", name="tag_image", value="*")
+    _temp = task.mask(source="*", name="new_image", value="*")
 
 
 def get_inputpath():

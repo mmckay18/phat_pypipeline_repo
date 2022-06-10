@@ -12,18 +12,18 @@ def register(task):
     _temp = task.mask(source="*", name="__init__", value="*")
 
 
-def list_of_rawDataProducts(my_input):
-    rawdp_fn_list = []
-    input_rawpath_list = glob.glob(my_input.rawspath + "/*.fits")
-    my_job.logprint(f"{len(input_rawpath_list), input_rawpath_list}")
-    for rawpath in input_rawpath_list:
-        # my_job.logprint(f"list of rawdataproducts: {rawpath}")
-        rawdataproducts_fn = rawpath.split("/")[-1]
-        # my_job.logprint(f"rawdataproducts: {rawdataproducts_fn}")
-        rawdp_fn_list.append(rawdataproducts_fn)
+# def list_of_rawDataProducts(my_input):
+#     rawdp_fn_list = []
+#     input_rawpath_list = glob.glob(my_input.rawspath + "/*.fits")
+#     my_job.logprint(f"{len(input_rawpath_list), input_rawpath_list}")
+#     for rawpath in input_rawpath_list:
+#         # my_job.logprint(f"list of rawdataproducts: {rawpath}")
+#         rawdataproducts_fn = rawpath.split("/")[-1]
+#         # my_job.logprint(f"rawdataproducts: {rawdataproducts_fn}")
+#         rawdp_fn_list.append(rawdataproducts_fn)
 
-    my_job.logprint(f"rawDP_fn_list: {rawdp_fn_list}")
-    return rawdp_fn_list, input_rawpath_list
+#     my_job.logprint(f"rawDP_fn_list: {rawdp_fn_list}")
+#     return rawdp_fn_list, input_rawpath_list
 
 
 def targetname_list(my_input):

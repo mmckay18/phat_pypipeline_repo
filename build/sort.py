@@ -1,9 +1,11 @@
 #! /usr/bin/env python
+from asyncio import DatagramProtocol
 import os
 import wpipe as wp
 from astropy.io import fits
 import glob
-import os
+import shutil
+import pandas as pd
 
 
 def register(task):
@@ -11,104 +13,121 @@ def register(task):
     _temp = task.mask(source="*", name="__init__", value="*")
 
 
-def copy_sorted_dir_to_data(sorted_dir_path, data_dir_path):
+def make_unsorted_df(my_input):
     """
-    Copy sorted directory to the data directory for processing using unix command line
+    Returns the sum of two decimal numbers in binary digits.
 
-    Parameters:
-        sorted_dir_path (str): Sorted directory
+                Parameters:
+                        task (): task object
 
-        data_dir_path (str): Data directory where the sorted directories are strored for processing
+                Returns:
+                        binary_sum (str): Binary string of the sum of a and b
 
-
-    Returns:
     """
-    my_job.logprint(f"Copy {sorted_dir_path} to {data_dir_path}/")
-    cmd = f"cp -R {sorted_dir_path} {data_dir_path}"
-    os.system(cmd)
+
+    rawdp_info_list = []
+    input_data_df = pd.DataFrame(
+        columns=["FILENAME", "PROPOSID", "TARGNAME", "PROPOSID_TARGNAME"]
+    )
+    for my_rawdp in my_input.rawdataproducts:
+        my_rawdp_fits_path = my_rawdp.path
+        hdu = fits.open(my_rawdp_fits_path)
+        PROP_ID = str(hdu[0].header["PROPOSID"])
+        TARGNAME = hdu[0].header["TARGNAME"]
+        FILENAME = hdu[0].header["FILENAME"]
+        TARGET_NAME = PROP_ID + "_" + TARGNAME
+        hdu.close()  # close FITS file
+
+        rawdp_info = [FILENAME, PROP_ID, TARGNAME, TARGET_NAME]
+        # * my_job.logprint(f"{rawdp_info}") # for debugging purposes
+        rawdp_info_list.append(rawdp_info)
+
+    rawdp_df = pd.DataFrame(
+        rawdp_info_list,
+        columns=["FILENAME", "PROPOSID", "TARGNAME", "PROPOSID_TARGNAME"],
+    )
+    # * Append raw data information to data frame
+    df1 = pd.concat([input_data_df, rawdp_df], ignore_index=True)
+
+    # my_job.logprint(f"FINAL_DF, # {len(df1)}") # * Prints the number of raw dataproducts in the DataFrame - for debugging purposes
+    # my_job.logprint(f"{df1.head(10)}")
+
+    # Dataframe of the list of targets
+    TARGET_LIST_df = []
+    TARGET_LIST_df = df1["PROPOSID_TARGNAME"].unique()
+    return df1, list(TARGET_LIST_df)
 
 
-def add_proc_conf_log_default(data_dir_path):
-    """
-    Description:
-        Adds proc_default, conf_deafalt, and log_deafalt directory
+def sort_input_dataproduct(my_input):
+    """ """
 
-            Parameters:
-                    data_dir_path (str): Path to data directory for processing
+    for my_rawdp in my_input.rawdataproducts:
 
-            Returns:
-                Writes directories to data_dir_path
-    """
-    # Adding default directories to sorted directories
-    my_job.logprint(f"Adding default directories to {data_dir_path}")
-    proc_default_path = os.path.join(data_dir_path, "proc_default")
-    conf_default_path = os.path.join(data_dir_path, "conf_default")
-    log_default_path = os.path.join(data_dir_path, "log_default")
+        my_rawdp_fits_path = my_rawdp.path
 
-    os.mkdir(proc_default_path)
-    os.mkdir(conf_default_path)
-    os.mkdir(log_default_path)
-
-
-def sort_fits(unsorted_dir_path):
-    """
-    Sorts HST WFC3/UVIS targets by plateifu and Target Name from target header and creates/stores in a directory in the parent directory
-
-            Parameters:
-                    unsorted_dir_path (str): Path to data directory with HST files
-
-            Returns:
-                    sorted_dir_path (str): Path to sorted directory with fits files with the same targetname and proposal ID
-    """
-    # List of unsorted fits files for processing
-    unsorted_targ_list = glob.glob(unsorted_dir_path + "/*.fits")
-
-    for input_filepath in unsorted_targ_list:
-        hdu = fits.open(input_filepath)
+        # 1. Grab fitsfile header info directly from the dataproduct
+        hdu = fits.open(my_rawdp_fits_path)
         prop_id = str(hdu[0].header["PROPOSID"])
-        target_name = hdu[0].header["TARGNAME"]
-        filename = hdu[0].header["FILENAME"]
+        targname = hdu[0].header["TARGNAME"]
         hdu.close()
 
-        # Set varibale for the name
-        new_dir_name = prop_id + "_" + target_name
-        sorted_dir_path = unsorted_dir_path + "/" + new_dir_name
+        target_name = prop_id + "_" + targname
 
-        cmd = f"cp {input_filepath} {sorted_dir_path}"  # Unix command(cmd) to copy files to directory
+        # Create a new test target
+        # TODO my_target = my_input.target('target', rawdps_to_add='raw.dat')
+        my_target = my_input.target(name=target_name, rawdps_to_add=my_rawdp)
 
-        # Check if current filename exist and if not create a new dir and copies the current file
-        if os.path.exists(sorted_dir_path) == True:
-            my_job.logprint(f"Copy {filename} to {sorted_dir_path}")
-            os.system(cmd)  # Run Unix to copy
-            pass
-        else:
-            my_job.logprint(f"Writing directory: {sorted_dir_path}")
-            os.mkdir(sorted_dir_path)
-            os.system(cmd)  # Run Unix to copy
+        # * Grab default configuration
+        # ? my_config = my_target.configurations[<name_of_config>]
+        my_config = my_target.configurations["default"]
+        # my_job.logprint(
+        #     f"Target: {my_target.name} Config: {my_config.name}, inputname: {my_rawdp.filename}"
+        # )
 
-    return str(sorted_dir_path)
+        # my_job.logprint(f""
+        # create new dataproduct with the name of the input image
+        _dp = my_config.dataproduct(
+            filename=my_rawdp.filename,
+            relativepath=my_config.rawpath,
+            group="raw",
+            subtype="image",
+        )
+        # my_job.logprint(f"DP: {_dp.filename}") # * for debugging purposes
+    return _dp
 
 
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
-    my_job.logprint("Getting Input directories/files")
+    my_input = my_pipe.inputs[0]
 
-    input_path = my_pipe.input_root  # input directory path
-    my_job.logprint(f"Input FilePath:{input_path}")
-    unsorted_input_pathlist = glob.glob(input_path + "/*")
-    my_job.logprint("Start Sorting...")
-    for unsorted_path in unsorted_input_pathlist:
-        # Run sorting function on the unsorted data
-        sorted_dir_path = sort_fits(unsorted_path)
-        data_dir_path = str(my_pipe.data_root)
+    # Make a list of target names the proposal id and targetname
+    unsorted_df, unsorted_targetnames_list = make_unsorted_df(my_pipe.inputs[0])
 
-        # Copy sorted directories to data directory for processing
-        copy_sorted_dir_to_data(sorted_dir_path, data_dir_path)
-        add_proc_conf_log_default(sorted_dir_path)
-    # !!! Requirement - Unsorted FITS files must be in a directory with excute permission
-    # TODO Add edge case functionality when TARGNAME = ANY in unsorted FITS file header
+    my_job.logprint(f"{unsorted_targetnames_list}") #* for debugging purposes
+    for target_name in unsorted_targetnames_list:
+        my_job.logprint(f"{target_name}")  #* for debugging purposes
+        sorted_df = unsorted_df[unsorted_df["PROPOSID_TARGNAME"] == target_name]
 
-    # Fire next event
+        # Prints all the images associated with the target in the sort log file
+        # my_job.logprint(f"{sorted_df.head()}")
+
+        # Get list of Filename for each target
+        rawdp_fn_list = sorted_df["FILENAME"].tolist()
+        my_job.logprint(f"{rawdp_fn_list}")  # * for debugging purposes
+
+        # Creates targets from the raw dataproducts
+        my_target = my_input.target(name=target_name, rawdps_to_add=rawdp_fn_list)
+
+        # ! The raw_default keeps populating with all the images from both targets - we just fixed this
+
+    # TODO: FIRE TAG IMAGE FROM THE PIPELIN
     my_job.logprint("Firing Job")
-    my_job.child_event("tag_image").fire()
+    my_event = my_job.child_event(
+        "new_image",
+    )
+    my_event.fire()
+    # ? Why does each target have the all target raw datprodcuts for eah target?
+    # ? What is the data produxct after I nmake the target?
+    # ? Do I make new data products aftermaking the target?
+    # ? What EXACTLY DOES TAGING THE IMAGE MEAN?

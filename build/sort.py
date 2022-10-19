@@ -38,6 +38,7 @@ def make_unsorted_df(my_input):
         TARGET_NAME = PROP_ID + "_" + TARGNAME
         hdu.close()  # close FITS file
 
+        # !
         rawdp_info = [FILENAME, PROP_ID, TARGNAME, TARGET_NAME]
         # * my_job.logprint(f"{rawdp_info}") # for debugging purposes
         rawdp_info_list.append(rawdp_info)
@@ -71,6 +72,7 @@ def sort_input_dataproduct(my_input):
         targname = hdu[0].header["TARGNAME"]
         hdu.close()
 
+        # ! Field target name
         target_name = prop_id + "_" + targname
 
         # Create a new test target
@@ -101,27 +103,27 @@ if __name__ == "__main__":
     my_job = wp.Job()
     my_input = my_pipe.inputs[0]
 
-    # Make a list of target names the proposal id and targetname
+    # Make a list of target names in Unsorted diectory proposal id and targetname
     unsorted_df, unsorted_targetnames_list = make_unsorted_df(my_pipe.inputs[0])
 
-    my_job.logprint(f"{unsorted_targetnames_list}") #* for debugging purposes
+    my_job.logprint(f"{unsorted_targetnames_list}")  # * for debugging purposes
     for target_name in unsorted_targetnames_list:
-        my_job.logprint(f"{target_name}")  #* for debugging purposes
+        my_job.logprint(f"{target_name}")  # * for debugging purposes
         sorted_df = unsorted_df[unsorted_df["PROPOSID_TARGNAME"] == target_name]
 
         # Prints all the images associated with the target in the sort log file
-        # my_job.logprint(f"{sorted_df.head()}")
+        my_job.logprint(f"{sorted_df.head()}")
 
         # Get list of Filename for each target
         rawdp_fn_list = sorted_df["FILENAME"].tolist()
-        my_job.logprint(f"{rawdp_fn_list}")  # * for debugging purposes
+        # my_job.logprint(f"{rawdp_fn_list}")  # * for debugging purposes
 
-        # Creates targets from the raw dataproducts
+        # Creates targets from the raw dataproducts in Unsorted directory
         my_target = my_input.target(name=target_name, rawdps_to_add=rawdp_fn_list)
 
         # ! The raw_default keeps populating with all the images from both targets - we just fixed this
 
-    # TODO: FIRE TAG IMAGE FROM THE PIPELIN
+    # TODO: FIRE TAG IMAGE FROM THE PIPELINE
     my_job.logprint("Firing Job")
     my_event = my_job.child_event(
         "new_image",

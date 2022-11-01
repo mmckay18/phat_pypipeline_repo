@@ -121,6 +121,13 @@ if __name__ == "__main__":
         # Creates targets from the raw dataproducts in Unsorted directory
         my_target = my_input.target(name=target_name, rawdps_to_add=rawdp_fn_list)
 
+        # * Work In Progress: *
+        # Copy raw dataproduct files to proc directory
+        # for dp_filename in rawdp_fn_list:
+        #     my_dp = my_input.dataproduct(dp_filename, group='raw')
+        #     my_dp.make_copy(path=wp.Pipeline()) point to path in string format, also point to config file - get proc directory from config file
+        # my_config.confpath
+
         # ! The raw_default keeps populating with all the images from both targets - we just fixed this
 
     # TODO: FIRE TAG IMAGE FROM THE PIPELINE
@@ -129,6 +136,10 @@ if __name__ == "__main__":
         "new_image",
     )
     my_event.fire()
+
+    this_job = wp.ThisJob.job_id
+    print("Job ID: ", this_job)
+
     # ? Why does each target have the all target raw datprodcuts for eah target?
     # ? What is the data produxct after I nmake the target?
     # ? Do I make new data products aftermaking the target?

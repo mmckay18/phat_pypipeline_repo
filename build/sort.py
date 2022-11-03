@@ -15,13 +15,15 @@ def register(task):
 
 def make_unsorted_df(my_input):
     """
-    Returns the sum of two decimal numbers in binary digits.
+    Sorts PHAST FLC files into targets and stores them into a pandas dataframe
 
                 Parameters:
-                        task (): task object
+                        my_input(): wp.Pipeline.inputs[0]
 
                 Returns:
                         binary_sum (str): Binary string of the sum of a and b
+                        df1 (pd.DataFrame): Dataframe of all the the raw dataproducts
+                        list(TARGET_LIST_df): list of targets
 
     """
 
@@ -36,9 +38,8 @@ def make_unsorted_df(my_input):
         TARGNAME = hdu[0].header["TARGNAME"]
         FILENAME = hdu[0].header["FILENAME"]
         TARGET_NAME = PROP_ID + "_" + TARGNAME
-        hdu.close()  # close FITS file
+        hdu.close()
 
-        # !
         rawdp_info = [FILENAME, PROP_ID, TARGNAME, TARGET_NAME]
         # * my_job.logprint(f"{rawdp_info}") # for debugging purposes
         rawdp_info_list.append(rawdp_info)
@@ -59,43 +60,43 @@ def make_unsorted_df(my_input):
     return df1, list(TARGET_LIST_df)
 
 
-def sort_input_dataproduct(my_input):
-    """ """
+# def sort_input_dataproduct(my_input):
+#     """ """
 
-    for my_rawdp in my_input.rawdataproducts:
+#     for my_rawdp in my_input.rawdataproducts:
 
-        my_rawdp_fits_path = my_rawdp.path
+#         my_rawdp_fits_path = my_rawdp.path
 
-        # 1. Grab fitsfile header info directly from the dataproduct
-        hdu = fits.open(my_rawdp_fits_path)
-        prop_id = str(hdu[0].header["PROPOSID"])
-        targname = hdu[0].header["TARGNAME"]
-        hdu.close()
+#         # 1. Grab fitsfile header info directly from the dataproduct
+#         hdu = fits.open(my_rawdp_fits_path)
+#         prop_id = str(hdu[0].header["PROPOSID"])
+#         targname = hdu[0].header["TARGNAME"]
+#         hdu.close()
 
-        # ! Field target name
-        target_name = prop_id + "_" + targname
+#         # ! Field target name
+#         target_name = prop_id + "_" + targname
 
-        # Create a new test target
-        # TODO my_target = my_input.target('target', rawdps_to_add='raw.dat')
-        my_target = my_input.target(name=target_name, rawdps_to_add=my_rawdp)
+#         # Create a new test target
+#         # TODO my_target = my_input.target('target', rawdps_to_add='raw.dat')
+#         my_target = my_input.target(name=target_name, rawdps_to_add=my_rawdp)
 
-        # * Grab default configuration
-        # ? my_config = my_target.configurations[<name_of_config>]
-        my_config = my_target.configurations["default"]
-        # my_job.logprint(
-        #     f"Target: {my_target.name} Config: {my_config.name}, inputname: {my_rawdp.filename}"
-        # )
+#         # * Grab default configuration
+#         # ? my_config = my_target.configurations[<name_of_config>]
+#         my_config = my_target.configurations["default"]
+#         # my_job.logprint(
+#         #     f"Target: {my_target.name} Config: {my_config.name}, inputname: {my_rawdp.filename}"
+#         # )
 
-        # my_job.logprint(f""
-        # create new dataproduct with the name of the input image
-        _dp = my_config.dataproduct(
-            filename=my_rawdp.filename,
-            relativepath=my_config.rawpath,
-            group="raw",
-            subtype="image",
-        )
-        # my_job.logprint(f"DP: {_dp.filename}") # * for debugging purposes
-    return _dp
+#         # my_job.logprint(f""
+#         # create new dataproduct with the name of the input image
+#         _dp = my_config.dataproduct(
+#             filename=my_rawdp.filename,
+#             relativepath=my_config.rawpath,
+#             group="raw",
+#             subtype="image",
+#         )
+#         # my_job.logprint(f"DP: {_dp.filename}") # * for debugging purposes
+#     return _dp
 
 
 if __name__ == "__main__":

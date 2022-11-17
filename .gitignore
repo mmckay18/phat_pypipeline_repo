@@ -130,3 +130,5 @@ run4/input/Unsorted/iepu21dlq_flc.fits
 run4/input/Unsorted/iepu22dvq_flc.fits
 run4/input/Unsorted/iepu22dzq_flc.fits
 run4/input/Unsorted/iepu22e4q_flc.fits
+test_pypiper/*
+NOTES.txt

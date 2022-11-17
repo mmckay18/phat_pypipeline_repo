@@ -15,13 +15,14 @@ def register(task):
 
 def make_unsorted_df(my_input):
     """
-    Sorts PHAST FLC files into targets and stores them into a pandas dataframe
+    Sorts PHAST FLC files by Field using the FITS file targetname and proposal ID
 
                 Parameters:
                         my_input(): wp.Pipeline.inputs[0]
 
                 Returns:
                         binary_sum (str): Binary string of the sum of a and b
+
                         df1 (pd.DataFrame): Dataframe of all the the raw dataproducts
                         list(TARGET_LIST_df): list of targets
 
@@ -60,45 +61,6 @@ def make_unsorted_df(my_input):
     return df1, list(TARGET_LIST_df)
 
 
-# def sort_input_dataproduct(my_input):
-#     """ """
-
-#     for my_rawdp in my_input.rawdataproducts:
-
-#         my_rawdp_fits_path = my_rawdp.path
-
-#         # 1. Grab fitsfile header info directly from the dataproduct
-#         hdu = fits.open(my_rawdp_fits_path)
-#         prop_id = str(hdu[0].header["PROPOSID"])
-#         targname = hdu[0].header["TARGNAME"]
-#         hdu.close()
-
-#         # ! Field target name
-#         target_name = prop_id + "_" + targname
-
-#         # Create a new test target
-#         # TODO my_target = my_input.target('target', rawdps_to_add='raw.dat')
-#         my_target = my_input.target(name=target_name, rawdps_to_add=my_rawdp)
-
-#         # * Grab default configuration
-#         # ? my_config = my_target.configurations[<name_of_config>]
-#         my_config = my_target.configurations["default"]
-#         # my_job.logprint(
-#         #     f"Target: {my_target.name} Config: {my_config.name}, inputname: {my_rawdp.filename}"
-#         # )
-
-#         # my_job.logprint(f""
-#         # create new dataproduct with the name of the input image
-#         _dp = my_config.dataproduct(
-#             filename=my_rawdp.filename,
-#             relativepath=my_config.rawpath,
-#             group="raw",
-#             subtype="image",
-#         )
-#         # my_job.logprint(f"DP: {_dp.filename}") # * for debugging purposes
-#     return _dp
-
-
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
@@ -122,24 +84,15 @@ if __name__ == "__main__":
         # Creates targets from the raw dataproducts in Unsorted directory
         my_target = my_input.target(name=target_name, rawdps_to_add=rawdp_fn_list)
 
-        # * Work In Progress: *
-        # Copy raw dataproduct files to proc directory
-        # for dp_filename in rawdp_fn_list:
-        #     my_dp = my_input.dataproduct(dp_filename, group='raw')
-        #     my_dp.make_copy(path=wp.Pipeline()) point to path in string format, also point to config file - get proc directory from config file
-        # my_config.confpath
-
-        # ! The raw_default keeps populating with all the images from both targets - we just fixed this
-
-    # TODO: FIRE TAG IMAGE FROM THE PIPELINE
+    # Fire next task (tag_image)
     my_job.logprint("Firing Job")
     my_event = my_job.child_event(
         "new_image",
     )
     my_event.fire()
 
-    this_job = wp.ThisJob.job_id
-    print("Job ID: ", this_job)
+    # this_job = wp.ThisJob.job_id
+    # print("Job ID: ", this_job)
 
     # ? Why does each target have the all target raw datprodcuts for eah target?
     # ? What is the data produxct after I nmake the target?

@@ -21,8 +21,6 @@ def make_unsorted_df(my_input):
                         my_input(): wp.Pipeline.inputs[0]
 
                 Returns:
-                        binary_sum (str): Binary string of the sum of a and b
-
                         df1 (pd.DataFrame): Dataframe of all the the raw dataproducts
                         list(TARGET_LIST_df): list of targets
 

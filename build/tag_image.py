@@ -3,6 +3,7 @@ import wpipe as wp
 import numpy as np
 import glob
 from astropy.io import fits
+import shutil
 
 
 def register(task):
@@ -38,7 +39,13 @@ def run_pypiper():
 
 def copy_rawdp_proc():
 
-    my_dp = my_input.dataproduct(filename, group)
+    """
+
+    Copy raw dataproduct objects to the proc directory for tagging
+
+    """
+
+    # my_dp = my_input.dataproduct(filename, group)
 
 
 if __name__ == "__main__":
@@ -54,16 +61,18 @@ if __name__ == "__main__":
         list_of_dp = glob.glob(fits_path)  # List of raw_default FLC fits files
         my_job.logprint(f"List of dp in Target: {list_of_dp}")
 
-        # create dataproduct object
+        # create dataproduct object in target
         for dp_fname in list_of_dp:
             my_dp = my_input.dataproduct(filename=dp_fname, group="raw")
-            my_job.logprint(f" Dataproduct path {my_dp.suffix}")
+            my_job.logprint(f" Dataproduct path {my_dp}")
 
-            # Make a copy of the dataproduct to the proc dirtectory of the target
-            proc_path = f"{target}/proc_default/"
-            my_job.logprint(f"Proc dirtectory: {proc_path}")
-            # my_dp.make_copy(path=proc_path)
-            # my_job.logprint(f"Copying {dp_fname} to {target}/proc_default/*.fits")
+        # Make a copy of the dataproduct to the proc dirtectory of the target
+        # proc_path = f"{target}/proc_default/"
+        # shutil.copy2(rawdp.path, procdp.path)
+
+        # my_job.logprint(f"Proc dirtectory: {proc_path}")
+        # my_dp.make_copy(path=proc_path)
+        # my_job.logprint(f"Copying {dp_fname} to {target}/proc_default/*.fits")
 
     # my_job.logprint(f"Targets: {my_targets.dataraws}")
     # my_input = wp.Input(my_pipe, my_pipe.input_root)

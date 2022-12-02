@@ -77,6 +77,8 @@ if __name__ == "__main__":
             CAM = raw_hdu[0].header["INSTRUME"]
             FILTER = raw_hdu[0].header["FILTER"]
 
+            raw_hdu.close()
+
             my_procdp = my_input.dataproduct(
                 filename=dp_fname,
                 group="proc",

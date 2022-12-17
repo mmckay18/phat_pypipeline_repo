@@ -46,14 +46,22 @@ if __name__ == "__main__":
     # my_job.logprint(f"{my_config.parameters.name}")
 
     # my_job.logprint(f"Targets: {my_targets.datapath}")
+
     for target in my_targets.datapath:
         # my_job.logprint(f"{target}/*.fits")
         fits_path = f"{target}/raw_default/*.fits"
         list_of_dp = glob.glob(fits_path)  # List of raw_default FLC fits files
         # my_job.logprint(f"List of dp in Target: {list_of_dp}")
 
+        #! Get the total number of files in a given target
+        tot_untagged_im = len(list_of_dp)
+        my_job.logprint(f"# of untagged images for {target}: {tot_untagged_im}")
+
         # [done] Step 1: Copy images associated with the dataproducts from raw default to the proc directory - or copy the dataproducts from the config file?
+        i = 0
         for dp_fname_path in list_of_dp:
+            i += 1
+            my_job.logprint(f"tagging image {i}")
             dp_fname = dp_fname_path.split("/")[-1]
             # my_job.logprint(dp_fname)
             # my_job.logprint({dp_fname_path})
@@ -65,7 +73,7 @@ if __name__ == "__main__":
             my_job.logprint(f"Copy {dp_fname} -> {proc_path}")
             my_rawdp.make_copy(path=proc_path, group="proc")
 
-            # Make the proc directory a dataproduct
+            # Open FITS files and extract desired parameters to tag each image
             raw_hdu = fits.open(dp_fname_path)
             FILENAME = raw_hdu[0].header["FILENAME"]
             RA = raw_hdu[0].header["RA_TARG"]
@@ -76,6 +84,8 @@ if __name__ == "__main__":
             EXPFLAG = raw_hdu[0].header["EXPFLAG"]
             CAM = raw_hdu[0].header["INSTRUME"]
             FILTER = raw_hdu[0].header["FILTER"]
+            TARGNAME = raw_hdu[0].header["TARGNAME"]
+            PROPOSALID = raw_hdu[0].header["PROPOSID"]
 
             raw_hdu.close()
 
@@ -92,19 +102,34 @@ if __name__ == "__main__":
                     "Expflag": EXPFLAG,
                     "cam": CAM,
                     "filter": FILTER,
+                    "targname": TARGNAME,
+                    "proposalid": PROPOSALID,
                 },
             )
             my_job.logprint(
-                f" Dataproduct path {my_procdp.filename} {my_procdp.options}"
+                f" Dataproduct path {my_procdp.filename} {my_procdp.options}"  # Print the tags for each image
             )
 
+            if i == 1:
+                first_tag_targetname = str(PROPOSALID) + "-" + TARGNAME
+                my_job.logprint(f"First tag {first_tag_targetname}")
+
+            elif i == tot_untagged_im:
+                my_job.logprint(f"Firing Next Task for Target: {first_tag_targetname}")
+                my_job.logprint("   ")
+                # Fire next task (tag_image)
+                # my_job.logprint("Firing Job")
+                # my_event = my_job.child_event(
+                #     "new_image",
+                # )
+                # my_event.fire()
+
     # TODO:
+    # - Count the total number of tagged images in for a given target
     # * Step 2: print target configuration file (default.config)
 
     # * Step 3: Use the default configuration to tag the associated images of a target
     # * Step 4: Fire next task
-
-    # conf_params = wp.ThisJob.config.parameters
 
     this_config, this_job_id = run_pypiper()
 

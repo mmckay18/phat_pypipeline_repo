@@ -118,11 +118,11 @@ if __name__ == "__main__":
                 my_job.logprint(f"Firing Next Task for Target: {first_tag_targetname}")
                 my_job.logprint("   ")
                 # Fire next task (tag_image)
-                # my_job.logprint("Firing Job")
-                # my_event = my_job.child_event(
-                #     "new_image",
-                # )
-                # my_event.fire()
+                my_job.logprint("Firing Job")
+                my_event = my_job.child_event(
+                    "astrodrizzle",
+                )
+                my_event.fire()
 
     # TODO:
     # - Count the total number of tagged images in for a given target

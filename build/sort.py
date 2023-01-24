@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from asyncio import DatagramProtocol
+# from asyncio import DatagramProtocol
 import os
 import wpipe as wp
 from astropy.io import fits
@@ -67,32 +67,69 @@ if __name__ == "__main__":
     # Make a list of target names in Unsorted diectory proposal id and targetname
     unsorted_df, unsorted_targetnames_list = make_unsorted_df(my_pipe.inputs[0])
 
-    my_job.logprint(f"{unsorted_targetnames_list}")  # * for debugging purposes
+    # my_job.logprint(f"{unsorted_targetnames_list}")  # * for debugging purposes
     for target_name in unsorted_targetnames_list:
-        my_job.logprint(f"{target_name}")  # * for debugging purposes
         sorted_df = unsorted_df[unsorted_df["PROPOSID_TARGNAME"] == target_name]
-
-        # Prints all the images associated with the target in the sort log file
-        my_job.logprint(f"{sorted_df.head()}")
-
-        # Get list of Filename for each target
+        # * Get list of Filename for each target
         rawdp_fn_list = sorted_df["FILENAME"].tolist()
         # my_job.logprint(f"{rawdp_fn_list}")  # * for debugging purposes
 
-        # Creates targets from the raw dataproducts in Unsorted directory
-        my_target = my_input.target(name=target_name, rawdps_to_add=rawdp_fn_list)
+        #* Creates targets from the raw dataproducts in Unsorted directory
+        my_targets = my_input.target(name=target_name, rawdps_to_add=rawdp_fn_list)
+        my_job.logprint(
+            f"{my_targets.name} {my_targets.target_id}, {my_targets.input_id}"
+        )
+    # Iterarte through targets
+    for target in my_input.targets:
+        # Create configeration for target and add parameters
+        my_config = target.configuration(
+            name="default", parameters={"target_id": target.target_id}
+        )
 
-    # Fire next task (tag_image)
-    my_job.logprint("Firing Job")
-    my_event = my_job.child_event(
-        "new_image",
-    )
-    my_event.fire()
+        # ________________
+        my_job.logprint(f"{target}")
+        target_rawdata = f"{target.datapath}/raw_default/*.fits"
+        target_dp_list = glob.glob(target_rawdata)
+        tot_untagged_im = len(
+            target_dp_list
+        )  # * Get the total number of files in a given target
+        my_job.logprint(
+            f"# of untagged images for {target.name}, {target.target_id}: {tot_untagged_im}"
+        )
 
-    # this_job = wp.ThisJob.job_id
-    # print("Job ID: ", this_job)
+        # my_job.logprint(f"{target_dp_list}")
 
-    # ? Why does each target have the all target raw datprodcuts for eah target?
-    # ? What is the data produxct after I nmake the target?
-    # ? Do I make new data products aftermaking the target?
-    # ? What EXACTLY DOES TAGING THE IMAGE MEAN?
+        # * Step 1: Copy images associated with the dataproducts from raw default to the proc directory - or copy the dataproducts from the config file?
+        i = 0
+        for dp_fname_path in target_dp_list:
+            i += 1
+            my_job.logprint(f"tagging image {i}")
+            dp_fname = dp_fname_path.split("/")[-1]
+            my_rawdp = my_input.dataproduct(filename=dp_fname, group="raw")
+            proc_path = f"{target.datapath}/proc_default/"
+
+            #! Make copy from raw directory to proc directory
+            my_rawdp.make_copy(path=proc_path, group="proc")
+            my_job.logprint(f"{my_rawdp}, {tot_untagged_im}")
+
+            #! New dataproduct for proc directory files
+            newdp = my_input.dataproduct(filename=dp_fname, group="proc")
+            my_job.logprint(f"{newdp}, {tot_untagged_im}")
+
+            new_dp_id = newdp.dp_id
+            my_job.logprint(f"{type(new_dp_id)}, {newdp.filename}")
+            
+            # Fire next task (tag_image)
+            my_job.logprint("Firing Job")
+            my_event = my_job.child_event(
+                name="new_image",
+                tag=new_dp_id,
+                options={
+                    "dp_id": new_dp_id,
+                    "to_run": tot_untagged_im,
+                    "filename": newdp.filename,
+                    "target_name": target.name,
+                    "target_id": target.target_id,
+                },
+            )
+            my_event.fire()

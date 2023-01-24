@@ -29,108 +29,104 @@ Original funtion docstring for tag_image.pl:
 """
 
 
-def run_pypiper():
-    """Test function"""
-    this_config = wp.ThisJob.config
-    this_job_id = wp.ThisJob.job_id
-    print("Running run_pypiper task")
-    return this_config, this_job_id
+def tagging(this_event):
+    """
+    Tags in the incoming dataproducts from fired event
+
+    Parameters:
+    -----------
+    this_event : Event(OptOwner)
+        a fired event of a WINGS pipeline.
+
+    Returns:
+    --------
+    None.
+
+    """
+
+    my_job.logprint(f"{this_event.options}")
+    this_dp_id = this_event.options["dp_id"]
+    # this_dp_filename = this_event.options["filename"]
+    this_target_id = this_event.options["target_id"]
+
+    this_dp = wp.DataProduct(int(this_dp_id))
+    dp_fitspath = this_dp.path
+    my_job.logprint(f"FITS path {dp_fitspath}")
+
+    # Open FITS files and extract desired parameters to tag each image
+    raw_hdu = fits.open(dp_fitspath)
+    FILENAME = raw_hdu[0].header["FILENAME"]
+    RA = raw_hdu[0].header["RA_TARG"]
+    DEC = raw_hdu[0].header["DEC_TARG"]
+    TELESCOP = raw_hdu[0].header["TELESCOP"]
+    ORINT = raw_hdu[0].header["P1_ORINT"]
+    EXPTIME = raw_hdu[0].header["EXPTIME"]
+    EXPFLAG = raw_hdu[0].header["EXPFLAG"]
+    CAM = raw_hdu[0].header["INSTRUME"]
+    FILTER = raw_hdu[0].header["FILTER"]
+    TARGNAME = raw_hdu[0].header["TARGNAME"]
+    PROPOSALID = raw_hdu[0].header["PROPOSID"]
+    raw_hdu.close()
+
+    # Tagging
+    this_dp_id = this_event.options["dp_id"]
+    this_dp = wp.DataProduct(
+        int(this_dp_id),
+        options={
+            "filename": FILENAME,
+            "ra": RA,
+            "dec": DEC,
+            "Telescope": TELESCOP,
+            "ORIENTATION": ORINT,
+            "Exptime": EXPTIME,
+            "Expflag": EXPFLAG,
+            "cam": CAM,
+            "filter": FILTER,
+            "targname": TARGNAME,
+            "proposalid": PROPOSALID,
+            "dp_id": this_dp_id,
+            "target_id": this_target_id,
+        },
+    )
+
+    my_job.logprint(this_dp.options)
 
 
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
-    my_input = my_pipe.inputs[0]
-    my_targets = my_input.targets
-    # my_config = wp.configuration("default.conf")
-    # my_job.logprint(f"{my_config.parameters.name}")
 
-    # my_job.logprint(f"Targets: {my_targets.datapath}")
+    # ! Get the firing event obj
+    this_event = my_job.firing_event  # parent event obj
+    my_job.logprint(f"This Event: {this_event}")
 
-    for target in my_targets.datapath:
-        # my_job.logprint(f"{target}/*.fits")
-        fits_path = f"{target}/raw_default/*.fits"
-        list_of_dp = glob.glob(fits_path)  # List of raw_default FLC fits files
-        # my_job.logprint(f"List of dp in Target: {list_of_dp}")
+    # TODO call dataproduct using tagret and dataproduct ID
+    # my_job.logprint(f"Get dataproduct object using the keyid")
+    #
 
-        #! Get the total number of files in a given target
-        tot_untagged_im = len(list_of_dp)
-        my_job.logprint(f"# of untagged images for {target}: {tot_untagged_im}")
+    # ! Start tagging function
+    tagging(this_event)
 
-        # [done] Step 1: Copy images associated with the dataproducts from raw default to the proc directory - or copy the dataproducts from the config file?
-        i = 0
-        for dp_fname_path in list_of_dp:
-            i += 1
-            my_job.logprint(f"tagging image {i}")
-            dp_fname = dp_fname_path.split("/")[-1]
-            # my_job.logprint(dp_fname)
-            # my_job.logprint({dp_fname_path})
-            my_rawdp = my_input.dataproduct(filename=dp_fname, group="raw")
-            # my_job.logprint(f" Dataproduct path {my_rawdp}")
-            proc_path = f"{target}/proc_default/"
-            # my_job.logprint(f"{type(proc_path)}")
-            # my_job.logprint(f"Proc Directory {str(proc_path)}")
-            my_job.logprint(f"Copy {dp_fname} -> {proc_path}")
-            my_rawdp.make_copy(path=proc_path, group="proc")
+    #         # Fire next task (tag_image)
+    #         my_job.logprint("Firing Job")
+    #         my_event = my_job.child_event(
+    #             "astrodrizzle",
+    #             options={"dp_id": my_procdp.dp_id, "to_run": tot_untagged_im},
+    #         )
+    #         my_event.fire()
 
-            # Open FITS files and extract desired parameters to tag each image
-            raw_hdu = fits.open(dp_fname_path)
-            FILENAME = raw_hdu[0].header["FILENAME"]
-            RA = raw_hdu[0].header["RA_TARG"]
-            DEC = raw_hdu[0].header["DEC_TARG"]
-            TELESCOP = raw_hdu[0].header["TELESCOP"]
-            ORINT = raw_hdu[0].header["P1_ORINT"]
-            EXPTIME = raw_hdu[0].header["EXPTIME"]
-            EXPFLAG = raw_hdu[0].header["EXPFLAG"]
-            CAM = raw_hdu[0].header["INSTRUME"]
-            FILTER = raw_hdu[0].header["FILTER"]
-            TARGNAME = raw_hdu[0].header["TARGNAME"]
-            PROPOSALID = raw_hdu[0].header["PROPOSID"]
+    #         # if i == 1:
+    #         #     first_tag_targetname = str(PROPOSALID) + "-" + TARGNAME
+    #         #     my_job.logprint(f"First tag {first_tag_targetname}")
 
-            raw_hdu.close()
+    #         # elif i == tot_untagged_im:
+    #         #     my_job.logprint(f"Firing Next Task for Target: {first_tag_targetname}")
+    #         #     my_job.logprint("   ")
+    #         #     # Fire next task (tag_image)
+    #         #     my_job.logprint("Firing Job")
+    #         #     my_event = my_job.child_event(
+    #         #         "astrodrizzle",
+    #         #     )
+    #         #     my_event.fire()
 
-            my_procdp = my_input.dataproduct(
-                filename=dp_fname,
-                group="proc",
-                options={
-                    "filename": FILENAME,
-                    "ra": RA,
-                    "dec": DEC,
-                    "Telescope": TELESCOP,
-                    "ORIENTATION": ORINT,
-                    "Exptime": EXPTIME,
-                    "Expflag": EXPFLAG,
-                    "cam": CAM,
-                    "filter": FILTER,
-                    "targname": TARGNAME,
-                    "proposalid": PROPOSALID,
-                },
-            )
-            my_job.logprint(
-                f" Dataproduct path {my_procdp.filename} {my_procdp.options}"  # Print the tags for each image
-            )
-
-            if i == 1:
-                first_tag_targetname = str(PROPOSALID) + "-" + TARGNAME
-                my_job.logprint(f"First tag {first_tag_targetname}")
-
-            elif i == tot_untagged_im:
-                my_job.logprint(f"Firing Next Task for Target: {first_tag_targetname}")
-                my_job.logprint("   ")
-                # Fire next task (tag_image)
-                my_job.logprint("Firing Job")
-                my_event = my_job.child_event(
-                    "astrodrizzle",
-                )
-                my_event.fire()
-
-    # TODO:
-    # - Count the total number of tagged images in for a given target
-    # * Step 2: print target configuration file (default.config)
-
-    # * Step 3: Use the default configuration to tag the associated images of a target
-    # * Step 4: Fire next task
-
-    this_config, this_job_id = run_pypiper()
-
-    print("CONFIG ID:", this_config, "JOB ID:", this_job_id)
+    # # TODO:

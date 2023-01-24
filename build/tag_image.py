@@ -31,7 +31,7 @@ Original funtion docstring for tag_image.pl:
 
 def tagging(this_event):
     """
-    Tags in the incoming dataproducts from fired event
+    Tags incoming dataproducts from fired event
 
     Parameters:
     -----------
@@ -100,12 +100,23 @@ if __name__ == "__main__":
     this_event = my_job.firing_event  # parent event obj
     my_job.logprint(f"This Event: {this_event}")
 
-    # TODO call dataproduct using tagret and dataproduct ID
-    # my_job.logprint(f"Get dataproduct object using the keyid")
-    #
-
     # ! Start tagging function
     tagging(this_event)
+
+    if this_event.options["to_run"] == 0:
+        # Fire next task (tag_image)
+        my_job.logprint("Firing Job")
+        my_event = my_job.child_event(
+            "astrodrizzle",
+        )
+        my_event.fire()
+
+    else:
+        pass
+
+    # TODO:
+    # * Enable the pipeline to countdown the number of dataproducts for a target
+    # * Fire astrodrizzle task after the last image for a target finish tagging:
 
     #         # Fire next task (tag_image)
     #         my_job.logprint("Firing Job")
@@ -128,5 +139,3 @@ if __name__ == "__main__":
     #         #         "astrodrizzle",
     #         #     )
     #         #     my_event.fire()
-
-    # # TODO:

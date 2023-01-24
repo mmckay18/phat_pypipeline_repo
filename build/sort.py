@@ -74,7 +74,7 @@ if __name__ == "__main__":
         rawdp_fn_list = sorted_df["FILENAME"].tolist()
         # my_job.logprint(f"{rawdp_fn_list}")  # * for debugging purposes
 
-        #* Creates targets from the raw dataproducts in Unsorted directory
+        # * Creates targets from the raw dataproducts in Unsorted directory
         my_targets = my_input.target(name=target_name, rawdps_to_add=rawdp_fn_list)
         my_job.logprint(
             f"{my_targets.name} {my_targets.target_id}, {my_targets.input_id}"
@@ -100,9 +100,9 @@ if __name__ == "__main__":
         # my_job.logprint(f"{target_dp_list}")
 
         # * Step 1: Copy images associated with the dataproducts from raw default to the proc directory - or copy the dataproducts from the config file?
-        i = 0
+        i = tot_untagged_im
         for dp_fname_path in target_dp_list:
-            i += 1
+            i -= 1
             my_job.logprint(f"tagging image {i}")
             dp_fname = dp_fname_path.split("/")[-1]
             my_rawdp = my_input.dataproduct(filename=dp_fname, group="raw")
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
             new_dp_id = newdp.dp_id
             my_job.logprint(f"{type(new_dp_id)}, {newdp.filename}")
-            
+
             # Fire next task (tag_image)
             my_job.logprint("Firing Job")
             my_event = my_job.child_event(
@@ -126,7 +126,7 @@ if __name__ == "__main__":
                 tag=new_dp_id,
                 options={
                     "dp_id": new_dp_id,
-                    "to_run": tot_untagged_im,
+                    "to_run": i,
                     "filename": newdp.filename,
                     "target_name": target.name,
                     "target_id": target.target_id,

@@ -45,7 +45,6 @@ if __name__ == "__main__":
         my_job.logprint(f"{my_input.procdataproducts}")
 
     #! 1 - Seperate target images by filter
-
     #! 2 - Run astrodrizzle on each target image using the default configuration
     #! 3 - read in config file for each target
     #! 4 - Fire next task

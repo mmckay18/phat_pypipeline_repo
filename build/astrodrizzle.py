@@ -53,9 +53,15 @@ if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
 
-    #Defining the target
-    #(my_target= my_job.firing_event.parent_job())
-    target_path = my_target.datapath()
+    #Defining the target and filter
+    parent_event = my_job.firing_event
+    my_target = parent_event.options["targname"]
+    my_filter = parent_event.options["filter"]
+
+    my_job.logprint(f"{parent_target}")
+    my_job.logprint(f"{parent_filter}")
+
+    target_path = my_target.path()
 
     #Setting input parameters
     config_file = f"{target_path}/conf_default/default.conf" #config file with custom parameter settings
@@ -63,7 +69,7 @@ if __name__ == "__main__":
     input_dict = {}  #parameters that will be put into AstroDrizzle
     for param in driz_param:
         if f"{param}" in config_file:
-            #set param to value in config file otherwise leaves it as the default value
+            #set param to value in config file otherwise leaves it as the default value (use pyfits.getval)
             #input_dict[param]=
     if len(input_dict) >= 1:
         my_job.logprint(f"Custom AstroDrizzle parameters found for {my_target}: {input_dict}")
@@ -72,16 +78,19 @@ if __name__ == "__main__":
     input_dict[clean]='Yes' #clean up directory
 
     #Pulling the filters for the target
-    #from the event, pull option of filter and number of filters (all_filters=.... num_of_allfilters=...
-    my_job.logprint(f"{num_of_allfilters} filters found for {my_target}")
+    #make list of all dataproducts with targname of my_target (all_dp=[])
+    #Make list of the filter in each dataproduct
+    #Remove duplicates to make all_filters=[]
+    #num_of_allfilters= len(all_filters)
+    #my_job.logprint(f"{num_of_allfilters} filters found for {my_target}")
 
     #Getting image list
     i = 0
     for j in all_filters:
         i+=1
         target_im=[]
-        target_im.append()#images where dataproduct option of Filter equals j (my_input=my_pipe.inputs[0], data=my_input.dataproducts) with file paths f"{target_path}/proc_default/*.fits"))
-        len_target_im = len(target_im)
+    #    target_im.append()#images where dataproduct option of Filter equals j (my_input=my_pipe.inputs[0], data=my_input.dataproducts) with file paths f"{target_path}/proc_default/*.fits"))
+    #    len_target_im = len(target_im)
 
         my_job.logprint(f"{len_target_im} images found for {my_target} in the {j} filter")
 

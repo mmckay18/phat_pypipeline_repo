@@ -107,7 +107,11 @@ if __name__ == "__main__":
         # Fire next task (tag_image)
         my_job.logprint("Firing Job")
         my_event = my_job.child_event(
-            "astrodrizzle",
+            name="astrodrizzle",
+        # options={                                      need to send the targetname and filter to astrodrizzle
+        #    "targname": data_pro.targname,
+        #   "filter": data_pro.filter,
+        },
         )
         my_event.fire()
 

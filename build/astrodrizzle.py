@@ -28,26 +28,26 @@ def register(task):
 #
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-if __name__ == "__main__":
-    my_pipe = wp.Pipeline()
-    my_job = wp.Job()
-    my_input = my_pipe.inputs[0]
-    my_targets = my_input.targets
-    my_job.logprint("Starting AstroDrizzle")
+# if __name__ == "__main__":
+#     my_pipe = wp.Pipeline()
+#     my_job = wp.Job()
+#     my_input = my_pipe.inputs[0]
+#     my_targets = my_input.targets
+#     my_job.logprint("Starting AstroDrizzle")
 
-    # my_targets = wp.Target(my_input)
-    # my_job.logprint(f"{my_targets.name}")
-    for targetname in my_targets.name:
-        my_job.logprint(f"{targetname}")
-        new_target = my_input.target(targetname)
+#     # my_targets = wp.Target(my_input)
+#     # my_job.logprint(f"{my_targets.name}")
+#     for targetname in my_targets.name:
+#         my_job.logprint(f"{targetname}")
+#         new_target = my_input.target(targetname)
 
-        my_job.logprint(f"{new_target}")
-        my_job.logprint(f"{my_input.procdataproducts}")
+#         my_job.logprint(f"{new_target}")
+#         my_job.logprint(f"{my_input.procdataproducts}")
 
-    #! 1 - Seperate target images by filter
-    #! 2 - Run astrodrizzle on each target image using the default configuration
-    #! 3 - read in config file for each target
-    #! 4 - Fire next task
+#     #! 1 - Seperate target images by filter
+#     #! 2 - Run astrodrizzle on each target image using the default configuration
+#     #! 3 - read in config file for each target
+#     #! 4 - Fire next task
 
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()

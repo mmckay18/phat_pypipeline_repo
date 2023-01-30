@@ -64,8 +64,9 @@ if __name__ == "__main__":
     for dp in proc_dp:
         my_job.logprint(f"{dp}")
         my_job.logprint(f"{dp.options}")
-        if dp.option['targname'] == my_target.name:
-            
+        if dp.option["targname"] == my_target.name:
+            pass
+            # my_job.logprint(f"{dp.options['filter']}")
 
     # # ! Get the list of dataproducts for this target and gets there filter parameter from dataproducts options
     # target_path = my_target.datapath

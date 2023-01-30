@@ -101,6 +101,7 @@ if __name__ == "__main__":
 
         # * Step 1: Copy images associated with the dataproducts from raw default to the proc directory - or copy the dataproducts from the config file?
         i = tot_untagged_im
+        dp_id_list = []
         for dp_fname_path in target_dp_list:
             i -= 1
             my_job.logprint(f"tagging image {i}")
@@ -119,6 +120,9 @@ if __name__ == "__main__":
             new_dp_id = newdp.dp_id
             my_job.logprint(f"{type(new_dp_id)}, {newdp.filename}")
 
+            # Append cirrent dataproduct id to list
+            dp_id_list.append(new_dp_id)
+
             # Fire next task (tag_image)
             my_job.logprint("Firing Job")
             my_event = my_job.child_event(
@@ -130,6 +134,7 @@ if __name__ == "__main__":
                     "filename": newdp.filename,
                     "target_name": target.name,
                     "target_id": target.target_id,
+                    "dataproduct_list": dp_id_list,
                 },
             )
             my_event.fire()

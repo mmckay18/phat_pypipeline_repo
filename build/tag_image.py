@@ -40,7 +40,7 @@ def tagging(this_event):
 
     Returns:
     --------
-    None.
+    logprint the options for the current dataproduct in the log file.
 
     """
 
@@ -103,15 +103,19 @@ if __name__ == "__main__":
     # ! Start tagging function
     tagging(this_event)
 
+    # my_job.logprint(this_event.options["dataproduct_list"]) # ! Doesnt work???
+
     if this_event.options["to_run"] == 0:
         # Fire next task (tag_image)
         my_job.logprint("Firing Job")
+        # need to send the targetname and filter to astrodrizzle
         my_event = my_job.child_event(
             name="astrodrizzle",
-        # options={                                      need to send the targetname and filter to astrodrizzle
-        #    "targname": data_pro.targname,
-        #   "filter": data_pro.filter,
-        },
+            options={
+                "targname": this_event.options["target_name"],
+                "target_id": this_event.options["target_id"],
+                # "dataproduct_list": this_event.options["dataproduct_list"],
+            },
         )
         my_event.fire()
 

@@ -36,6 +36,7 @@ def make_unsorted_df(my_input):
         PROP_ID = str(hdu[0].header["PROPOSID"])
         TARGNAME = hdu[0].header["TARGNAME"]
         FILENAME = hdu[0].header["FILENAME"]
+        FILTER = hdu[0].header["FILTER"]
         TARGET_NAME = PROP_ID + "_" + TARGNAME
         hdu.close()
 
@@ -81,12 +82,11 @@ if __name__ == "__main__":
         )
     # Iterarte through targets
     for target in my_input.targets:
-        # Create configeration for target and add parameters
+        # * Create configeration for target and add parameters
         my_config = target.configuration(
             name="default", parameters={"target_id": target.target_id}
         )
 
-        # ________________
         my_job.logprint(f"{target}")
         target_rawdata = f"{target.datapath}/raw_default/*.fits"
         target_dp_list = glob.glob(target_rawdata)
@@ -96,9 +96,6 @@ if __name__ == "__main__":
         my_job.logprint(
             f"# of untagged images for {target.name}, {target.target_id}: {tot_untagged_im}"
         )
-
-        # my_job.logprint(f"{target_dp_list}")
-
         # * Step 1: Copy images associated with the dataproducts from raw default to the proc directory - or copy the dataproducts from the config file?
         i = tot_untagged_im
         dp_id_list = []
@@ -111,30 +108,43 @@ if __name__ == "__main__":
 
             #! Make copy from raw directory to proc directory
             my_rawdp.make_copy(path=proc_path, group="proc")
+            my_procdp = my_rawdp.make_copy(path=proc_path, group="proc")
             my_job.logprint(f"{my_rawdp}, {tot_untagged_im}")
 
-            #! New dataproduct for proc directory files
-            newdp = my_input.dataproduct(filename=dp_fname, group="proc")
-            my_job.logprint(f"{newdp}, {tot_untagged_im}")
+            # ! CHANGE NAME OF PROC FILES # TODO Change the file names for the proc files
+            hdu = fits.open(dp_fname_path)
+            filter = hdu[0].header["FILTER"]
+            dp_fname = dp_fname.split("_")
+            dp_fname = f"{dp_fname[0]}_{filter}_{dp_fname[1]}"
+            my_job.logprint(f"{dp_fname}")
 
-            new_dp_id = newdp.dp_id
-            my_job.logprint(f"{type(new_dp_id)}, {newdp.filename}")
+            new_dp_fname_path = proc_path + dp_fname  #! new dataproduct path
+            # os.rename(dp_fname_path, new_dp_fname_path)  # Rename proc filename
+            # os.replace(dp_fname_path, new_dp_fname_path)
+
+            # #! New dataproduct for proc directory files
+            my_procdp.filename = dp_fname  # ! Changes filename
+            # newdp = my_input.dataproduct(filename=dp_fname, group="proc")
+            my_job.logprint(f"{my_procdp}, {tot_untagged_im}")
+            # new_dp_id = newdp.dp_id
+            # my_job.logprint(f"{type(new_dp_id)}, {newdp.filename}")
 
             # Append cirrent dataproduct id to list
-            dp_id_list.append(new_dp_id)
+            dp_id_list.append(my_procdp.dp_id)
 
             # Fire next task (tag_image)
             my_job.logprint("Firing Job")
             my_event = my_job.child_event(
                 name="new_image",
-                tag=new_dp_id,
+                tag=my_procdp.dp_id,
                 options={
-                    "dp_id": new_dp_id,
+                    "dp_id": my_procdp.dp_id,
                     "to_run": i,
-                    "filename": newdp.filename,
+                    "filename": my_procdp.filename,
                     "target_name": target.name,
                     "target_id": target.target_id,
                     "dataproduct_list": dp_id_list,
+                    "config_id": my_config.config_id,
                 },
             )
             my_event.fire()

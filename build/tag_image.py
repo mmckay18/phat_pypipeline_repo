@@ -48,13 +48,13 @@ def tagging(this_event):
     this_dp_id = this_event.options["dp_id"]
     # this_dp_filename = this_event.options["filename"]
     this_target_id = this_event.options["target_id"]
-
+    # Call dataproduct
     this_dp = wp.DataProduct(int(this_dp_id))
-    dp_fitspath = this_dp.path
-    my_job.logprint(f"FITS path {dp_fitspath}")
+    # dp_fitspath = this_dp.path
+    my_job.logprint(f"FITS path {this_dp.path}")
 
     # Open FITS files and extract desired parameters to tag each image
-    raw_hdu = fits.open(dp_fitspath)
+    raw_hdu = fits.open(this_dp.path)
     FILENAME = raw_hdu[0].header["FILENAME"]
     RA = raw_hdu[0].header["RA_TARG"]
     DEC = raw_hdu[0].header["DEC_TARG"]

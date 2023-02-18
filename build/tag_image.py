@@ -29,7 +29,7 @@ Original funtion docstring for tag_image.pl:
 """
 
 
-def tagging(this_event):
+def tag_event_dataproduct(this_event):
     """
     Tags incoming dataproducts from fired event
 
@@ -46,15 +46,21 @@ def tagging(this_event):
 
     my_job.logprint(f"{this_event.options}")
     this_dp_id = this_event.options["dp_id"]
-    # this_dp_filename = this_event.options["filename"]
     this_target_id = this_event.options["target_id"]
+    config_id = this_event.options["config_id"]
+    filename = this_event.options["filename"]
+    # my_job.logprint(f"{config_id} {this_dp_id} {this_target_id} {filename}")
     # Call dataproduct
-    this_dp = wp.DataProduct(int(this_dp_id))
-    # dp_fitspath = this_dp.path
-    my_job.logprint(f"FITS path {this_dp.path}")
+    # this_dp = wp.DataProduct(this_dp_id, filename=filename, group="proc")
+    this_dp = wp.DataProduct(int(this_dp_id), group="proc")
+    # my_job.logprint(f"{this_dp}")
+    # my_job.logprint(f"{this_dp.target.datapath}")
+    # * Dataproduct file pat
+    procdp_path = this_dp.target.datapath + "/proc_default/" + this_dp.filename
 
     # Open FITS files and extract desired parameters to tag each image
-    raw_hdu = fits.open(this_dp.path)
+    raw_hdu = fits.open(procdp_path)
+    # my_job.logprint(f"{this_dp.path}")
     FILENAME = raw_hdu[0].header["FILENAME"]
     RA = raw_hdu[0].header["RA_TARG"]
     DEC = raw_hdu[0].header["DEC_TARG"]
@@ -68,7 +74,7 @@ def tagging(this_event):
     PROPOSALID = raw_hdu[0].header["PROPOSID"]
     raw_hdu.close()
 
-    # Tagging
+    # tag_event_dataproduct
     this_dp_id = this_event.options["dp_id"]
     this_dp = wp.DataProduct(
         int(this_dp_id),
@@ -98,22 +104,24 @@ if __name__ == "__main__":
 
     # ! Get the firing event obj
     this_event = my_job.firing_event  # parent event obj
+    config_id = this_event.options["config_id"]
     my_job.logprint(f"This Event: {this_event}")
+    my_job.logprint(f"Config ID: {config_id}")
 
-    # ! Start tagging function
-    tagging(this_event)
+    # ! Start tag_event_dataproduct function
+    tag_event_dataproduct(this_event)
 
     # my_job.logprint(this_event.options["dataproduct_list"]) # ! Doesnt work???
 
     if this_event.options["to_run"] == 0:
         # Fire next task (tag_image)
         my_job.logprint("Firing Job")
-        # need to send the targetname and filter to astrodrizzle
         my_event = my_job.child_event(
             name="astrodrizzle",
             options={
                 "targname": this_event.options["target_name"],
                 "target_id": this_event.options["target_id"],
+                "config_id": this_event.options["config_id"],
                 # "dataproduct_list": this_event.options["dataproduct_list"],
             },
         )
@@ -124,26 +132,4 @@ if __name__ == "__main__":
 
     # TODO:
     # * Enable the pipeline to countdown the number of dataproducts for a target
-    # * Fire astrodrizzle task after the last image for a target finish tagging:
-
-    #         # Fire next task (tag_image)
-    #         my_job.logprint("Firing Job")
-    #         my_event = my_job.child_event(
-    #             "astrodrizzle",
-    #             options={"dp_id": my_procdp.dp_id, "to_run": tot_untagged_im},
-    #         )
-    #         my_event.fire()
-
-    #         # if i == 1:
-    #         #     first_tag_targetname = str(PROPOSALID) + "-" + TARGNAME
-    #         #     my_job.logprint(f"First tag {first_tag_targetname}")
-
-    #         # elif i == tot_untagged_im:
-    #         #     my_job.logprint(f"Firing Next Task for Target: {first_tag_targetname}")
-    #         #     my_job.logprint("   ")
-    #         #     # Fire next task (tag_image)
-    #         #     my_job.logprint("Firing Job")
-    #         #     my_event = my_job.child_event(
-    #         #         "astrodrizzle",
-    #         #     )
-    #         #     my_event.fire()
+    # * Fire astrodrizzle task after the last image for a target finish tagging

@@ -107,9 +107,9 @@ if __name__ == "__main__":
             proc_path = f"{target.datapath}/proc_default/"
 
             #! Make copy from raw directory to proc directory
-            my_rawdp.make_copy(path=proc_path, group="proc")
+            # my_rawdp.make_copy(path=proc_path, group="proc")
             my_procdp = my_rawdp.make_copy(path=proc_path, group="proc")
-            my_job.logprint(f"{my_rawdp}, {tot_untagged_im}")
+            # my_job.logprint(f"{my_rawdp}, {tot_untagged_im}")
 
             # ! CHANGE NAME OF PROC FILES # TODO Change the file names for the proc files
             hdu = fits.open(dp_fname_path)
@@ -117,19 +117,15 @@ if __name__ == "__main__":
             dp_fname = dp_fname.split("_")
             dp_fname = f"{dp_fname[0]}_{filter}_{dp_fname[1]}"
             my_job.logprint(f"{dp_fname}")
+            proc_dp_fname_path = proc_path + dp_fname  # * new dataproduct path
 
-            new_dp_fname_path = proc_path + dp_fname  #! new dataproduct path
-            # os.rename(dp_fname_path, new_dp_fname_path)  # Rename proc filename
-            # os.replace(dp_fname_path, new_dp_fname_path)
-
-            # #! New dataproduct for proc directory files
+            #! New dataproduct for proc directory files
             my_procdp.filename = dp_fname  # ! Changes filename
-            # newdp = my_input.dataproduct(filename=dp_fname, group="proc")
+            my_procdp = wp.DataProduct(my_config, filename=dp_fname, group="proc")
             my_job.logprint(f"{my_procdp}, {tot_untagged_im}")
-            # new_dp_id = newdp.dp_id
-            # my_job.logprint(f"{type(new_dp_id)}, {newdp.filename}")
+            my_job.logprint(f"{type(my_procdp.dp_id)}, {my_procdp.filename}")
 
-            # Append cirrent dataproduct id to list
+            # Append current dataproduct id to list
             dp_id_list.append(my_procdp.dp_id)
 
             # Fire next task (tag_image)

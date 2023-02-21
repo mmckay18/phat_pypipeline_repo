@@ -8,8 +8,10 @@ import os
 from astropy.io import fits
 
 # import shutil
-from drizzlepac import photeq
 from drizzlepac import astrodrizzle
+from stsci.tools import teal
+
+teal.unlearn('astrodrizzle')
 
 
 def register(task):
@@ -129,16 +131,17 @@ if __name__ == "__main__":
     else:
         my_job.logprint(f"No custom AstroDrizzle parameters found for {my_target}, using default parameters.")
     input_dict["clean"] = 'Yes'  # clean up directory
-# can add any other parameters here that we want to default to different values than the astrodrizzle defaults
 
-# Getting image list
+# can add any other parameters here that we want to default to different values than the astrodrizzle defaults like the kernal
+
+# Getting image list and log file name
     i = 0  # to count the number of filters astrodrizzle has run for
     for j in all_filters:
         i += 1
         target_im = []
         for dp in my_dp:
             if dp.options['filter'] == j:  # for the filter j, pulls out which dps have the same filter
-                target_im.append(dp.options['filename'])
+                target_im.append(dp.filename)
         inputall = target_im[0]  # the first image name in the array
         for ii in range(len(target_im) - 1):
             inputall = inputall + ',' + target_im[ii + 1]  # writes string of file names for input to astrodrizzle
@@ -146,10 +149,13 @@ if __name__ == "__main__":
 
         my_job.logprint(f"{len_target_im} images found for {my_target} in the {j} filter")
 
+        log_name = 'astrodrizzle' + j + '.log'  # filter specific log file name
+
 # Running AstroDrizzle
         my_job.logprint(f"Starting AstroDrizzle for {my_target} in filter {i}")
-
-        astrodrizzle.AstroDrizzle(input=inputall, input_dict= input_dict, output='final')
+#       my_job.logprint(f"{os.getcwd()}")
+#       my_job.logprint(f"{inputall}")
+        astrodrizzle.AstroDrizzle(input=inputall, output='final', runfile=log_name, build=True) # input_dict=input_dict
         my_job.logprint(f"AstroDrizzle complete for {my_target} in filter {i}")
 
 # Firing next task

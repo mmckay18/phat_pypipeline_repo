@@ -55,41 +55,44 @@ def register(task):
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
-    my_job.logprint(f"{my_job}")
+#   my_job.logprint(f"{my_job}")
 
     # Defining the target and filters
     parent_event = my_job.firing_event
-    my_job.logprint(f"{parent_event}")
+#   my_job.logprint(f"{parent_event}")
 
     parent_job = parent_event.parent_job
-    my_job.logprint(f"{parent_job}")
+#   my_job.logprint(f"{parent_job}")
 
     my_target = wp.Target(parent_event.options["target_id"])  # Get target using the target id
-    my_job.logprint(f"{my_target}")
+#   my_job.logprint(f"{my_target}")
 
     my_target_path = my_target.datapath
     target_proc_path = my_target_path + '/proc_default'
     os.chdir(target_proc_path)  # makes the correct proc directory the working directory
 
-    my_config = my_job.config()  # Get configuration for the job
-    my_job.logprint(f"{my_config}")
+    my_config = my_job.config # Get configuration for the job
+#   my_job.logprint(f"{my_config}")
 
-    my_dp = my_config.dataproducts()  # Get dataproducts associated with configuration (ie. dps for my_target)
-    my_job.logprint(f"{my_dp}")
+    my_dp = my_config.procdataproducts  # Get dataproducts associated with configuration (ie. dps for my_target)
+#   my_job.logprint(f"{my_dp}")
 
     filters = []  # Making array of filters for target
     for dp in my_dp:
-        my_job.logprint(f"{dp}")  # Should return each dataproduct
-        my_job.logprint(f"{dp.options}")
-        filters.append(dp.option["filter"])
-    # if dp.option["targname"] == my_target.name:
-    #    pass
-    # my_job.logprint(f"{dp.options['filter']}")
-    all_filters = list(set(all_filters))  # Remove duplicates to get array of different filters for target
-    num_all_filters = len(ind_filters)
+#       my_job.logprint(f"{dp}")  # Should return each dataproduct
+#       my_job.logprint(dp.options)
+        filters.append(dp.options['filter'])
+    all_filters = list(set(filters))  # Remove duplicates to get array of different filters for target
+    num_all_filters = len(all_filters)
     my_job.logprint(f"{num_all_filters} filters found for target {my_target.name}")
 
     ################################
+
+    # if dp.option["targname"] == my_target.name:
+    #    pass
+    # my_job.logprint(f"{dp.options['filter']}")
+
+
     # # ! Get the list of dataproducts for this target and gets there filter parameter from dataproducts options
     # target_path = my_target.datapath
     # proc_path = target_path + "/proc_default/"
@@ -113,45 +116,45 @@ if __name__ == "__main__":
     ###############################################
 
     # Setting input parameters
-#   driz_param = ["skysub", "driz_sep_scale", "driz_cr_scale", "driz_cr_snr", "driz_sep_bits", "final_bits",
-#                 "final_pixfrac", "final_scale", "final_kernal", "reset_bits"]  # possible parameters
-#   input_dict = {}  # parameters that will be put into AstroDrizzle
-#   for param in driz_param:
-#       if param in my_config:
-#           param_val = my_config.option[
-#               f"{param}"]  # set param to value in config file otherwise leaves it as the default value
-#           input_dict[param] = param_val
-#   if len(input_dict) >= 1:
-#       my_job.logprint(f"Custom AstroDrizzle parameters found for {my_target}: {input_dict}")
-#   else:
-#       my_job.logprint(f"No custom AstroDrizzle parameters found for {my_target}, using default parameters.")
-#   input_dict["clean"] = 'Yes'  # clean up directory
+    driz_param = ['skysub', 'driz_sep_scale', 'driz_cr_scale', 'driz_cr_snr', 'driz_sep_bits', 'final_bits',
+                'final_pixfrac', 'final_scale', 'final_kernal', 'reset_bits']  # possible parameters
+    input_dict = {}  # parameters that will be put into AstroDrizzle
+#   my_job.logprint(my_config.parameters)
+    for param in driz_param:
+        if param in my_config.parameters:
+            param_val = my_config.parameters[param]  # set param to value in config file otherwise leaves it as the default value
+            input_dict[param] = param_val
+    if len(input_dict) >= 1:
+        my_job.logprint(f"Custom AstroDrizzle parameters found for {my_target}: {input_dict}")
+    else:
+        my_job.logprint(f"No custom AstroDrizzle parameters found for {my_target}, using default parameters.")
+    input_dict["clean"] = 'Yes'  # clean up directory
 # can add any other parameters here that we want to default to different values than the astrodrizzle defaults
 
 # Getting image list
-#   i = 0  # to count the number of filters astrodrizzle has run for
-#   for j in all_filters:
-#       i += 1
-#       target_im = []
-#       for dp in my_dp:
-#           if dp.option["filter"] == j:  # for the filter j, pulls out which dps have the same filter
-#               target_im.append(dp.option["filename"])
-#       inputall = target_im[0]  # the first image name in the array
-#       for ii in range(len(target_im) - 1):
-#           inputall = inputall + ',' + target_im[ii + 1]  # writes string of file names for input to astrodrizzle
-#       len_target_im = len(inputall)
+    i = 0  # to count the number of filters astrodrizzle has run for
+    for j in all_filters:
+        i += 1
+        target_im = []
+        for dp in my_dp:
+            if dp.options['filter'] == j:  # for the filter j, pulls out which dps have the same filter
+                target_im.append(dp.options['filename'])
+        inputall = target_im[0]  # the first image name in the array
+        for ii in range(len(target_im) - 1):
+            inputall = inputall + ',' + target_im[ii + 1]  # writes string of file names for input to astrodrizzle
+        len_target_im = len(target_im)
 
-#       my_job.logprint(f"{len_target_im} images found for {my_target} in the {j} filter")
+        my_job.logprint(f"{len_target_im} images found for {my_target} in the {j} filter")
 
 # Running AstroDrizzle
-#       my_job.logprint(f"Starting AstroDrizzle for {my_target} in filter {i}")
+        my_job.logprint(f"Starting AstroDrizzle for {my_target} in filter {i}")
 
-#       astrodrizzle.AstroDrizzle(inputall, input_dict, output='final')
-#       my_job.logprint(f"AstroDrizzle complete for {my_target} in filter {i}")
+        astrodrizzle.AstroDrizzle(input=inputall, input_dict= input_dict, output='final')
+        my_job.logprint(f"AstroDrizzle complete for {my_target} in filter {i}")
 
 # Firing next task
-#        if i == num_all_filters:
-#            my_job.logprint(f"AstroDrizzle complete for {my_target}")
+        if i == num_all_filters:
+            my_job.logprint(f"AstroDrizzle complete for {my_target}")
 #            my_job.logprint(" ")
 #            next_event = my_job.child_event() #next event
 #            next_event.fire()

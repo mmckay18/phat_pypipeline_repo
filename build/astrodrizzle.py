@@ -8,7 +8,7 @@ import os
 from astropy.io import fits
 
 # import shutil
-from drizzlepac import astrodrizzle
+from drizzlepac import *
 from stsci.tools import teal
 
 teal.unlearn('astrodrizzle')
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     my_job = wp.Job()
 #   my_job.logprint(f"{my_job}")
 
-    # Defining the target and filters
+# Defining the target and filters
     parent_event = my_job.firing_event
 #   my_job.logprint(f"{parent_event}")
 
@@ -118,8 +118,8 @@ if __name__ == "__main__":
     ###############################################
 
     # Setting input parameters
-    driz_param = ['skysub', 'driz_sep_scale', 'driz_cr_scale', 'driz_cr_snr', 'driz_sep_bits', 'final_bits',
-                'final_pixfrac', 'final_scale', 'final_kernal', 'reset_bits']  # possible parameters
+    driz_param = ['reset_bits', 'skysub', 'driz_sep_scale', 'driz_sep_bits', 'combine_type', 'driz_cr_scale', 'driz_cr_snr', 'final_bits',
+                'final_pixfrac', 'final_scale', 'final_kernal']  # possible parameters
     input_dict = {}  # parameters that will be put into AstroDrizzle
 #   my_job.logprint(my_config.parameters)
     for param in driz_param:
@@ -130,11 +130,12 @@ if __name__ == "__main__":
         my_job.logprint(f"Custom AstroDrizzle parameters found for {my_target}: {input_dict}")
     else:
         my_job.logprint(f"No custom AstroDrizzle parameters found for {my_target}, using default parameters.")
-    input_dict["clean"] = 'Yes'  # clean up directory
+    input_dict['clean'] = 'Yes'  # clean up directory
+    input_dict['final_kernel'] = 'lanczos3'  # set final kernel
 
 # can add any other parameters here that we want to default to different values than the astrodrizzle defaults like the kernal
 
-# Getting image list and log file name
+# Getting image list and setting file names
     i = 0  # to count the number of filters astrodrizzle has run for
     for j in all_filters:
         i += 1
@@ -150,12 +151,15 @@ if __name__ == "__main__":
         my_job.logprint(f"{len_target_im} images found for {my_target} in the {j} filter")
 
         log_name = 'astrodrizzle' + j + '.log'  # filter specific log file name
+        ind_input_dict = input_dict.copy()
+        ind_input_dict['runfile'] = log_name  # adding specific log names to input dictionary
+
+        out_name = 'final' + j  # final product name
+        ind_input_dict['output'] = out_name  # adding to input dictionary
 
 # Running AstroDrizzle
         my_job.logprint(f"Starting AstroDrizzle for {my_target} in filter {i}")
-#       my_job.logprint(f"{os.getcwd()}")
-#       my_job.logprint(f"{inputall}")
-        astrodrizzle.AstroDrizzle(input=inputall, output='final', runfile=log_name, build=True) # input_dict=input_dict
+        astrodrizzle.AstroDrizzle(input=inputall, context=True, build=True, **ind_input_dict)
         my_job.logprint(f"AstroDrizzle complete for {my_target} in filter {i}")
 
 # Firing next task

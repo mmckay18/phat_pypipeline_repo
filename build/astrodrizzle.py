@@ -128,9 +128,9 @@ if __name__ == "__main__":
             param_val = my_config.parameters[param]  # set param to value in config file otherwise leaves it as the default value
             input_dict[param] = param_val
     if len(input_dict) >= 1:
-        my_job.logprint(f"Custom AstroDrizzle parameters found for {my_target}: {input_dict}")
+        my_job.logprint(f"Custom AstroDrizzle parameters found for {my_target.name}: {input_dict}")
     else:
-        my_job.logprint(f"No custom AstroDrizzle parameters found for {my_target}, using default parameters.")
+        my_job.logprint(f"No custom AstroDrizzle parameters found for {my_target.name}, using default parameters.")
     input_dict['clean'] = 'Yes'  # clean up directory
 
     if 'driz_sep_kernel' not in my_config.parameters: # adjusting individual kernel default
@@ -164,7 +164,6 @@ if __name__ == "__main__":
 # Getting image list and setting filter specific parameters
     i = 0  # to count the number of filters AstroDrizzle has run for
     for j in all_filters:
-        i += 1
         target_im = []
         for dp in my_dp:
             if dp.options['filter'] == j:  # for the filter j, pulls out which dps have the same filter
@@ -174,7 +173,7 @@ if __name__ == "__main__":
             inputall = inputall + ',' + target_im[ii + 1]  # writes string of file names for input to AstroDrizzle
         len_target_im = len(target_im)
 
-        my_job.logprint(f"{len_target_im} images found for {my_target} in the {j} filter")
+        my_job.logprint(f"{len_target_im} images found for {my_target.name} in the {j} filter")
 
         log_name = 'astrodrizzle' + j + '.log'  # filter specific log file name
         ind_input_dict = input_dict.copy()
@@ -188,16 +187,52 @@ if __name__ == "__main__":
             ind_input_dict['combine_nhigh'] = 1 # for 4 input images nhigh should be 1, could need to be raised for >4
 
 # Running AstroDrizzle
-        my_job.logprint(f"Starting AstroDrizzle for {my_target} in filter {i}")
+        my_job.logprint(f"Starting AstroDrizzle for {my_target.name} in filter {i}")
         if len_target_im == 1: # for filters with only 1 input image, only the sky subtraction and final drizzle can run
             astrodrizzle.AstroDrizzle(input=inputall, context=True, build=True, driz_separate= False, median= False, blot= False, driz_cr= False, **ind_input_dict)
         else:
             astrodrizzle.AstroDrizzle(input=inputall, context=True, build=True, **ind_input_dict)
-        my_job.logprint(f"AstroDrizzle complete for {my_target} in filter {i}")
+        my_job.logprint(f"AstroDrizzle complete for {my_target.name} in filter {i}")
 
+# Create Dataproducts for drizzled images
+        drizzleim_path = 'final' + j + '_drc.fits' # Already in proc directory so this is just the file name
+        driz_hdu = fits.open(drizzleim_path)
+
+        FILENAME = driz_hdu[0].header['FILENAME'] # Parameters from header
+        TELESCOP = driz_hdu[0].header['TELESCOP']
+        INSTRUME = driz_hdu[0].header['INSTRUME']
+        TARGNAME = driz_hdu[0].header['TARGNAME']
+        RA_TARG = driz_hdu[0].header['RA_TARG']
+        DEC_TARG = driz_hdu[0].header['DEC_TARG']
+        PROPOSID = driz_hdu[0].header['PROPOSID']
+        EXPTIME = driz_hdu[0].header['EXPTIME']
+        PA_V3 = driz_hdu[0].header['PA_V3']
+        DETECTOR = driz_hdu[0].header['DETECTOR']
+        FILTER = driz_hdu[0].header['FILTER']
+        driz_hdu.close()
+
+        driz_dp = wp.DataProduct(my_config, filename = drizzleim_path, group = "proc",  # Create dataproduct owned by config for the target
+                                 options = {
+                                 "Filename" : FILENAME,
+                                 "Telescope" : TELESCOP,
+                                 "Instrument" : INSTRUME,
+                                 "Target_name" : TARGNAME,
+                                 "RA" : RA_TARG,
+                                 "DEC" : DEC_TARG,
+                                 "ProposalID" : PROPOSID,
+                                 "Exposure_time" : EXPTIME,
+                                 "Position_angle" : PA_V3,
+                                 "Detector" : DETECTOR,
+                                 "Filter" : FILTER})
+
+        dp_ids=[] # Get list of new dp ids to send to next task
+        dp_ids.append(driz_dp.dp_id)
+
+        my_job.logprint(f"Dataproduct for drizzled image in filter {j}: {driz_dp.options}")
+
+        i += 1 # count finished filter
 # Firing next task
         if i == num_all_filters:
-            my_job.logprint(f"AstroDrizzle complete for {my_target}")
-#           my_job.logprint(" ")
-#           next_event = my_job.child_event() #next event
-#           next_event.fire()
+            my_job.logprint(f"AstroDrizzle step complete for {my_target.name}")
+            next_event = my_job.child_event(name = "find_reference", options = {"dp_id" : dp_ids}) #next event
+            next_event.fire()

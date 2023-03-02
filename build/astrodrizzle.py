@@ -135,13 +135,9 @@ if __name__ == "__main__":
             ]  # set param to value in config file otherwise leaves it as the default value
             input_dict[param] = param_val
     if len(input_dict) >= 1:
-<<<<<<< HEAD
+
         my_job.logprint(f"Custom AstroDrizzle parameters found for {my_target.name}: {input_dict}")
-=======
-        my_job.logprint(
-            f"Custom AstroDrizzle parameters found for {my_target}: {input_dict}"
-        )
->>>>>>> refs/remotes/origin/main
+
     else:
         my_job.logprint(f"No custom AstroDrizzle parameters found for {my_target.name}, using default parameters.")
     input_dict['clean'] = 'Yes'  # clean up directory
@@ -188,13 +184,12 @@ if __name__ == "__main__":
             inputall = inputall + ',' + target_im[ii + 1]  # writes string of file names for input to AstroDrizzle
         len_target_im = len(target_im)
 
-<<<<<<< HEAD
+
         my_job.logprint(f"{len_target_im} images found for {my_target.name} in the {j} filter")
-=======
+
         my_job.logprint(
             f"{len_target_im} images found for {my_target} in the {j} filter"
         )
->>>>>>> refs/remotes/origin/main
 
         log_name = 'astrodrizzle' + j + '.log'  # filter specific log file name
         ind_input_dict = input_dict.copy()
@@ -207,20 +202,14 @@ if __name__ == "__main__":
             ind_input_dict['combine_type'] = 'median'
             ind_input_dict['combine_nhigh'] = 1 # for 4 input images nhigh should be 1, could need to be raised for >4
 
-<<<<<<< HEAD
 # Running AstroDrizzle
         my_job.logprint(f"Starting AstroDrizzle for {my_target.name} in filter {i}")
-=======
-        # Running AstroDrizzle
-        my_job.logprint(f"Starting AstroDrizzle for {my_target} in filter {i}")
->>>>>>> refs/remotes/origin/main
         if len_target_im == 1: # for filters with only 1 input image, only the sky subtraction and final drizzle can run
             astrodrizzle.AstroDrizzle(input=inputall, context=True, build=True, driz_separate= False, median= False, blot= False, driz_cr= False, **ind_input_dict)
         else:
             astrodrizzle.AstroDrizzle(input=inputall, context=True, build=True, **ind_input_dict)
         my_job.logprint(f"AstroDrizzle complete for {my_target.name} in filter {i}")
 
-<<<<<<< HEAD
 # Create Dataproducts for drizzled images
         drizzleim_path = 'final' + j + '_drc.fits' # Already in proc directory so this is just the file name
         driz_hdu = fits.open(drizzleim_path)
@@ -258,11 +247,9 @@ if __name__ == "__main__":
         my_job.logprint(f"Dataproduct for drizzled image in filter {j}: {driz_dp.options}")
 
         i += 1 # count finished filter
-# Firing next task
-=======
+
         # Firing next task
->>>>>>> refs/remotes/origin/main
         if i == num_all_filters:
             my_job.logprint(f"AstroDrizzle step complete for {my_target.name}")
-            next_event = my_job.child_event(name = "find_reference", options = {"dp_id" : dp_ids}) #next event
+            next_event = my_job.child_event(name = "find_ref", options = {"dp_id" : dp_ids}) #next event
             next_event.fire()

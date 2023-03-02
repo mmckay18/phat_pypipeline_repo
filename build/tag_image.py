@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 import wpipe as wp
-import numpy as np
-import glob
 from astropy.io import fits
-import shutil
 
 
 def register(task):

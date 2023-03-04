@@ -16,10 +16,8 @@ if __name__ == "__main__":
     my_job.logprint(f"This Event: {this_event}")
     my_job.logprint(f"Config ID: {config_id}")
 
-
-
     my_event = my_job.child_event(
-        name="astrodrizzle",
+        name="prep_image",
         options={
             "targname": this_event.options["target_name"],
             "target_id": this_event.options["target_id"],

@@ -251,5 +251,5 @@ if __name__ == "__main__":
         # Firing next task
         if i == num_all_filters:
             my_job.logprint(f"AstroDrizzle step complete for {my_target.name}")
-            next_event = my_job.child_event(name = "find_ref", options = {"dp_id" : dp_ids}) #next event
+            next_event = my_job.child_event(name="find_ref", options={"dp_id" : dp_ids}) #next event
             next_event.fire()

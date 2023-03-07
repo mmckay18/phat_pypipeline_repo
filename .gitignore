@@ -132,3 +132,6 @@ run4/input/Unsorted/iepu22dzq_flc.fits
 run4/input/Unsorted/iepu22e4q_flc.fits
 test_pypiper/*
 NOTES.txt
+temp/*
+EDA.ipynb
+

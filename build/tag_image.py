@@ -116,10 +116,9 @@ if __name__ == "__main__":
         my_event = my_job.child_event(
             name="astrodrizzle",
             options={
-                "targname": this_event.options["target_name"],
+                "target_name": this_event.options["target_name"],
                 "target_id": this_event.options["target_id"],
                 "config_id": this_event.options["config_id"],
-                # "dataproduct_list": this_event.options["dataproduct_list"],
             },
         )
         my_event.fire()

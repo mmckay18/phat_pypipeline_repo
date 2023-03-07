@@ -63,6 +63,7 @@ def make_unsorted_df(my_input):
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
+    my_job.logprint(f"{my_pipe.inputs}")  # * for debugging purposes
     my_input = my_pipe.inputs[0]
 
     # Make a list of target names in Unsorted diectory proposal id and targetname

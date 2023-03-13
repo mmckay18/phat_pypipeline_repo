@@ -59,7 +59,7 @@ if __name__ == "__main__":
     my_job = wp.Job()
     #   my_job.logprint(f"{my_job}")
 
-    # Defining the target and filters
+# Defining the target and filters
     parent_event = my_job.firing_event
     #   my_job.logprint(f"{parent_event}")
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     os.chdir(target_proc_path)  # makes the correct proc directory the working directory
 
     my_config = my_job.config  # Get configuration for the job
-    #   my_job.logprint(f"{my_config}")
+    #my_job.logprint(f"{my_config}")
 
     my_dp = (
         my_config.procdataproducts
@@ -122,25 +122,10 @@ if __name__ == "__main__":
     # my_job.logprint(f"{parent_filter}")
     ###############################################
 
-    # Setting input parameters
-    driz_param = [
-        "reset_bits",
-        "skysub",
-        "sky_method",
-        "driz_sep_pixfrac",
-        "driz_sep_scale",
-        "driz_sep_bits",
-        "driz_sep_kernel",
-        "combine_type",
-        "combine_nlow",
-        "combine_nhigh",
-        "driz_cr_scale",
-        "driz_cr_snr",
-        "final_bits",
-        "final_pixfrac",
-        "final_scale",
-        "final_kernel",
-    ]  # possible parameters
+# Setting input parameters
+    driz_param = ['reset_bits', 'skysub', 'sky_method', 'driz_sep_pixfrac', 'driz_sep_scale', 'driz_sep_bits', 'driz_sep_kernel',
+                  'combine_type', 'combine_nlow', 'combine_nhigh', 'driz_cr_scale', 'driz_cr_snr', 'final_bits',
+                  'final_pixfrac', 'final_scale', 'final_kernel']  # possible parameters
     input_dict = {}  # parameters that will be put into AstroDrizzle
     #   my_job.logprint(my_config.parameters)
     for param in driz_param:
@@ -157,55 +142,35 @@ if __name__ == "__main__":
         my_job.logprint(f"No custom AstroDrizzle parameters found for {my_target.name}, using default parameters.")
     input_dict['clean'] = 'Yes'  # clean up directory
 
-    if (
-        "driz_sep_kernel" not in my_config.parameters
-    ):  # adjusting individual kernel default
-        if (
-            "driz_sep_pixfrac" not in my_config.parameters
-            or my_config.parameters["driz_sep_pixfrac"] == 1
-        ):
-            if (
-                "driz_sep_scale" not in my_config.parameters
-                or my_config.parameters["driz_sep_scale"] == 1
-            ):
-                input_dict["driz_sep_kernel"] = "lanczos3"
-                if "driz_sep_pixfrac" not in my_config.parameters:
-                    input_dict["driz_sep_pixfrac"] = 1
-                if "driz_sep_scale" not in my_config.parameters:
-                    input_dict["driz_sep_scale"] = 1
-    if (
-        "driz_sep_kernel" in my_config.parameters
-        and my_config.parameters["driz_sep_kernel"] == "lanczos3"
-    ):
-        if "driz_sep_pixfrac" not in my_config.parameters:
-            input_dict["driz_sep_pixfrac"] = 1
-        if "driz_sep_scale" not in my_config.parameters:
-            input_dict["driz_sep_scale"] = 1
+    if 'driz_sep_kernel' not in my_config.parameters: # adjusting individual kernel default
+        if 'driz_sep_pixfrac' not in my_config.parameters or my_config.parameters['driz_sep_pixfrac'] == 1:
+            if 'driz_sep_scale' not in my_config.parameters or my_config.parameters['driz_sep_scale'] == 1:
+                input_dict['driz_sep_kernel'] = 'lanczos3'
+                if 'driz_sep_pixfrac' not in my_config.parameters:
+                    input_dict['driz_sep_pixfrac'] = 1
+                if 'driz_sep_scale' not in my_config.parameters:
+                    input_dict['driz_sep_scale'] = 1
+    if 'driz_sep_kernel' in my_config.parameters and my_config.parameters['driz_sep_kernel'] == 'lanczos3':
+        if 'driz_sep_pixfrac' not in my_config.parameters:
+            input_dict['driz_sep_pixfrac'] = 1
+        if 'driz_sep_scale' not in my_config.parameters:
+            input_dict['driz_sep_scale'] = 1
 
-    if "final_kernel" not in my_config.parameters:  # adjusting final kernel default
-        if (
-            "final_pixfrac" not in my_config.parameters
-            or my_config.parameters["final_pixfrac"] == 1
-        ):
-            if (
-                "final_scale" not in my_config.parameters
-                or my_config.parameters["final_scale"] == 1
-            ):
-                input_dict["final_kernel"] = "lanczos3"
-                if "final_pixfrac" not in my_config.parameters:
-                    input_dict["final_pixfrac"] = 1
-                if "final_scale" not in my_config.parameters:
-                    input_dict["final_scale"] = 1
-    if (
-        "final_kernel" in my_config.parameters
-        and my_config.parameters["final_kernel"] == "lanczos3"
-    ):
-        if "final_pixfrac" not in my_config.parameters:
-            input_dict["final_pixfrac"] = 1
-        if "final_scale" not in my_config.parameters:
-            input_dict["final_scale"] = 1
+    if 'final_kernel' not in my_config.parameters: # adjusting final kernel default
+        if 'final_pixfrac' not in my_config.parameters or my_config.parameters['final_pixfrac'] == 1:
+            if 'final_scale' not in my_config.parameters or my_config.parameters['final_scale'] == 1:
+                input_dict['final_kernel'] = 'lanczos3'
+                if 'final_pixfrac' not in my_config.parameters:
+                    input_dict['final_pixfrac'] = 1
+                if 'final_scale' not in my_config.parameters:
+                    input_dict['final_scale'] = 1
+    if 'final_kernel' in my_config.parameters and my_config.parameters['final_kernel'] == 'lanczos3':
+        if 'final_pixfrac' not in my_config.parameters:
+            input_dict['final_pixfrac'] = 1
+        if 'final_scale' not in my_config.parameters:
+            input_dict['final_scale'] = 1
 
-    # Getting image list and setting filter specific parameters
+# Getting image list and setting filter specific parameters
     i = 0  # to count the number of filters AstroDrizzle has run for
     for j in all_filters:
         target_im = []
@@ -216,9 +181,7 @@ if __name__ == "__main__":
                 target_im.append(dp.filename)
         inputall = target_im[0]  # the first image name in the array
         for ii in range(len(target_im) - 1):
-            inputall = (
-                inputall + "," + target_im[ii + 1]
-            )  # writes string of file names for input to AstroDrizzle
+            inputall = inputall + ',' + target_im[ii + 1]  # writes string of file names for input to AstroDrizzle
         len_target_im = len(target_im)
 
 
@@ -228,24 +191,16 @@ if __name__ == "__main__":
             f"{len_target_im} images found for {my_target} in the {j} filter"
         )
 
-        log_name = "astrodrizzle" + j + ".log"  # filter specific log file name
+        log_name = 'astrodrizzle' + j + '.log'  # filter specific log file name
         ind_input_dict = input_dict.copy()
-        ind_input_dict[
-            "runfile"
-        ] = log_name  # adding specific log names to input dictionary
+        ind_input_dict['runfile'] = log_name  # adding specific log names to input dictionary
 
-        out_name = "final" + j  # final product name
-        ind_input_dict[
-            "output"
-        ] = out_name  # adding filter specific final product name to input dictionary
+        out_name = 'final' + j  # final product name
+        ind_input_dict['output'] = out_name  # adding filter specific final product name to input dictionary
 
-        if (
-            len_target_im >= 4 and "combine_type" not in my_config.parameters
-        ):  # with at least 4 input images, median is better than default of minmed
-            ind_input_dict["combine_type"] = "median"
-            ind_input_dict[
-                "combine_nhigh"
-            ] = 1  # for 4 input images nhigh should be 1, could need to be raised for >4
+        if len_target_im >= 4 and 'combine_type' not in my_config.parameters: # with at least 4 input images, median is better than default of minmed
+            ind_input_dict['combine_type'] = 'median'
+            ind_input_dict['combine_nhigh'] = 1 # for 4 input images nhigh should be 1, could need to be raised for >4
 
 # Running AstroDrizzle
         my_job.logprint(f"Starting AstroDrizzle for {my_target.name} in filter {i}")
@@ -284,10 +239,8 @@ if __name__ == "__main__":
                                  "Exposure_time" : EXPTIME,
                                  "Position_angle" : PA_V3,
                                  "Detector" : DETECTOR,
-                                 "Filter" : FILTER})
-
-        dp_ids=[] # Get list of new dp ids to send to next task
-        dp_ids.append(driz_dp.dp_id)
+                                 "Filter" : FILTER
+                                 })
 
         my_job.logprint(f"Dataproduct for drizzled image in filter {j}: {driz_dp.options}")
 
@@ -296,5 +249,9 @@ if __name__ == "__main__":
         # Firing next task
         if i == num_all_filters:
             my_job.logprint(f"AstroDrizzle step complete for {my_target.name}")
-            next_event = my_job.child_event(name="find_ref", options={"dp_id" : dp_ids}) #next event
+            next_event = my_job.child_event(name = "find_ref", options = {
+                "target_name": parent_event.options["target_name"],
+                "target_id": parent_event.options["target_id"],
+                "config_id": parent_event.options["config_id"]
+                }) #next event
             next_event.fire()

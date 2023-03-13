@@ -65,9 +65,9 @@ if __name__ == "__main__":
     my_job = wp.Job()
 
     this_event = my_job.firing_event  # parent event obj
-    config_id = this_event.options["config_id"]
-    my_job.logprint(f"This Event: {this_event}")
-    my_job.logprint(f"Config ID: {config_id}")
+    # config_id = this_event.options["config_id"]
+    # my_job.logprint(f"This Event: {this_event}")
+    # my_job.logprint(f"Config ID: {config_id}")
 
     #! List of path to each image for a target
     my_config = my_job.config
@@ -77,6 +77,7 @@ if __name__ == "__main__":
         mask="/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/2022-10-26_mymodel8_epoch30.pth",
         hidden=32,
     )
+    my_job.logprint(f"{mdl}")
 
     for my_dp in my_dp_list:
         my_job.logprint(f"{my_dp}, {type(my_dp)}")

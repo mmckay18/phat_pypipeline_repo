@@ -4,15 +4,20 @@ import numpy as np
 from glob import glob
 import os
 
-pathroot = "/astro/users/zczhuo/zhuo/phast/deepcrtrain/"
-pathimgs = pathroot + "files/img4clean/photcorr/"
+# pathroot = "/astro/users/zczhuo/zhuo/phast/deepcrtrain/"
+# pathimgs = pathroot + "files/img4clean/photcorr/"
+pathimgs = "/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/test_pypiper/data/16799_M31-B33-F06-UVIS/proc_default"
+
 # os.chdir(pathimgs)
 
 imgfull = glob(pathimgs + "*flc.fits")
 print("all_imgs_name:", imgfull)
 
 # import the trained model used for UVIS images
-mdl = deepCR(mask="2022-10-26_mymodel8_epoch30.pth", hidden=32)
+mdl = deepCR(
+    mask="/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/2022-10-26_mymodel8_epoch30.pth",
+    hidden=32,
+)
 
 
 def imgclean(imgname, mdl):

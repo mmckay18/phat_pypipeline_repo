@@ -46,7 +46,7 @@ if __name__ == "__main__":
         max_exp = exposuresarr.max()
         max_exp_ind = np.where(exposuresarr==max_exp)[0][0]
         ref_dp = my_dps[max_exp_ind]
-        #my_job.logprint(f"{my_dps}")
+        #y_job.logprint(f"{my_dps}")
         #my_job.logprint(f"{exposuresarr}")
         #my_job.logprint(f"{ref_dp}")
         my_job.logprint(f"Reference image for {my_target.name} is {ref_dp.filename}")

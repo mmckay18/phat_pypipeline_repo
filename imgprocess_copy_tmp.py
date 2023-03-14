@@ -3,12 +3,27 @@ from astropy.io import fits
 import numpy as np
 from glob import glob
 import os
+import torch
 
-# pathroot = "/astro/users/zczhuo/zhuo/phast/deepcrtrain/"
-# pathimgs = pathroot + "files/img4clean/photcorr/"
-pathimgs = "/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/test_pypiper/data/16799_M31-B33-F06-UVIS/proc_default"
+# state_dict = torch.load(
+#     "/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/2022-10-26_mymodel8_epoch30.pth"
+# )
+# from collections import OrderedDict
 
-# os.chdir(pathimgs)
+# new_state_dict = OrderedDict()
+# for k, v in state_dict.items():
+#     if "module" not in k:
+#         k = "module." + k
+#     else:
+#         k = k.replace("features.module.", "module.features.")
+#         new_state_dict[k] = v
+# print(new_state_dict.keys())
+# mdl = deepCR(mask=new_state_dict, hidden=32)
+# # pathroot = "/astro/users/zczhuo/zhuo/phast/deepcrtrain/"
+# # pathimgs = pathroot + "files/img4clean/photcorr/"
+pathimgs = "/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/test_pypiper/data/16799_M31-B33-F06-UVIS/proc_default/"
+
+# # os.chdir(pathimgs)
 
 imgfull = glob(pathimgs + "*flc.fits")
 print("all_imgs_name:", imgfull)
@@ -18,6 +33,7 @@ mdl = deepCR(
     mask="/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/2022-10-26_mymodel8_epoch30.pth",
     hidden=32,
 )
+print(mdl)
 
 
 def imgclean(imgname, mdl):
@@ -72,6 +88,7 @@ def imgclean(imgname, mdl):
 
 
 for ii in imgfull:
+    print(ii)
     imgclean(ii, mdl)
 
 

@@ -81,9 +81,14 @@ if __name__ == "__main__":
 
     for my_dp in my_dp_list:
         my_job.logprint(f"{my_dp}, {type(my_dp)}")
-        dp_filepath = procdp_path + "/" + my_dp.filename
-        my_job.logprint(f"{dp_filepath}")
-        imgclean(dp_filepath, mdl)  # Run DeepCR on each image
+        if my_dp.filename.split("_")[-1] == "flc.fits":
+            ext_flc = my_dp.filename.split("_")[-1]
+            my_job.logprint(ext_flc)
+            dp_filepath = procdp_path + "/" + my_dp.filename
+            my_job.logprint(f"{dp_filepath}")
+            imgclean(dp_filepath, mdl)  # Run DeepCR on each image
+        else:
+            pass
 
     #! DeepCR function
     # imgfull = glob(pathimgs + "*flc.fits")

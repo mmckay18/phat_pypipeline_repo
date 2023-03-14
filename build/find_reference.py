@@ -34,15 +34,16 @@ if __name__ == "__main__":
 
     # Choosing the best reference image
     if (
-        "reference" in my_config.parameters
+        "reference_filter" in my_config.parameters
     ):  # checking for set reference in parameter file
-        ref_im = my_config.parameters["reference"]
+        ref_filt = my_config.parameters["reference_filter"]
+        ref_name = 'final' + ref_filt + _drc.fits
         my_job.logprint(
-            f"Reference image parameter found, using {ref_im} as reference image."
+            f"Reference image parameter found, using {ref_name} as reference image."
         )
 
         ref_dp = wp.DataProduct.select(
-            group="proc", dpowner_id=my_job.config_id, filename=ref_im
+            group="proc", dpowner_id=my_job.config_id, filename=ref_name
         )  # pull correct dp for reference
     else:  # setting reference as longest exposure time
         exposures = []

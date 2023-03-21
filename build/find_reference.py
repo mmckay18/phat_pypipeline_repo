@@ -78,6 +78,8 @@ if __name__ == "__main__":
     to_run= len(all_dps)
 
     for dp in all_dps: #fire prep image for all tagged images and the reference image
+        filename = dp.filename
+        my_job.logprint(f"Firing prep image task for {filename}")
         dp_id = dp.dp_id #have to define dp_id outside of the event or else it sets it as the same for all dps
         my_event = my_job.child_event(
             name="prep_image", tag=dp_id,

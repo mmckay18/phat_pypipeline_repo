@@ -308,9 +308,6 @@ if __name__ == "__main__":
             },
         )
 
-        dp_ids = []  # Get list of new dp ids to send to next task
-        dp_ids.append(driz_dp.dp_id)
-
         my_job.logprint(
             f"Dataproduct for drizzled image in filter {j}: {driz_dp.options}"
         )
@@ -326,14 +323,9 @@ if __name__ == "__main__":
 
         # Firing next task
         if i == num_all_filters:
-            my_job.logprint(f"AstroDrizzle step complete for {my_target.name}")
+            my_job.logprint(f"AstroDrizzle step complete for {my_target.name}, firing find reference task.")
             next_event = my_job.child_event(
                 name="find_ref",
-                options={
-                    "dp_id": dp_ids,
-                    "target_name": parent_event.options["target_name"],
-                    "target_id": parent_event.options["target_id"],
-                    "config_id": parent_event.options["config_id"],
-                },
+                options={"target_id": parent_event.options["target_id"]}
             )  # next event
             next_event.fire()

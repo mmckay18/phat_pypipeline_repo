@@ -104,7 +104,7 @@ if __name__ == "__main__":
             i -= 1
             my_job.logprint(f"tagging image {i}")
             dp_fname = dp_fname_path.split("/")[-1]
-            my_rawdp = my_input.dataproduct(filename=dp_fname, group="raw")
+            my_rawdp = my_input.dataproduct(filename=dp_fname, group="raw", data_type="image")
             proc_path = f"{target.datapath}/proc_default/"
 
             #! Make copy from raw directory to proc directory
@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
             #! New dataproduct for proc directory files
             my_procdp.filename = dp_fname  # ! Changes filename
-            my_procdp = wp.DataProduct(my_config, filename=dp_fname, group="proc")
+            my_procdp = wp.DataProduct(my_config, filename=dp_fname, group="proc", data_type="image", subtype="tagged")
             my_job.logprint(f"{my_procdp}, {tot_untagged_im}")
             my_job.logprint(f"{type(my_procdp.dp_id)}, {my_procdp.filename}")
 

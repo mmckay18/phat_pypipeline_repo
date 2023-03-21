@@ -74,19 +74,20 @@ if __name__ == "__main__":
     my_config = my_job.config  # Get configuration for the job
     # my_job.logprint(f"{my_config}")
 
-    my_dp = (
-        my_config.procdataproducts
-    )  # Get dataproducts associated with configuration (ie. dps for my_target)
-    #   my_job.logprint(f"{my_dp}")
+    my_dp = wp.DataProduct.select(dpowner_id=my_config.config_id, data_type="image", subtype="tagged") # Get dataproducts associated with configuration (ie. dps for my_target)
+    #my_job.logprint(f"{my_dp}")
 
     filters = []  # Making array of filters for target
     for dp in my_dp:
         #       my_job.logprint(f"{dp}")  # Should return each dataproduct
         #       my_job.logprint(dp.options)
         filters.append(dp.options["filter"])
-    all_filters = list(
-        set(filters)
-    )  # Remove duplicates to get array of different filters for target
+
+    all_filters = set(filters)
+    # Remove duplicates to get array of different filters for target
+
+    my_config.parameters['filters']= ','.join(all_filters)
+
     num_all_filters = len(all_filters)
     my_job.logprint(f"{num_all_filters} filters found for target {my_target.name}")
 
@@ -120,25 +121,25 @@ if __name__ == "__main__":
 
     # Setting input parameters
     driz_param = [
-        "reset_bits",
-        "skysub",
-        "sky_method",
-        "driz_sep_pixfrac",
-        "driz_sep_scale",
-        "driz_sep_bits",
-        "driz_sep_kernel",
-        "combine_type",
-        "combine_nlow",
-        "combine_nhigh",
-        "driz_cr_scale",
-        "driz_cr_snr",
-        "final_bits",
-        "final_pixfrac",
-        "final_scale",
-        "final_kernel",
+        'reset_bits',
+        'skysub',
+        'sky_method',
+        'driz_sep_pixfrac',
+        'driz_sep_scale',
+        'driz_sep_bits',
+        'driz_sep_kernel',
+        'combine_type',
+        'combine_nlow',
+        'combine_nhigh',
+        'driz_cr_scale',
+        'driz_cr_snr',
+        'final_bits',
+        'final_pixfrac',
+        'final_scale',
+        'final_kernel',
     ]  # possible parameters
     input_dict = {}  # parameters that will be put into AstroDrizzle
-    #   my_job.logprint(my_config.parameters)
+    #my_job.logprint(my_config.parameters)
     for param in driz_param:
         if param in my_config.parameters:
             param_val = my_config.parameters[
@@ -235,7 +236,7 @@ if __name__ == "__main__":
             "runfile"
         ] = log_name  # adding specific log names to input dictionary
 
-        out_name = "final" + j  # final product name
+        out_name = "drizzle" + j  # final product name
         ind_input_dict[
             "output"
         ] = out_name  # adding filter specific final product name to input dictionary
@@ -249,7 +250,7 @@ if __name__ == "__main__":
             ] = 1  # for 4 input images nhigh should be 1, could need to be raised for >4
 
         # Running AstroDrizzle
-        my_job.logprint(f"Starting AstroDrizzle for {my_target.name} in filter {i}")
+        my_job.logprint(f"Starting AstroDrizzle for {my_target.name} in filter {j}")
         if (
             len_target_im == 1
         ):  # for filters with only 1 input image, only the sky subtraction and final drizzle can run
@@ -271,7 +272,7 @@ if __name__ == "__main__":
 
         # Create Dataproducts for drizzled images
         drizzleim_path = (
-            "final" + j + "_drc.fits"
+            "drizzle" + j + "_drc.fits"
         )  # Already in proc directory so this is just the file name
         driz_hdu = fits.open(drizzleim_path)
 
@@ -291,7 +292,7 @@ if __name__ == "__main__":
         driz_dp = wp.DataProduct(
             my_config,
             filename=drizzleim_path,
-            group="proc",  # Create dataproduct owned by config for the target
+            group="proc", data_type="image", subtype="drizzled",  # Create dataproduct owned by config for the target
             options={
                 "Filename": FILENAME,
                 "Telescope": TELESCOP,
@@ -315,6 +316,13 @@ if __name__ == "__main__":
         )
 
         i += 1  # count finished filter
+
+        #compname = this_event.options['compname']
+        #update_option = parent_job.options[compname]
+        #update_option += 1
+        #to_run = this_event.options['to_run']
+
+        #if update_option == to_run:
 
         # Firing next task
         if i == num_all_filters:

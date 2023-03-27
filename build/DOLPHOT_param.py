@@ -41,7 +41,7 @@ if __name__ == "__main__":
         p.write(f'Nimg={nimg}') #write to file
 
 #Define image specific parameters
-
+        my_job.logprint(f'Checking for user specified individual parameters and defining any unspecified individual parameters')
         for dp in all_dps: #all images
             loc = tagged_dps.index(dp)  # image number with reference at index 0
 
@@ -52,26 +52,28 @@ if __name__ == "__main__":
         params = ["img_shift", "img_xform", "img_psfa", "img_psfb", "img_psfc", "img_RAper",
                   "img_RChi", "img_RSky", "img_RSky2", "img_RPSF", "img_aprad", "img_apsky"]
 
-        #define any image specific parameters in config file
+        #define any image specific parameters given in config file
         all_individual = {}
-        for param in params:
+        for param in params: #run for all image specific parameters
             name_parts = param.split('_')
             defined = []
-            for i in range(0, len(all_dps)):
-                param_name = name_parts[0] + f"{i}_" + name_parts[1]
-                if param_name in my_config.paramters:
+            for i in range(0, len(all_dps)): #for every input image
+                param_name = name_parts[0] + f"{i}_" + name_parts[1] #get image specific parameter name (ex. img2_shift)
+                if param_name in my_config.paramters: #check config for this parameter
                     p.write(f'{param_name} = {my_config.parameters[param_name]}')
+                    my_job.logprint(f'{param_name} parameter found in configuration')
                     defined.append(1)
-            if len(defined) == len(all_dps):
+            if len(defined) == len(all_dps): #if image specific parameter is defined for all input images
                 all_individual[param] = "Yes"
             else:
                 all_individual[param] = "No"
 
-        #define all img_ default parameters, replace if in config file
-        for param in params:
-            if param in my_config.parameters:
+        #define img_ default parameters which are used if img#_ parameter for an image isn't defined, replace if in config file
+        for param in params: #run for all image specific parameters
+            if param in my_config.parameters: #check config for this parameter
                 p.write(f'{param} = {my_config.parameters[param]}')
-            elif all_individual[param] == "No":
+                my_job.logprint(f'{param} parameter found in configuration')
+            elif all_individual[param] == "No": #defining defaults if not in config file AND if the parameter wasn't defined for all images individually above.
                 if param = "img_shift":
                     p.write(f'img_shift = 0 0')
                 if param = "img_xform":
@@ -96,6 +98,9 @@ if __name__ == "__main__":
                     p.write(f'img_aprad = 20')
                 if param = "img_apsky":
                     p.write(f'img_apsky = 30 50')
+
+##################################
+            #original method I was using to define parameters which would require setting all of them individually
 
             #if "img_shift" in my_config.parameters:
             #    p.write(f'img_shift = {my_config.parameters["img_shift"]}')
@@ -131,9 +136,10 @@ if __name__ == "__main__":
             #    p.write(f'img_RChi = {my_config.parameters["img_RChi"]}')
             #else:
             #    p.write(f'img_RChi = -1')
-
+#########################################
 
 #Define global parameters
+        my_job.logprint(f'Checking for user specified global parameters and defining any unspecified global parameters')
         params_global = ["photsec", "RCentroid", "SigFind", "SigFindMult", "SigFinal", "MaxIT",
                          "FPSF", "PSFPhot", "PSFPhotIt", "FitSky", "SkipSky", "SkySig", "NegSky",
                          "ForceSameMag", "NoiseMult", "FSat", "Zero", "PosStep", "dPosMax",
@@ -144,9 +150,10 @@ if __name__ == "__main__":
                          "FakeMatch", "FakePSF", "FakeStarPSF", "FakePad", "RandomFake", "UsePhot",
                          "DiagPlotType", "VerboseData"]
         for globpar in params_global:
-            if globpar in my_config.parameters:
+            if globpar in my_config.parameters: #check for any global parameters in config
                 p.write(f'{globpar} = {my_config.parameters[globpar]}')
-            else:
+                my_job.logprint(f'{globpar} parameter found in configuration')
+            else: #define defaults if not defined in config
                 if globpar = "photsec":
                     pass
                 if globpar = "RCentroid":
@@ -251,5 +258,12 @@ if __name__ == "__main__":
                     p.write(f'DiagPlotType = :')
                 if globpar = "VerboseData":
                     p.write(f'VerboseData = 0')
-        #If in config file then write that parameter to the param file, otherwise use the ones I set here
+
+    my_job.logprint(f"DOLPHOT parameter file complete for {my_target.name}, firing DOLPHOT task")
+    next_event = my_job.child_event(
+        name="DOLPHOT",
+        options={"target_id": parent_event.options["target_id"]}
+    )  # next event
+    next_event.fire()
+
 

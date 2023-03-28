@@ -98,31 +98,42 @@ if __name__ == "__main__":
             f"# of untagged images for {target.name}, {target.target_id}: {tot_untagged_im}"
         )
         # * Step 1: Copy images associated with the dataproducts from raw default to the proc directory - or copy the dataproducts from the config file?
-        i = tot_untagged_im
+        # i = tot_untagged_im
         dp_id_list = []
+        # create hjob option
+        comp_name = "completed" + target.name
+        new_option = {comp_name: 0}
+        my_job.options = new_option
+        # my_job
         for dp_fname_path in target_dp_list:
-            i -= 1
-            my_job.logprint(f"tagging image {i}")
+            #     i -= 1
+            # my_job.logprint(f"tagging image {i}")
             dp_fname = dp_fname_path.split("/")[-1]
-            my_rawdp = my_input.dataproduct(filename=dp_fname, group="raw", data_type="image")
+            my_rawdp = my_input.dataproduct(
+                filename=dp_fname, group="raw", data_type="image"
+            )
             proc_path = f"{target.datapath}/proc_default/"
 
             #! Make copy from raw directory to proc directory
-            # my_rawdp.make_copy(path=proc_path, group="proc")
             my_procdp = my_rawdp.make_copy(path=proc_path, group="proc")
-            # my_job.logprint(f"{my_rawdp}, {tot_untagged_im}")
 
             # ! CHANGE NAME OF PROC FILES # TODO Change the file names for the proc files
             hdu = fits.open(dp_fname_path)
-            filter = hdu[0].header["FILTER"]
+            filter_name = hdu[0].header["FILTER"]
             dp_fname = dp_fname.split("_")
-            dp_fname = f"{dp_fname[0]}_{filter}_{dp_fname[1]}"
+            dp_fname = f"{dp_fname[0]}_{filter_name}_{dp_fname[1]}"
             my_job.logprint(f"{dp_fname}")
             proc_dp_fname_path = proc_path + dp_fname  # * new dataproduct path
 
             #! New dataproduct for proc directory files
             my_procdp.filename = dp_fname  # ! Changes filename
-            my_procdp = wp.DataProduct(my_config, filename=dp_fname, group="proc", data_type="image", subtype="tagged")
+            my_procdp = wp.DataProduct(
+                my_config,
+                filename=dp_fname,
+                group="proc",
+                data_type="image",
+                subtype="tagged",
+            )
             my_job.logprint(f"{my_procdp}, {tot_untagged_im}")
             my_job.logprint(f"{type(my_procdp.dp_id)}, {my_procdp.filename}")
 
@@ -136,12 +147,13 @@ if __name__ == "__main__":
                 tag=my_procdp.dp_id,
                 options={
                     "dp_id": my_procdp.dp_id,
-                    "to_run": i,
+                    "to_run": tot_untagged_im,
                     "filename": my_procdp.filename,
                     "target_name": target.name,
                     "target_id": target.target_id,
                     "dataproduct_list": dp_id_list,
                     "config_id": my_config.config_id,
+                    "comp_name": "completed" + target.name,
                 },
             )
             my_event.fire()

@@ -104,13 +104,18 @@ if __name__ == "__main__":
     config_id = this_event.options["config_id"]
     my_job.logprint(f"This Event: {this_event}")
     my_job.logprint(f"Config ID: {config_id}")
+    compname = this_event.options["comp_name"]
+    parent_job = this_event.parent_job
+    update_option = parent_job.options[compname]
+    update_option += 1
+    to_run = this_event.options["to_run"]
+    my_job.logprint(f"to_run: {to_run}")
+    my_job.logprint(f"update_option: {update_option}")
 
     # ! Start tag_event_dataproduct function
     tag_event_dataproduct(this_event)
 
-    # my_job.logprint(this_event.options["dataproduct_list"]) # ! Doesnt work???
-
-    if this_event.options["to_run"] == 0:
+    if this_event.options["to_run"] == update_option:
         # Fire next task (tag_image)
         my_job.logprint("Firing Job")
         my_event = my_job.child_event(

@@ -91,34 +91,6 @@ if __name__ == "__main__":
     num_all_filters = len(all_filters)
     my_job.logprint(f"{num_all_filters} filters found for target {my_target.name}")
 
-    ################################
-
-    # if dp.option["targname"] == my_target.name:
-    #    pass
-    # my_job.logprint(f"{dp.options['filter']}")
-
-    # # ! Get the list of dataproducts for this target and gets there filter parameter from dataproducts options
-    # target_path = my_target.datapath
-    # proc_path = target_path + "/proc_default/"
-    # for fits_filename in glob.glob(proc_path + "/*.fits"):
-    #     my_job.logprint(f"{fits_filename}")
-    #     my_dp = wp.DataProduct(my_target.input, fits_filename, group="proc")
-    #     my_job.logprint(f"{my_dp}")
-
-    # proc_dp = my_input.procdataproducts
-    # # my_job.logprint(f"{proc_dp}")
-    # for dp in proc_dp:
-    #     my_job.logprint(f"{dp}")
-    # my_job.logprint(f"{dp.options}")
-    # my_job.logprint(f"{dp.options['filter']}")
-
-    # my_target = parent_event.options["targname"]
-    # my_filter = parent_event.options["filter"]
-
-    # my_job.logprint(f"{parent_target}")
-    # my_job.logprint(f"{parent_filter}")
-    ###############################################
-
     # Setting input parameters
     driz_param = [
         'reset_bits',

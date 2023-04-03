@@ -124,8 +124,12 @@ if __name__ == "__main__":
                 "target_name": this_event.options["target_name"],
                 "target_id": this_event.options["target_id"],
                 "config_id": this_event.options["config_id"],
+                "to_run": this_event.options["to_run"],
+                "filename": this_event.options["filename"],
+                "comp_name": "completed" + this_event.options["target_name"],
             },
         )
+        my_job.logprint(f"Event Options: {this_event.options}")
         my_event.fire()
 
     else:
@@ -135,18 +139,18 @@ if __name__ == "__main__":
     # * Enable the pipeline to countdown the number of dataproducts for a target
     # * Fire astrodrizzle task after the last image for a target finish tagging
 ########################################
-#Code originally from astrodrizzle that can be used here instead
+# Code originally from astrodrizzle that can be used here instead
 
-#my_config = my_job.config  # Get configuration for the job
+# my_config = my_job.config  # Get configuration for the job
 
-#my_dp = wp.DataProduct.select(dpowner_id=my_config.config_id, data_type="image", subtype="tagged") # Get dataproducts associated with configuration (ie. dps for my_target)
+# my_dp = wp.DataProduct.select(dpowner_id=my_config.config_id, data_type="image", subtype="tagged") # Get dataproducts associated with configuration (ie. dps for my_target)
 
-#filters = []  # Making array of filters for target
-#for dp in my_dp:
-    # filters.append(dp.options["filter"])
-#all_filters = set(filters) # Remove duplicates to get array of different filters for target
+# filters = []  # Making array of filters for target
+# for dp in my_dp:
+# filters.append(dp.options["filter"])
+# all_filters = set(filters) # Remove duplicates to get array of different filters for target
 
-#my_config.parameters['filters']= ','.join(all_filters) #add list of filters to configuration
+# my_config.parameters['filters']= ','.join(all_filters) #add list of filters to configuration
 
-#num_all_filters = len(all_filters)
-#my_job.logprint(f"{num_all_filters} filters found for target {my_target.name}")
+# num_all_filters = len(all_filters)
+# my_job.logprint(f"{num_all_filters} filters found for target {my_target.name}")

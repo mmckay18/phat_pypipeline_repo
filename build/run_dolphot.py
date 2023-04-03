@@ -7,7 +7,7 @@ from astropy.io import fits
 
 def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
-    _temp = task.mask(source="*", name="dolphot_param", value="*")
+    _temp = task.mask(source="*", name="DOLPHOT", value="*")
 
 
 if __name__ == "__main__":

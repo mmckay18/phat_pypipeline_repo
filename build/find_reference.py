@@ -17,10 +17,10 @@ if __name__ == "__main__":
     my_job = wp.Job()
 
 # Defining the target and dataproducts
-    parent_event = my_job.firing_event  # parent astrodrizzle event
+    this_event = my_job.firing_event  # parent astrodrizzle event firing
     #   my_job.logprint(f"{parent_event}")
 
-    my_target = wp.Target(parent_event.options["target_id"])  # get the target
+    my_target = wp.Target(this_event.options["target_id"])  # get the target
 
     my_config = my_job.config  # configuration for this job
     #   my_job.logprint(my_config)
@@ -86,7 +86,8 @@ if __name__ == "__main__":
             options={
                 'dp_id': dp_id,
                 'to_run': to_run,
-                'compname': comp_name
+                'compname': comp_name,
+                'target_id': this_event.options['target_id']
             }
         )
         my_event.fire()

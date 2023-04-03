@@ -13,6 +13,7 @@ if __name__ == "__main__":
     my_job = wp.Job()
 
     this_event = my_job.firing_event  # parent event obj
+    parent_job = this_event.parent_job
     #config_id = this_event.options["config_id"]
     my_job.logprint(f"This Event: {this_event}")
     #my_job.logprint(f"Config ID: {config_id}")
@@ -24,7 +25,7 @@ if __name__ == "__main__":
 
     if update_option == to_run:
     # Fire event
-        my_event = my_job.child_event(name="dolphot_param", options={
+        my_event = my_job.child_event(name="param_dolphot", options={
             "target_id": this_event.options["target_id"],
          },
      )

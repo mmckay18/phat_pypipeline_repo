@@ -56,14 +56,14 @@ if __name__ == "__main__":
     #   my_job.logprint(f"{my_job}")
 
     # Defining the target and filters
-    parent_event = my_job.firing_event
+    this_event = my_job.firing_event
     #   my_job.logprint(f"{parent_event}")
 
-    parent_job = parent_event.parent_job
+    parent_job = this_event.parent_job
     #   my_job.logprint(f"{parent_job}")
 
     my_target = wp.Target(
-        parent_event.options["target_id"]
+        this_event.options["target_id"]
     )  # Get target using the target id
     #   my_job.logprint(f"{my_target}")
 
@@ -298,6 +298,6 @@ if __name__ == "__main__":
             my_job.logprint(f"AstroDrizzle step complete for {my_target.name}, firing find reference task.")
             next_event = my_job.child_event(
                 name="find_ref",
-                options={"target_id": parent_event.options["target_id"]}
+                options={"target_id": this_event.options["target_id"]}
             )  # next event
             next_event.fire()

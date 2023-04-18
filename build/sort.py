@@ -117,7 +117,7 @@ if __name__ == "__main__":
             #! Make copy from raw directory to proc directory
             my_procdp = my_rawdp.make_copy(path=proc_path, group="proc")
 
-            # ! CHANGE NAME OF PROC FILES # TODO Change the file names for the proc files
+            # ! CHANGE NAME OF PROC FILES
             hdu = fits.open(dp_fname_path)
             filter_name = hdu[0].header["FILTER"]
             dp_fname = dp_fname.split("_")
@@ -125,7 +125,7 @@ if __name__ == "__main__":
             my_job.logprint(f"{dp_fname}")
             proc_dp_fname_path = proc_path + dp_fname  # * new dataproduct path
 
-            #! New dataproduct for proc directory files
+            # ! New dataproduct for proc directory files
             my_procdp.filename = dp_fname  # ! Changes filename
             my_procdp = wp.DataProduct(
                 my_config,

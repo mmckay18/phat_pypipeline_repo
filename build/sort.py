@@ -101,7 +101,7 @@ if __name__ == "__main__":
         # i = tot_untagged_im
         dp_id_list = []
         # create hjob option
-        comp_name = "completed" + target.name
+        comp_name = "completed_" + target.name
         new_option = {comp_name: 0}
         my_job.options = new_option
         # my_job
@@ -153,7 +153,7 @@ if __name__ == "__main__":
                     "target_id": target.target_id,
                     "dataproduct_list": dp_id_list,
                     "config_id": my_config.config_id,
-                    "comp_name": "completed" + target.name,
+                    "comp_name": "completed_" + target.name,
                 },
             )
             my_event.fire()

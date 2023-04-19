@@ -143,20 +143,24 @@ if __name__ == "__main__":
 
         #! Fire next task astrodrizzle
         my_job.logprint("FIRING NEXT ASTRODRIZZLE TASK")
-
+        comp_name = "completed_" + this_event.options["target_name"]
+        filter_counter = 0
         for i in all_filters:
+            filter_counter += 1
             my_job.logprint(f"{i},{type(str(i))}")
             my_event = my_job.child_event(
                 name="astrodrizzle",
                 options={
                     "target_name": this_event.options["target_name"],
                     "target_id": this_event.options["target_id"],
-                    # "config_id": this_event.options["config_id"],
+                    "config_id": this_event.options["config_id"],
                     "to_run": len(all_filters),  # num of filter to run
                     "filter": str(i),
-                    "comp_name": "completed_" + this_event.options["target_name"],
+                    comp_name: filter_counter,  # Increase the filter counter after each interation of the loop
                 },
-                tag=str(i),
+                tag=str(
+                    i
+                ),  #! need to set a tag for each event if firering multiple events with the same name
             )
             my_event.fire()
 

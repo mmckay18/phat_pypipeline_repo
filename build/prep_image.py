@@ -2,6 +2,15 @@
 import wpipe as wp
 from astropy.io import fits
 
+#! - It should take the data product ID it gets handed,
+#! - get the file associated with it,
+#! - and run the correct DOLPHOT masking routine for the camera that produced it.
+#! - Then it should run the DOLPHOT splitgroups routine on the output,.
+#! - Then it should run calcsky on the output from splitgroups.
+#! - Finally, it needs to make data products for all of the output files,
+#! - and check to see how many other prep_image tasks have completed for the target.
+#! - Check against the total, and fire a done event if it's the last one. 
+
 
 def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)

@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
     if this_event.options["to_run"] == update_option:
         my_job.logprint(f"This Job Options: {my_job.options}")
-        # comp_name = "completed_" + this_event.options["target_name"]
+        compname = "completed_" + this_event.options["target_name"]
         new_option = {compname: 0}
         my_job.options = new_option
         my_job.logprint(f"Updated Job Options: {my_job.options}")
@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
         #! Fire next task astrodrizzle
         my_job.logprint("FIRING NEXT ASTRODRIZZLE TASK")
-        comp_name = "completed_" + this_event.options["target_name"]
+        # comp_name = "completed_" + this_event.options["target_name"]
         for i in all_filters:
             my_job.logprint(f"{i},{type(str(i))}")
             my_event = my_job.child_event(
@@ -160,6 +160,7 @@ if __name__ == "__main__":
                     "config_id": this_event.options["config_id"],
                     "to_run": len(all_filters),  # num of filter to run
                     "filter": str(i),
+                    "comp_name": compname
                 },
                 tag=str(
                     i

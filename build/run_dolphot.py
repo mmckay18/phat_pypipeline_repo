@@ -26,15 +26,15 @@ if __name__ == "__main__":
 #Check that all files needed are present (ie. images, sky files, etc)
 
 #Run Dolphot
-dolphot_output = subprocess.run(["dolphot", "dolphotout", '-p' + param_path + param_filename], capture_output=True, text=True)
+    dolphot_output = subprocess.run(["dolphot", "dolphotout", '-p' + param_path + param_filename], capture_output=True, text=True)
 
-with open('dolphotout_stdout.log', 'w') as outlog:
-    outlog.write(f'{dolphot_output.stdout}')
-with open('dolphotout_stderr.log', 'w') as errlog:
-    errlog.write(f'{dolphot_output.stderr}')
+    with open('dolphotout_stdout.log', 'w') as outlog:
+        outlog.write(f'{dolphot_output.stdout}')
+    with open('dolphotout_stderr.log', 'w') as errlog:
+        errlog.write(f'{dolphot_output.stderr}')
 
 #Create dataproducts for Dolphot output files
 
-out_files = glob('dolphotout*') #check that this gets file called just dolphotout
-for file in out_files:
-    wp.DataProduct(my_config, filename = file, group="proc", subtype = "dolphot output")
+    out_files = glob('dolphotout*') #check that this gets file called just dolphotout
+    for file in out_files:
+        wp.DataProduct(my_config, filename = file, group="proc", subtype = "dolphot output")

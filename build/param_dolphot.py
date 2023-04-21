@@ -68,29 +68,29 @@ if __name__ == "__main__":
                 p.write(f'{param} = {my_config.parameters[param]}\n')
                 my_job.logprint(f'{param} parameter found in configuration')
             elif all_individual[param] == "No": #defining defaults if not in config file AND if the parameter wasn't defined for all images individually above.
-                if param = "img_shift":
+                if param == "img_shift":
                     p.write(f'img_shift = 0 0\n')
-                if param = "img_xform":
+                if param == "img_xform":
                     p.write(f'img_xform = 1 0 0\n')
-                if param = "img_psfa":
+                if param == "img_psfa":
                     p.write(f'img_psfa = 3 0 0 0 0 0\n')
-                if param = "img_psfb":
+                if param == "img_psfb":
                     p.write(f'img_psfb = 3 0 0 0 0 0\n')
-                if param = "img_psfc":
+                if param == "img_psfc":
                     p.write(f'img_psfc = 0 0 0 0 0 0\n')
-                if param = "img_RAper":
+                if param == "img_RAper":
                     p.write(f'img_RAper = 2.5\n')
-                if param = "img_RChi":
+                if param == "img_RChi":
                     p.write(f'img_RChi = -1\n')
-                if param = "img_RSky":
+                if param == "img_RSky":
                     p.write(f'img_RSky = 4.0 10.0\n')
-                if param = "img_RSky2":
+                if param == "img_RSky2":
                     p.write(f'img_RSky2 = -1 -1\n')
-                if param = "img_RPSF":
+                if param == "img_RPSF":
                     p.write(f'img_RPSF = 13\n')
-                if param = "img_aprad":
+                if param == "img_aprad":
                     p.write(f'img_aprad = 20\n')
-                if param = "img_apsky":
+                if param == "img_apsky":
                     p.write(f'img_apsky = 30 50\n')
 
 ##################################
@@ -148,109 +148,109 @@ if __name__ == "__main__":
                 p.write(f'{globpar} = {my_config.parameters[globpar]}\n')
                 my_job.logprint(f'{globpar} parameter found in configuration')
             else: #define defaults if not defined in config
-                if globpar = "photsec":
+                if globpar == "photsec":
                     pass
-                if globpar = "RCentroid":
+                if globpar == "RCentroid":
                     p.write(f'RCentroid = 1\n')
-                if globpar = "SigFind":
+                if globpar == "SigFind":
                     p.write(f'SigFind = 2.5\n')
-                if globpar = "SigFindMult":
+                if globpar == "SigFindMult":
                     p.write(f'SigFindMult = 0.85\n')
-                if globpar = "SigFinal":
+                if globpar == "SigFinal":
                     p.write(f'SigFinal = 3.5\n')
-                if globpar = "MaxIT":
+                if globpar == "MaxIT":
                     p.write(f'MaxIT = 25\n')
-                if globpar = "FPSF":
+                if globpar == "FPSF":
                     p.write(f'FPSF = G+L\n')
-                if globpar = "PSFPhot":
+                if globpar == "PSFPhot":
                     p.write(f'PSFPhot = 1\n')
-                if globpar = "PSFPhotIt":
+                if globpar == "PSFPhotIt":
                     p.write(f'PSFPhotIt = 1\n')
-                if globpar = "FitSky":
+                if globpar == "FitSky":
                     p.write(f'FitSky = 1\n')
-                if globpar = "SkipSky":
+                if globpar == "SkipSky":
                     p.write(f'SkipSky = 1\n')
-                if globpar = "SkySig":
+                if globpar == "SkySig":
                     p.write(f'SkySig = 2.25\n')
-                if globpar = "NegSky":
+                if globpar == "NegSky":
                     p.write(f'NegSky = 1\n')
-                if globpar = "ForceSameMag":
+                if globpar == "ForceSameMag":
                     p.write(f'ForceSameMag = 0\n')
-                if globpar = "NoiseMult":
+                if globpar == "NoiseMult":
                     p.write(f'NoiseMult = 0.05\n')
-                if globpar = "FSat":
+                if globpar == "FSat":
                     p.write(f'FSat = 0.999\n')
-                if globpar = "Zero":
+                if globpar == "Zero":
                     p.write(f'Zero = 25.0\n')
-                if globpar = "PosStep":
+                if globpar == "PosStep":
                     p.write(f'PosStep = 0.25\n')
-                if globpar = "dPosMax":
+                if globpar == "dPosMax":
                     p.write(f'dPosMax = 3.0\n')
-                if globpar = "RCombine":
+                if globpar == "RCombine":
                     p.write(f'RCombine = 2.0\n')
-                if globpar = "sigPSF":
+                if globpar == "sigPSF":
                     p.write(f'sigPSF = 10.0\n')
-                if globpar = "PSFStep":
+                if globpar == "PSFStep":
                     p.write(f'PSFStep = 0.25\n')
-                if globpar = "MinS":
+                if globpar == "MinS":
                     p.write(f'MinS = 0.65\n')
-                if globpar = "MaxS":
+                if globpar == "MaxS":
                     p.write(f'MaxS = 2.0\n')
-                if globpar = "MaxE":
+                if globpar == "MaxE":
                     p.write(f'MaxE = 0.5\n')
-                if globpar = "UseWCS":
+                if globpar == "UseWCS":
                     p.write(f'UseWCS = 0\n')
-                if globpar = "Align":
+                if globpar == "Align":
                     p.write(f'Align = 1\n')
-                if globpar = "AlignIter":
+                if globpar == "AlignIter":
                     p.write(f'AlignIter = 1\n')
-                if globpar = "AlignTol":
+                if globpar == "AlignTol":
                     p.write(f'AlignTol = 0\n')
-                if globpar = "AlignStep":
+                if globpar == "AlignStep":
                     p.write(f'AlignStep = 1\n')
-                if globpar = "Rotate":
+                if globpar == "Rotate":
                     p.write(f'Rotate = 0\n')
-                if globpar = "SubResRef":
+                if globpar == "SubResRef":
                     p.write(f'SubResRef = 1\n')
-                if globpar = "SecondPass":
+                if globpar == "SecondPass":
                     p.write(f'SecondPass = 1\n')
-                if globpar = "SearchMode":
+                if globpar == "SearchMode":
                     p.write(f'SearchMode = 1\n')
-                if globpar = "Force1":
+                if globpar == "Force1":
                     p.write(f'Force1 = 0\n')
-                if globpar = "EPSF":
+                if globpar == "EPSF":
                     p.write(f'EPSF = 1\n')
-                if globpar = "PSFsol":
+                if globpar == "PSFsol":
                     p.write(f'PSFsol = 1\n')
-                if globpar = "PSFres":
+                if globpar == "PSFres":
                     p.write(f'PSFres = 1\n')
-                if globpar = "psfstars":
+                if globpar == "psfstars":
                     p.write(f'psfstars = :\n')
-                if globpar = "psfoff":
+                if globpar == "psfoff":
                     p.write(f'psfoff = 0.0\n')
-                if globpar = "ApCor":
+                if globpar == "ApCor":
                     p.write(f'ApCor = 1\n')
-                if globpar = "SubPixel":
+                if globpar == "SubPixel":
                     p.write(f'SubPixel = 1\n')
-                if globpar = "FakeStars":
+                if globpar == "FakeStars":
                     p.write(f'FakeStars = :\n')
-                if globpar = "FakeOut":
+                if globpar == "FakeOut":
                     p.write(f'FakeOut = :\n')
-                if globpar = "FakeMatch":
+                if globpar == "FakeMatch":
                     p.write(f'FakeMatch = 3.0\n')
-                if globpar = "FakePSF":
+                if globpar == "FakePSF":
                     p.write(f'FakePSF = 1.5\n')
-                if globpar = "FakeStarPSF":
+                if globpar == "FakeStarPSF":
                     p.write(f'FakeStarPSF = 0\n')
-                if globpar = "FakePad":
+                if globpar == "FakePad":
                     p.write(f'FakePad = 0\n')
-                if globpar = "RandomFake":
+                if globpar == "RandomFake":
                     p.write(f'RandomFake = 1\n')
-                if globpar = "UsePhot":
+                if globpar == "UsePhot":
                     p.write(f'UsePhot = :\n')
-                if globpar = "DiagPlotType":
+                if globpar == "DiagPlotType":
                     p.write(f'DiagPlotType = :\n')
-                if globpar = "VerboseData":
+                if globpar == "VerboseData":
                     p.write(f'VerboseData = 0\n')
 
 #Create dataproduct for parameter file

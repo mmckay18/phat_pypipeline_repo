@@ -158,7 +158,7 @@ if __name__ == "__main__":
                     "target_name": this_event.options["target_name"],
                     "target_id": this_event.options["target_id"],
                     "config_id": this_event.options["config_id"],
-                    "to_run": len(all_filters),  # num of filter to run
+                    "filters_to_run": len(all_filters),  # num of filter to run
                     "filter": str(i),
                 },
                 tag=str(

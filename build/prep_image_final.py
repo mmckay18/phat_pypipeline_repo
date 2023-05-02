@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import wpipe as wp
 from astropy.io import fits
-import os
 
 #! - It should take the data product ID it gets handed,
 #! - get the file associated with it,
@@ -15,7 +14,7 @@ import os
 
 def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
-    _temp = task.mask(source="*", name="prep_image", value="*")
+    _temp = task.mask(source="*", name="prep_image_final", value="*")
 
 
 if __name__ == "__main__":
@@ -24,37 +23,28 @@ if __name__ == "__main__":
 
     this_event = my_job.firing_event  # parent event obj
     parent_job = this_event.parent_job
+    # Grab dp_id from event options
+    this_dp_id = this_event.options["dp_id"]
+    
+    # Call dataproduct
+    this_dp = wp.DataProduct(int(this_dp_id), group="proc")
+
+    # Run DOLPHOT masking routine
+    # - Get 
+
+
     # config_id = this_event.options["config_id"]
 
-    # EVENT INFORMATION
     my_job.logprint(f"This Event: {this_event}")
-    my_job.logprint(f"This Event Options: {this_event.options}")
+    my_job.logprint(f"This Event: {this_event.options}")
 
-    # Call drizzled image from astrodrozzle dataproduct
-    this_dp_id = this_event.options["dp_id"]
-    this_dp = wp.DataProduct(int(this_dp_id), group="proc")
-    my_job.logprint(
-        f"Data Product: {this_dp.filename}, Path: {this_dp.target.datapath}")
-    # proc_dir_path = this_dp.path
-    # filepath = this_dp.path + "/" + this_dp.filename
-    # my_job.logprint(f"Filepath: {filepath}")
-    # this_dp_fits = fits.open(this_dp.options["filename"])
-
-    # Change directory to DOLPHOT directory
-    # os.chdir('/Users/mmckay/phd_projects/phat_pipeline_dev/dolphot2.0')
-    # os.system(f"dolphot")
+    # my_job.logprint(f"Config ID: {config_id}")
 
     compname = this_event.options['compname']
     update_option = parent_job.options[compname]
     update_option += 1
     to_run = this_event.options['to_run']
 
-    #! Fire event to make DOLPHOT parameter file
-    my_event = my_job.child_event(name="param_dolphot", options={
-        "target_id": this_event.options["target_id"],
-    },
-    )
-    my_event.fire()
     # if update_option == to_run:
     #     #! Fire event to make DOLPHOT parameter file
     #     my_event = my_job.child_event(name="param_dolphot", options={

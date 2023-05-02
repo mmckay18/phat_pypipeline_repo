@@ -92,8 +92,8 @@ def tag_event_dataproduct(this_event):
             "target_id": this_target_id,
         },
     )
-
-    # my_job.logprint(this_dp.options)
+    my_job.logprint("Tagged Image Done")
+    my_job.logprint(f"Tagged Image options{this_dp.options}")
 
 
 if __name__ == "__main__":
@@ -118,6 +118,20 @@ if __name__ == "__main__":
     # ! Start tag_event_dataproduct function
     tag_event_dataproduct(this_event)
 
+    #! Fire DeepCR event
+    deepCR_event = my_job.child_event(
+        name="deepCR",
+        options={
+            # "target_name": this_event.options["target_name"],
+            # "target_id": this_event.options["target_id"],
+            # "config_id": this_event.options["config_id"],
+            # "comp_name": compname
+        },
+        # tag=str(i),  # ! need to set a tag for each event if firering multiple events with the same name
+    )
+    deepCR_event.fire()
+
+    # ! Check of all images have been tagged
     if this_event.options["to_run"] == update_option:
         my_job.logprint(f"This Job Options: {my_job.options}")
         compname = "completed_" + this_event.options["target_name"]
@@ -145,7 +159,8 @@ if __name__ == "__main__":
         my_job.logprint(f"MY CONFIG PARM: {my_config.parameters}")
 
         num_all_filters = len(all_filters)
-        my_job.logprint(f"{num_all_filters} filters found for target {dp.target.name}")
+        my_job.logprint(
+            f"{num_all_filters} filters found for target {dp.target.name}")
 
         #! Fire next task astrodrizzle
         my_job.logprint("FIRING NEXT ASTRODRIZZLE TASK")
@@ -158,13 +173,13 @@ if __name__ == "__main__":
                     "target_name": this_event.options["target_name"],
                     "target_id": this_event.options["target_id"],
                     "config_id": this_event.options["config_id"],
-                    "filters_to_run": len(all_filters),  # num of filter to run
+                    "to_run": len(all_filters),  # num of filter to run
                     "filter": str(i),
                     "comp_name": compname
                 },
                 tag=str(
                     i
-                ),  #! need to set a tag for each event if firering multiple events with the same name
+                ),  # ! need to set a tag for each event if firering multiple events with the same name
             )
             my_event.fire()
 

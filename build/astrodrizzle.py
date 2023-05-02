@@ -272,6 +272,7 @@ if __name__ == "__main__":
     to_run = this_event.options['to_run']
     my_job.logprint(update_option)
     my_job.logprint(to_run)
+    
     # Firing next task
     if update_option == to_run:
         my_job.logprint(f"AstroDrizzle step complete for {my_target.name}, firing find reference task.")

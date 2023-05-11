@@ -10,7 +10,7 @@ Finally, the pipeline is executed using the "wingspipe run" command.
 Overall, this script streamlines the process of setting up and running the pipeline, saving time and reducing the risk of manual errors."""
 
 os.chdir(
-    "/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/test"
+    "/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/test1/"
 )
 
 if os.path.exists("./data"):

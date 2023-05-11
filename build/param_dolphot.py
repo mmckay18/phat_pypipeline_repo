@@ -13,61 +13,72 @@ if __name__ == "__main__":
     my_job = wp.Job()
     my_config = my_job.config
     this_event = my_job.firing_event
+    my_job.logprint(f"{this_event.options}")
 
-#Read in target and necessary dataproducts
+# Read in target and necessary dataproducts
 
     my_target = wp.Target(this_event.options["target_id"])
 
-    ref_dp = wp.DataProduct.select(dpowner_id=my_config.config_id, data_type="image", subtype="dolphot input reference") #reference image
-    ref_dp_list = [ref_dp] #making reference dp into a list
+    ref_dp = wp.DataProduct.select(dpowner_id=my_config.config_id, data_type="image",
+                                   subtype="dolphot input reference")  # reference image
+    ref_dp_list = [ref_dp]  # making reference dp into a list
 
-    tagged_dps = wp.DataProduct.select(dpowner_id=my_config.config_id, data_type="image", subtype="dolphot input") #all other images
+    tagged_dps = wp.DataProduct.select(
+        dpowner_id=my_config.config_id, data_type="image", subtype="dolphot input")  # all other images
 
     all_dps = ref_dp_list + tagged_dps
 
-#Create parameter file
+# Create parameter file
     my_target_path = my_target.datapath
-    target_conf_path = my_target_path + "/conf_default/" #path to target's conf directory
+    # path to target's conf directory
+    target_conf_path = my_target_path + "/conf_default/"
 
-    with open(target_conf_path + my_target.name + '.param', 'w') as p: #create empty file
+    with open(target_conf_path + my_target.name + '.param', 'w') as p:  # create empty file
 
-        nimg = len(ref_dp) + len(tagged_dps) #number of images
-        p.write(f'Nimg={nimg}\n') #write to file
+        nimg = len(ref_dp) + len(tagged_dps)  # number of images
+        p.write(f'Nimg={nimg}\n')  # write to file
 
-#Define image specific parameters
-        my_job.logprint(f'Checking for user specified individual parameters and defining any unspecified individual parameters')
-        for dp in all_dps: #all images
-            loc = tagged_dps.index(dp)  # image number with reference at index 0
+# Define image specific parameters
+        my_job.logprint(
+            f'Checking for user specified individual parameters and defining any unspecified individual parameters')
+        for dp in all_dps:  # all images
+            # image number with reference at index 0
+            loc = tagged_dps.index(dp)
 
             im_fullfile = dp.filename
-            im_file = im_fullfile.split('.')[0] #get rid of extension
+            im_file = im_fullfile.split('.')[0]  # get rid of extension
             p.write(f'img{loc}_file = {im_file}\n')
 
         params = ["img_shift", "img_xform", "img_psfa", "img_psfb", "img_psfc", "img_RAper",
                   "img_RChi", "img_RSky", "img_RSky2", "img_RPSF", "img_aprad", "img_apsky"]
 
-        #define any image specific parameters given in config file
+        # define any image specific parameters given in config file
         all_individual = {}
-        for param in params: #run for all image specific parameters
+        for param in params:  # run for all image specific parameters
             name_parts = param.split('_')
             defined = []
-            for i in range(0, len(all_dps)): #for every input image
-                param_name = name_parts[0] + f"{i}_" + name_parts[1] #get image specific parameter name (ex. img2_shift)
-                if param_name in my_config.paramters: #check config for this parameter
-                    p.write(f'{param_name} = {my_config.parameters[param_name]}\n')
-                    my_job.logprint(f'{param_name} parameter found in configuration')
+            for i in range(0, len(all_dps)):  # for every input image
+                # get image specific parameter name (ex. img2_shift)
+                param_name = name_parts[0] + f"{i}_" + name_parts[1]
+                if param_name in my_config.paramters:  # check config for this parameter
+                    p.write(
+                        f'{param_name} = {my_config.parameters[param_name]}\n')
+                    my_job.logprint(
+                        f'{param_name} parameter found in configuration')
                     defined.append(1)
-            if len(defined) == len(all_dps): #if image specific parameter is defined for all input images
+            # if image specific parameter is defined for all input images
+            if len(defined) == len(all_dps):
                 all_individual[param] = "Yes"
             else:
                 all_individual[param] = "No"
 
-        #define img_ default parameters which are used if img#_ parameter for an image isn't defined, replace if in config file
-        for param in params: #run for all image specific parameters
-            if param in my_config.parameters: #check config for this parameter
+        # define img_ default parameters which are used if img#_ parameter for an image isn't defined, replace if in config file
+        for param in params:  # run for all image specific parameters
+            if param in my_config.parameters:  # check config for this parameter
                 p.write(f'{param} = {my_config.parameters[param]}\n')
                 my_job.logprint(f'{param} parameter found in configuration')
-            elif all_individual[param] == "No": #defining defaults if not in config file AND if the parameter wasn't defined for all images individually above.
+            # defining defaults if not in config file AND if the parameter wasn't defined for all images individually above.
+            elif all_individual[param] == "No":
                 if param == "img_shift":
                     p.write(f'img_shift = 0 0\n')
                 if param == "img_xform":
@@ -94,46 +105,47 @@ if __name__ == "__main__":
                     p.write(f'img_apsky = 30 50\n')
 
 ##################################
-            #original method I was using to define parameters which would require setting all of them individually
+            # original method I was using to define parameters which would require setting all of them individually
 
-            #if "img_shift" in my_config.parameters:
+            # if "img_shift" in my_config.parameters:
             #    p.write(f'img_shift = {my_config.parameters["img_shift"]}')
-            #else:
+            # else:
             #    p.write(f'img_shift = 0 0')
 
-            #if "img_xform" in my_config.parameters:
+            # if "img_xform" in my_config.parameters:
             #    p.write(f'img_xform = {my_config.parameters["img_xform"]}')
-            #else:
+            # else:
             #    p.write(f'img_xform = 1 0 0')
 
-            #if "img_psfa" in my_config.parameters:
+            # if "img_psfa" in my_config.parameters:
             #    p.write(f'img_psfa = {my_config.parameters["img_psfa"]}')
-            #else:
+            # else:
             #    p.write(f'img_psfa = 3 0 0 0 0 0')
 
-            #if "img_psfb" in my_config.parameters:
+            # if "img_psfb" in my_config.parameters:
             #    p.write(f'img_psfb = {my_config.parameters["img_psfb"]}')
-            #else:
+            # else:
             #    p.write(f'img_psfb = 3 0 0 0 0 0')
 
-            #if "img_psfc" in my_config.parameters:
+            # if "img_psfc" in my_config.parameters:
             #    p.write(f'img_psfc = {my_config.parameters["img_psfc"]}')
-            #else:
+            # else:
             #    p.write(f'img_psfc = 0 0 0 0 0 0')
 
-            #if "img_RAper" in my_config.parameters:
+            # if "img_RAper" in my_config.parameters:
             #    p.write(f'img_RAper = {my_config.parameters["img_RAper"]}')
-            #else:
+            # else:
             #    p.write(f'img_RAper = 2.5')
 
-            #if "img_RChi" in my_config.parameters:
+            # if "img_RChi" in my_config.parameters:
             #    p.write(f'img_RChi = {my_config.parameters["img_RChi"]}')
-            #else:
+            # else:
             #    p.write(f'img_RChi = -1')
 #########################################
 
-#Define global parameters
-        my_job.logprint(f'Checking for user specified global parameters and defining any unspecified global parameters')
+# Define global parameters
+        my_job.logprint(
+            f'Checking for user specified global parameters and defining any unspecified global parameters')
         params_global = ["photsec", "RCentroid", "SigFind", "SigFindMult", "SigFinal", "MaxIT",
                          "FPSF", "PSFPhot", "PSFPhotIt", "FitSky", "SkipSky", "SkySig", "NegSky",
                          "ForceSameMag", "NoiseMult", "FSat", "Zero", "PosStep", "dPosMax",
@@ -144,10 +156,10 @@ if __name__ == "__main__":
                          "FakeMatch", "FakePSF", "FakeStarPSF", "FakePad", "RandomFake", "UsePhot",
                          "DiagPlotType", "VerboseData"]
         for globpar in params_global:
-            if globpar in my_config.parameters: #check for any global parameters in config
+            if globpar in my_config.parameters:  # check for any global parameters in config
                 p.write(f'{globpar} = {my_config.parameters[globpar]}\n')
                 my_job.logprint(f'{globpar} parameter found in configuration')
-            else: #define defaults if not defined in config
+            else:  # define defaults if not defined in config
                 if globpar == "photsec":
                     pass
                 if globpar == "RCentroid":
@@ -253,15 +265,14 @@ if __name__ == "__main__":
                 if globpar == "VerboseData":
                     p.write(f'VerboseData = 0\n')
 
-#Create dataproduct for parameter file
-    param_dp = wp.DataProduct(my_config, filename=my_target.name + '.param', relativepath = target_conf_path,
+# Create dataproduct for parameter file
+    param_dp = wp.DataProduct(my_config, filename=my_target.name + '.param', relativepath=target_conf_path,
                               group="conf", data_type="text file", subtype="parameter")  # Create dataproduct owned by config for the parameter file
 
-    my_job.logprint(f"DOLPHOT parameter file complete for {my_target.name}, firing DOLPHOT task")
+    my_job.logprint(
+        f"DOLPHOT parameter file complete for {my_target.name}, firing DOLPHOT task")
     next_event = my_job.child_event(
         name="DOLPHOT",
         options={"param_dp_id": param_dp.dp_id}
     )  # next event
     next_event.fire()
-
-

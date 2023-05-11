@@ -66,7 +66,7 @@ if __name__ == "__main__":
     #my_job.logprint(f"{new_ref_dp}")
 
 #Set up count for prep_image
-    comp_name = 'completed' + my_target.name
+    comp_name = 'completed_' + my_target.name
     options = {comp_name: 0} #images prepped to be updated when each job of prep_image finishes
     my_job.options = options
 

@@ -63,6 +63,7 @@ def tag_event_dataproduct(this_event):
     RA = raw_hdu[0].header["RA_TARG"]
     DEC = raw_hdu[0].header["DEC_TARG"]
     TELESCOP = raw_hdu[0].header["TELESCOP"]
+    DETECTOR = raw_hdu[0].header["DETECTOR"]
     ORINT = raw_hdu[0].header["P1_ORINT"]
     EXPTIME = raw_hdu[0].header["EXPTIME"]
     EXPFLAG = raw_hdu[0].header["EXPFLAG"]
@@ -70,6 +71,7 @@ def tag_event_dataproduct(this_event):
     FILTER = raw_hdu[0].header["FILTER"]
     TARGNAME = raw_hdu[0].header["TARGNAME"]
     PROPOSALID = raw_hdu[0].header["PROPOSID"]
+
     raw_hdu.close()
 
     # tag_event_dataproduct
@@ -80,8 +82,9 @@ def tag_event_dataproduct(this_event):
             "filename": FILENAME,
             "ra": RA,
             "dec": DEC,
-            "Telescope": TELESCOP,
-            "ORIENTATION": ORINT,
+            "telescope": TELESCOP,
+            "detector": DETECTOR,
+            "orientation": ORINT,
             "Exptime": EXPTIME,
             "Expflag": EXPFLAG,
             "cam": CAM,
@@ -164,7 +167,6 @@ if __name__ == "__main__":
 
         #! Fire next task astrodrizzle
         my_job.logprint("FIRING NEXT ASTRODRIZZLE TASK")
-        # comp_name = "completed_" + this_event.options["target_name"]
         for i in all_filters:
             my_job.logprint(f"{i},{type(str(i))}")
             my_event = my_job.child_event(

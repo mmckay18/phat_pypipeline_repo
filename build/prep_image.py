@@ -49,7 +49,6 @@ if __name__ == "__main__":
         name="default", parameters={"target_id": target.target_id}
     )
     config_parameters = my_config.parameters
-
     my_job.logprint(f"This Config Parameters: {config_parameters}")
 
 # * Set proc dataproduct file path # TODO: Better way to implement this for development
@@ -60,27 +59,19 @@ if __name__ == "__main__":
     this_dp_subtype = this_dp.subtype
     my_job.logprint(
         f"Dataproduct Subtype: {this_dp_subtype}, Datatype{this_dp.data_type}\n")
-    if this_dp_subtype == "drizzled":
-        #! SPLITGROUPS - Splits the SCI images into their own fits files exclude drizzled image
-        my_job.logprint(f'Starting splitgroups on {dp_fullpath}')
-        splitgroups_output = subprocess.run(
-            ["splitgroups", dp_fullpath], capture_output=True, text=True, cwd=proc_path)
-        my_job.logprint(f'splitgroups stdout: {splitgroups_output}\n')
-        pass
-    else:
+    #! WFC3MASK - Uses the DQ array to remove bad pixels from the image and convert image to units of electron.
+    my_job.logprint(f'Starting wfc3mask on {dp_fullpath}')
+    wfc3mask_output = subprocess.run(
+        ["wfc3mask", dp_fullpath], capture_output=True, text=True)
+    my_job.logprint(f'wfc3mask stdout: {wfc3mask_output}')
 
-        #! WFC3MASK - Uses the DQ array to remove bad pixels from the image and convert image to units of electron.
-        my_job.logprint(f'Starting wfc3mask on {dp_fullpath}')
-        wfc3mask_output = subprocess.run(
-            ["wfc3mask", dp_fullpath], capture_output=True, text=True, cwd='/Users/mmckay/phd_projects/phat_pipeline_dev/dolphot2.0')
-        my_job.logprint(f'wfc3mask stdout: {wfc3mask_output}')
-
-#! SPLITGROUPS - Splits the SCI images into their own fits files.
-        proc_path = this_dp.target.datapath + "/proc_default/"
-        my_job.logprint(f'Starting splitgroups on {dp_fullpath}')
-        splitgroups_output = subprocess.run(
-            ["splitgroups", dp_fullpath], capture_output=True, text=True, cwd=proc_path)
-        my_job.logprint(f'splitgroups stdout: {splitgroups_output}\n')
+    #! SPLITGROUPS - Splits the SCI images into their own fits files.
+    proc_path = this_dp.target.datapath + "/proc_default/"
+    my_job.logprint(f'Starting splitgroups on {dp_fullpath}')
+    splitgroups_output = subprocess.run(
+        ["splitgroups", dp_fullpath], capture_output=True, text=True, cwd=proc_path)
+    my_job.logprint(f'splitgroups stdout: {splitgroups_output}\n')
+    # if this_dp_subtype == "drizzled":
 
     # * Counter: Update parent job option to increase by 1 when done running splitgroups
     compname = this_event.options['compname']
@@ -122,16 +113,23 @@ if __name__ == "__main__":
                 my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
 
         #! Makes CALCSKY fits to pipeline dataproducts
+        prep_dp_id_list = ''
         for calcsky_output_file in glob.glob(proc_path + '*sky.fits'):
             cs_dp_filename = calcsky_output_file.split("/")[-1]
             my_job.logprint(f'created dataproduct for {cs_dp_filename}\n')
             cs_dp = wp.DataProduct(my_config,
                                    filename=cs_dp_filename, group="proc", data_type="image", subtype="calcsky")
             my_job.logprint(f'DP {cs_dp_filename}: {cs_dp}')
+            # * Create event option for all prep_image dataproducts
+            # prep_dp_id_list.append(cs_dp.dp_id)
+            prep_dp_id_list += str(cs_dp.dp_id) + ','
 
+        # prep_dp_id_list = str(prep_dp_id_list)
         #! Fire event to make DOLPHOT parameter file
-        my_event = my_job.child_event(name="param_dolphot", options={
+        prep_dp_id_list = str(prep_dp_id_list)
+        my_event = my_job.child_event(name="make_param", options={
             "target_id": this_event.options["target_id"],
+            # "list_prep_image_dp_ids": prep_dp_id_list,
         },
         )
         my_event.fire()

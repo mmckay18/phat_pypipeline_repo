@@ -123,7 +123,7 @@ if __name__ == "__main__":
             dp_fname = dp_fname.split("_")
             dp_fname = f"{dp_fname[0]}_{filter_name}_{dp_fname[1]}"
             my_job.logprint(f"{dp_fname}")
-            proc_dp_fname_path = proc_path + dp_fname  # * new dataproduct path
+            # proc_dp_fname_path = proc_path + dp_fname  # * new dataproduct path
 
             # ! New dataproduct for proc directory files
             my_procdp.filename = dp_fname  # ! Changes filename

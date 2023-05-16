@@ -20,30 +20,54 @@ def register(task):
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
+    my_config = my_job.config
+    this_event = my_job.firing_event
 
-    this_event = my_job.firing_event  # parent event obj
-    parent_job = this_event.parent_job
-    # Grab dp_id from event options
-    this_dp_id = this_event.options["dp_id"]
-    
+    # Read in target and necessary dataproducts
+
+    my_target = wp.Target(this_event.options["target_id"])
+
+    ref_dp = wp.DataProduct.select(dpowner_id=my_config.config_id, data_type="image",
+                                   subtype="dolphot input reference")  # reference image
+    ref_dp_list = [ref_dp]  # making reference dp into a list
+
+    tagged_dps = wp.DataProduct.select(
+        dpowner_id=my_config.config_id, data_type="image", subtype="dolphot input")  # all other images
+
+    all_dps = ref_dp_list + tagged_dps
+
+# Create parameter file
+    my_target_path = my_target.datapath
+
+    # path to target's conf directory
+    target_conf_path = my_target_path + "/conf_default/"
+    my_job.logprint(f"Target Conf Path: {target_conf_path}")
+
+    # TODO: Make target file
+    param_filepath = target_conf_path + my_target.name + '.param'
+    my_job.logprint(f"Parameter File Path: {param_filepath}")
+
+    with open(param_filepath, 'w') as p:  # create empty file
+        nimg = len(ref_dp) + len(tagged_dps)  # number of images
+        p.write(f'Nimg={nimg}\n')  # write to file
+
     # Call dataproduct
-    this_dp = wp.DataProduct(int(this_dp_id), group="proc")
+    # this_dp = wp.DataProduct(int(this_dp_id), group="proc")
 
-    # Run DOLPHOT masking routine
-    # - Get 
+    # # Run DOLPHOT masking routine
+    # # - Get
 
+    # # config_id = this_event.options["config_id"]
 
-    # config_id = this_event.options["config_id"]
+    # my_job.logprint(f"This Event: {this_event}")
+    # my_job.logprint(f"This Event: {this_event.options}")
 
-    my_job.logprint(f"This Event: {this_event}")
-    my_job.logprint(f"This Event: {this_event.options}")
+    # # my_job.logprint(f"Config ID: {config_id}")
 
-    # my_job.logprint(f"Config ID: {config_id}")
-
-    compname = this_event.options['compname']
-    update_option = parent_job.options[compname]
-    update_option += 1
-    to_run = this_event.options['to_run']
+    # compname = this_event.options['compname']
+    # update_option = parent_job.options[compname]
+    # update_option += 1
+    # to_run = this_event.options['to_run']
 
     # if update_option == to_run:
     #     #! Fire event to make DOLPHOT parameter file

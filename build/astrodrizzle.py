@@ -6,6 +6,7 @@ import os
 from astropy.io import fits
 from drizzlepac import *
 from stsci.tools import teal
+import time
 
 teal.unlearn("astrodrizzle")
 
@@ -287,3 +288,4 @@ if __name__ == "__main__":
             options={"target_id": this_event.options["target_id"]}
         )  # next event
         next_event.fire()
+        time.sleep(150)

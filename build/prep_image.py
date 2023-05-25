@@ -4,6 +4,7 @@ from astropy.io import fits
 import os
 import subprocess
 import glob
+import time
 
 #! - It should take the data product ID it gets handed,
 #! - get the file associated with it,
@@ -133,6 +134,7 @@ if __name__ == "__main__":
         },
         )
         my_event.fire()
+        time.sleep(150)
 
     else:
         pass

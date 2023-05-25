@@ -65,13 +65,15 @@ if __name__ == "__main__":
         this_event.options["target_id"]
     )  # Get target using the target id
 
-    my_filter = this_event.options["filter"] # Get filter
+    my_filter = this_event.options["filter"]  # Get filter
 
-    my_job.logprint(f"Running Astrodrizzle task for {my_target.name} in filter {my_filter}.")
+    my_job.logprint(
+        f"Running Astrodrizzle task for {my_target.name} in filter {my_filter}.")
 
     my_target_path = my_target.datapath
     target_proc_path = my_target_path + "/proc_default"
-    os.chdir(target_proc_path)  # makes the correct proc directory the working directory
+    # makes the correct proc directory the working directory
+    os.chdir(target_proc_path)
 
     my_config = my_job.config  # Get configuration for the job
     # my_job.logprint(f"{my_config}")
@@ -96,7 +98,7 @@ if __name__ == "__main__":
         'final_kernel',
     ]  # possible parameters
     input_dict = {}  # parameters that will be put into AstroDrizzle
-    #my_job.logprint(my_config.parameters)
+    # my_job.logprint(my_config.parameters)
     for param in driz_param:
         if param in my_config.parameters:
             param_val = my_config.parameters[
@@ -190,7 +192,7 @@ if __name__ == "__main__":
         "runfile"
     ] = log_name  # adding specific log names to input dictionary
 
-    out_name = "drizzle" + my_filter  # final product name
+    out_name = my_target.name + '_' + my_filter  # final product name
     ind_input_dict[
         "output"
     ] = out_name  # adding filter specific final product name to input dictionary
@@ -204,7 +206,8 @@ if __name__ == "__main__":
         ] = 1  # for 4 input images nhigh should be 1, could need to be raised for >4
 
     # Running AstroDrizzle
-    my_job.logprint(f"Starting AstroDrizzle for {my_target.name} in filter {my_filter}")
+    my_job.logprint(
+        f"Starting AstroDrizzle for {my_target.name} in filter {my_filter}")
     if (
         len_target_im == 1
     ):  # for filters with only 1 input image, only the sky subtraction and final drizzle can run
@@ -222,11 +225,12 @@ if __name__ == "__main__":
         astrodrizzle.AstroDrizzle(
             input=inputall, context=True, build=True, **ind_input_dict
         )
-    my_job.logprint(f"AstroDrizzle complete for {my_target.name} in filter {my_filter}")
+    my_job.logprint(
+        f"AstroDrizzle complete for {my_target.name} in filter {my_filter}")
 
     # Create Dataproducts for drizzled images
     drizzleim_path = (
-        "drizzle" + my_filter + "_drc.fits"
+        out_name + "_drc.fits"
     )  # Already in proc directory so this is just the file name
     driz_hdu = fits.open(drizzleim_path)
 
@@ -246,7 +250,8 @@ if __name__ == "__main__":
     driz_dp = wp.DataProduct(
         my_config,
         filename=drizzleim_path,
-        group="proc", data_type="image", subtype="drizzled",  # Create dataproduct owned by config for the target
+        # Create dataproduct owned by config for the target
+        group="proc", data_type="image", subtype="drizzled",
         options={
             "Filename": FILENAME,
             "Telescope": TELESCOP,
@@ -272,10 +277,11 @@ if __name__ == "__main__":
     to_run = this_event.options['to_run']
     my_job.logprint(update_option)
     my_job.logprint(to_run)
-    
+
     # Firing next task
     if update_option == to_run:
-        my_job.logprint(f"AstroDrizzle step complete for {my_target.name}, firing find reference task.")
+        my_job.logprint(
+            f"AstroDrizzle step complete for {my_target.name}, firing find reference task.")
         next_event = my_job.child_event(
             name="find_ref",
             options={"target_id": this_event.options["target_id"]}

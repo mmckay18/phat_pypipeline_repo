@@ -25,18 +25,22 @@ if __name__ == "__main__":
     my_config = my_job.config  # configuration for this job
     #   my_job.logprint(my_config)
 
-    my_dps = wp.DataProduct.select(config_id=my_config.config_id, data_type="image", subtype="drizzled") # dataproducts for the drizzled images for my_target
-    #my_dps = wp.DataProduct.select(wp.si.DataProduct.filename.regexp_match("final*"), dpowner_id=my_job.config_id)
+    # dataproducts for the drizzled images for my_target
+    my_dps = wp.DataProduct.select(
+        config_id=my_config.config_id, data_type="image", subtype="drizzled")
+    # my_dps = wp.DataProduct.select(wp.si.DataProduct.filename.regexp_match("final*"), dpowner_id=my_job.config_id)
     # my_job.logprint(f"{my_dps}")
 
-    my_job.logprint(f"{len(my_dps)} drizzled images found for {my_target.name}.")
+    my_job.logprint(
+        f"{len(my_dps)} drizzled images found for {my_target.name}.")
 
 # Choosing the best reference image
     if (
         'reference_filter' in my_config.parameters
     ):  # checking for set reference in parameter file
         ref_filt = my_config.parameters['reference_filter']
-        ref_name = 'drizzle' + ref_filt + _drc.fits
+        # ref_name = 'drizzle' + ref_filt + _drc.fits
+        ref_name = my_target.name + ref_filt + '_drc.fits'
         my_job.logprint(
             f"Reference image parameter found, using {ref_name} as reference image."
         )
@@ -58,29 +62,36 @@ if __name__ == "__main__":
         # y_job.logprint(f"{my_dps}")
         # my_job.logprint(f"{exposuresarr}")
         # my_job.logprint(f"{ref_dp}")
-        my_job.logprint(f"Reference image for {my_target.name} is {ref_dp.filename}")
+        # my_job.logprint(
+        #     f"Reference image for {my_target.name} is {ref_dp.filename}")
+        # ref_name = my_target.name + '_' + \
+        #     ref_dp.filename.split('_drc')[0] + '_drc.fits'
+        # my_job.logprint(f"Reference image name is {ref_name}")
 
+# Add new dp for reference image
+    new_ref_dp = ref_dp.make_copy(
+        path=f"{my_target.datapath}/proc_default/", subtype="reference")
+    my_job.logprint(f"{new_ref_dp}")
 
-#Add new dp for reference image
-    new_ref_dp = ref_dp.make_copy(path=f"{my_target.datapath}/proc_default/", subtype="reference")
-    #my_job.logprint(f"{new_ref_dp}")
-
-#Set up count for prep_image
+# Set up count for prep_image
     comp_name = 'completed_' + my_target.name
-    options = {comp_name: 0} #images prepped to be updated when each job of prep_image finishes
+    # images prepped to be updated when each job of prep_image finishes
+    options = {comp_name: 0}
     my_job.options = options
 
-#Firing the next event
-    tagged_dps = wp.DataProduct.select(config_id=my_config.config_id, data_type="image", subtype="tagged") #all tagged dps
-    reference_dp = [new_ref_dp] #making reference dp into a list
-    all_dps = tagged_dps+reference_dp #add reference dp to tagged dps
-    #my_job.logprint(all_dps)
-    to_run= len(all_dps)
+# Firing the next event
+    tagged_dps = wp.DataProduct.select(
+        config_id=my_config.config_id, data_type="image", subtype="tagged")  # all tagged dps
+    reference_dp = [new_ref_dp]  # making reference dp into a list
+    all_dps = tagged_dps+reference_dp  # add reference dp to tagged dps
+    # my_job.logprint(all_dps)
+    to_run = len(all_dps)
 
-    for dp in all_dps: #fire prep image for all tagged images and the reference image
+    for dp in all_dps:  # fire prep image for all tagged images and the reference image
         filename = dp.filename
         my_job.logprint(f"Firing prep image task for {filename}")
-        dp_id = dp.dp_id #have to define dp_id outside of the event or else it sets it as the same for all dps
+        # have to define dp_id outside of the event or else it sets it as the same for all dps
+        dp_id = dp.dp_id
         my_event = my_job.child_event(
             name="prep_image", tag=dp_id,
             options={

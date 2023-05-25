@@ -30,11 +30,16 @@ if __name__ == "__main__":
 
 # Create parameter file
     my_target_path = my_target.datapath
+
     # path to target's conf directory
     target_conf_path = my_target_path + "/conf_default/"
+    my_job.logprint(f"Target Conf Path: {target_conf_path}")
 
-    with open(target_conf_path + my_target.name + '.param', 'w') as p:  # create empty file
+    # TODO: Make target file
+    param_filepath = target_conf_path + my_target.name + '.param'
+    my_job.logprint(f"Parameter File Path: {param_filepath}")
 
+    with open(param_filepath, 'w') as p:  # create empty file
         nimg = len(ref_dp) + len(tagged_dps)  # number of images
         p.write(f'Nimg={nimg}\n')  # write to file
 

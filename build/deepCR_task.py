@@ -56,8 +56,8 @@ def imgclean(imgname, mdl):
     # #  imgall[4].data = cleaned_imgchip2ori
     # #  imgall.flush()
     # print("update original fits file done")
-    ## attention, backup original files beforehand, this step will change the values of the original images
-    ## not good for scientific purpose
+    # attention, backup original files beforehand, this step will change the values of the original images
+    # not good for scientific purpose
     return
 
 
@@ -66,16 +66,20 @@ if __name__ == "__main__":
     my_job = wp.Job()
 
     this_event = my_job.firing_event  # parent event obj
+
     # config_id = this_event.options["config_id"]
-    # my_job.logprint(f"This Event: {this_event}")
+    my_job.logprint(f"This Event: {this_event}")
+    my_job.logprint(f"Options: {this_event.options}")
     # my_job.logprint(f"Config ID: {config_id}")
 
     #! List of path to each image for a target
     my_config = my_job.config
     my_dp_list = my_config.procdataproducts
     procdp_path = my_config.procpath
+    deepcr_pth_mask = my_config.parameters["deepcr_pth"]
+    my_job.logprint(f"{deepcr_pth_mask}")
     mdl = deepCR(
-        mask="/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/2022-10-26_mymodel8_epoch30.pth",
+        mask=deepcr_pth_mask,
         hidden=32,
     )
     my_job.logprint(f"{mdl}")
@@ -102,6 +106,7 @@ if __name__ == "__main__":
     # * Fire next event
     my_event = my_job.child_event(
         name="prep_image",
+        tag="*",
         options={
             "target_name": this_event.options["target_name"],
             "target_id": this_event.options["target_id"],

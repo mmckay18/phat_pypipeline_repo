@@ -122,16 +122,17 @@ if __name__ == "__main__":
     # ! Start tag_event_dataproduct function
     tag_event_dataproduct(this_event)
 
-    #! Fire DeepCR event
+    #! Fire DeepCR event after tagging
     deepCR_event = my_job.child_event(
         name="deepCR",
         options={
-            # "target_name": this_event.options["target_name"],
-            # "target_id": this_event.options["target_id"],
-            # "config_id": this_event.options["config_id"],
+            "target_name": this_event.options["target_name"],
+            "target_id": this_event.options["target_id"],
+            "config_id": this_event.options["config_id"],
             # "comp_name": compname
         },
-        # tag=str(i),  # ! need to set a tag for each event if firering multiple events with the same name
+        # ! need to set a tag for each event if firering multiple events with the same name
+        tag=str(update_option),
     )
     deepCR_event.fire()
     time.sleep(150)

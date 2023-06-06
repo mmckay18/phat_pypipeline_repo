@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import wpipe as wp
 from astropy.io import fits
+import time
 
 
 def register(task):
@@ -133,6 +134,7 @@ if __name__ == "__main__":
         # tag=str(i),  # ! need to set a tag for each event if firering multiple events with the same name
     )
     deepCR_event.fire()
+    time.sleep(150)
 
     # ! Check of all images have been tagged
     if this_event.options["to_run"] == update_option:
@@ -184,6 +186,7 @@ if __name__ == "__main__":
                 ),  # ! need to set a tag for each event if firering multiple events with the same name
             )
             my_event.fire()
+            time.sleep(150)
 
         # my_job.logprint(f"Firing Event Options: {my_event.options}")
 

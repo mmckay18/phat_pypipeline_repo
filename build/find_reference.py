@@ -2,6 +2,7 @@
 import wpipe as wp
 from astropy.io import fits
 import numpy as np
+import time
 
 # Task will look at all drizzled images for a target and choose the best reference to use for DOLPHOT
 
@@ -102,3 +103,4 @@ if __name__ == "__main__":
             }
         )
         my_event.fire()
+    time.sleep(150)

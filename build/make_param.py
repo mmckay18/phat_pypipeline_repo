@@ -14,13 +14,13 @@ if __name__ == "__main__":
     my_config = my_job.config
     this_event = my_job.firing_event
     my_job.logprint(f"{this_event.options}")
-    prep_event_ids = this_event.options["list_prep_image_event_ids"]
-    my_job.logprint(f"Prep Event IDs: {prep_event_ids}")
+    # prep_event_ids = this_event.options["list_prep_image_event_ids"]
+    # my_job.logprint(f"Prep Event IDs: {prep_event_ids}")
 
     # List of DP from prep image:
     # list_of_dps = this_event.options
     for dp in my_config.procdataproducts:
-        # my_job.logprint(f"DP: {dp}")
+        my_job.logprint(f"DP: {dp}")
         if "drc" in dp.filename:
             dp.subtype == "reference"
             my_job.logprint(f"Reference DP: {dp}, {dp.subtype}")

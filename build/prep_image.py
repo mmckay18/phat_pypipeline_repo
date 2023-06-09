@@ -136,7 +136,7 @@ if __name__ == "__main__":
         },
         )
         my_event.fire()
-    time.sleep(150)
 
     else:
         pass
+    time.sleep(150)

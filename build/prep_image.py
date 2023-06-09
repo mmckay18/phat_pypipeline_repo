@@ -117,19 +117,27 @@ if __name__ == "__main__":
         prep_dp_id_list = ''
         for calcsky_output_file in glob.glob(proc_path + '*sky.fits'):
             cs_dp_filename = calcsky_output_file.split("/")[-1]
-            my_job.logprint(f'created dataproduct for {cs_dp_filename}\n')
+            my_job.logprint(f'created dataproduct for {cs_dp_filename}')
             cs_dp = wp.DataProduct(my_config,
                                    filename=cs_dp_filename, group="proc", data_type="image", subtype="calcsky")
             my_job.logprint(f'DP {cs_dp_filename}: {cs_dp}')
+
             # * Create event option for all prep_image dataproducts
             # prep_dp_id_list.append(cs_dp.dp_id)
+            # ! Add dp id to list
             prep_dp_id_list += str(cs_dp.dp_id) + ', '
+        #
 
-        # prep_dp_id_list = str(prep_dp_id_list)
-        #! Fire event to make DOLPHOT parameter file
+        #! Makes the prep dp id list to a string
         prep_dp_id_list = str(prep_dp_id_list)
-        config_parameters[{'prep_image_dp_ids': prep_dp_id_list}]
-        my_job.logprint("Config Parameters: ", config_parameters)
+        my_job.logprint(f'List of prep image dps: {prep_dp_id_list}\n')
+
+        my_job.logprint(f'DONE: ALL DATAPRODUCTS CREATED\n')
+
+        #! Fire event to make DOLPHOT parameter file
+        # ! Attempting to read in a list of dps as a config parameter
+        # config_parameters[{'prep_image_dp_ids': prep_dp_id_list}]
+        # my_job.logprint("Config Parameters: ", config_parameters)
         my_event = my_job.child_event(name="make_param", options={
             "target_id": this_event.options["target_id"],
             # "list_prep_image_dp_ids": prep_dp_id_list,

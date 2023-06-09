@@ -3,7 +3,8 @@ import wpipe as wp
 from astropy.io import fits
 import numpy as np
 
-# Task will look at all drizzled images for a target and choose the best reference to use for DOLPHOT
+# Task will look at all drizzled images for a target and choose the best
+#  reference to use for DOLPHOT
 
 
 def register(task):
@@ -27,7 +28,9 @@ if __name__ == "__main__":
 
     # dataproducts for the drizzled images for my_target
     my_dps = wp.DataProduct.select(
-        config_id=my_config.config_id, data_type="image", subtype="drizzled")
+        config_id=my_config.config_id, 
+        data_type="image", 
+        subtype="drizzled")
     # my_dps = wp.DataProduct.select(wp.si.DataProduct.filename.regexp_match("final*"), dpowner_id=my_job.config_id)
     # my_job.logprint(f"{my_dps}")
 
@@ -49,6 +52,7 @@ if __name__ == "__main__":
             group="proc", dpowner_id=my_job.config_id, filename=ref_name
         )  # pull correct dp for reference
     else:  # setting reference as longest exposure time
+        
         exposures = []
         # filters=[]
         for dp in my_dps:
@@ -84,7 +88,7 @@ if __name__ == "__main__":
         config_id=my_config.config_id, data_type="image", subtype="tagged")  # all tagged dps
     reference_dp = [new_ref_dp]  # making reference dp into a list
     all_dps = tagged_dps+reference_dp  # add reference dp to tagged dps
-    # my_job.logprint(all_dps)
+    my_job.logprint(f"ALL DPS {all_dps}")
     to_run = len(all_dps)
 
     for dp in all_dps:  # fire prep image for all tagged images and the reference image

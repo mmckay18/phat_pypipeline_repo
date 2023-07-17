@@ -123,19 +123,28 @@ if __name__ == "__main__":
     tag_event_dataproduct(this_event)
 
     #! Fire DeepCR event after tagging
-    deepCR_event = my_job.child_event(
-        name="deepCR",
-        options={
-            "target_name": this_event.options["target_name"],
-            "target_id": this_event.options["target_id"],
-            "config_id": this_event.options["config_id"],
-            # "comp_name": compname
-        },
-        # ! need to set a tag for each event if firering multiple events with the same name
-        tag=str(update_option),
-    )
-    deepCR_event.fire()
-    time.sleep(150)
+    my_config_param = my_job.config.parameters
+    if my_config_param['RUN_DEEPCR'] == 'True':
+        deepCR_event = my_job.child_event(
+            name="deepCR",
+            options={
+                "target_name": this_event.options["target_name"],
+                "target_id": this_event.options["target_id"],
+                "config_id": this_event.options["config_id"],
+            },
+            # ! need to set a tag for each event if firering multiple events with the same name
+            tag=str(update_option),
+        )
+        deepCR_event.fire()
+        time.sleep(150)
+
+    elif my_config_param['RUN_DEEPCR'] == 'False':
+        my_job.logprint(f"Not running DeepCR")
+        tag = str(update_option),
+
+    else:
+        my_job.logprint(f"RUN_DEEPCR parameter not set...Moving on")
+        tag = str(update_option),
 
     # ! Check of all images have been tagged
     if this_event.options["to_run"] == update_option:

@@ -10,11 +10,13 @@ Finally, the pipeline is executed using the "wingspipe run" command.
 Overall, this script streamlines the process of setting up and running the pipeline, saving time and reducing the risk of manual errors."""
 
 os.chdir(
-    "/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/test1/"
+    "/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/test_1c/"
 )
 
 if os.path.exists("./data"):
     shutil.rmtree("./data")
+else:
+    pass
 # os.system("rm -r data/*")
 os.system("wingspipe delete -y")
 os.system(

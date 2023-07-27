@@ -124,7 +124,14 @@ if __name__ == "__main__":
 
     #! Fire DeepCR event after tagging
     my_config_param = my_job.config.parameters
-    if my_config_param['RUN_DEEPCR'] == 'True':
+    my_job.logprint(
+        f"MY CONFIG PARM: {my_config_param}, {type(my_config_param)}")
+    my_job.logprint(
+        f"\n parameter atrributs: {dir(my_job.config.parameters)}")
+    my_job.logprint(
+        f"\nRUN_DEEPCR setting: {my_job.config.parameters['RUN_DEEPCR']}, {type(my_job.config.parameters['RUN_DEEPCR'])}")
+
+    if my_config_param['RUN_DEEPCR'] == 'T':
         deepCR_event = my_job.child_event(
             name="deepCR",
             options={
@@ -132,13 +139,13 @@ if __name__ == "__main__":
                 "target_id": this_event.options["target_id"],
                 "config_id": this_event.options["config_id"],
             },
-            # ! need to set a tag for each event if firering multiple events with the same name
+            # ! need to set a tag for each event if firing multiple events with the same name
             tag=str(update_option),
         )
         deepCR_event.fire()
         time.sleep(150)
 
-    elif my_config_param['RUN_DEEPCR'] == 'False':
+    elif my_config_param['RUN_DEEPCR'] == 'F':
         my_job.logprint(f"Not running DeepCR")
         tag = str(update_option),
 

@@ -34,7 +34,6 @@ if __name__ == "__main__":
             my_job.logprint(f"Tagged DP: {dp}, {dp.subtype}")
         else:
             pass
-    print(tagged_dps)
     my_target = wp.Target(this_event.options["target_id"])
     my_job.logprint(f"###### This Target: {my_target}\n")
 

@@ -1,8 +1,12 @@
 #!/usr/bin/env python
+
+# Original script by Shellby Albrecht
+# Modified and by Myles McKay
 import wpipe as wp
-import os, subprocess
+# import os
+import subprocess
 from glob import glob
-from astropy.io import fits
+# from astropy.io import fits
 
 
 def register(task):
@@ -13,28 +17,45 @@ def register(task):
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
+    my_job.logprint("Starting DOLPHOT")
     my_config = my_job.config
     this_event = my_job.firing_event
     my_job.logprint(this_event)
+    my_job.logprint(this_event.options)
 
-#Get parameter file
-    param_dp_id = this_event.options["param_id_id"]
-    param_dp = wp.DataProduct.select(dpowner_id=my_config.config_id, data_type="text file", subtype="parameter", dp_id=param_dp_id)
-    param_path = param_dp.relativepath
-    param_filename = param_dp.filename
 
-#Check that all files needed are present (ie. images, sky files, etc)
+# Get parameter file
+    param_dp_id = this_event.options["param_dp_id"]
+    my_job.logprint(f'{param_dp_id}, {type(param_dp_id)}')
+    # param_dp = wp.DataProduct.select(
+    #     dpowner_id=my_config.config_id, data_type="text file", subtype="parameter", dp_id=param_dp_id)
 
-#Run Dolphot
-    dolphot_output = subprocess.run(["dolphot", "dolphotout", '-p' + param_path + param_filename], capture_output=True, text=True)
+    for dp in my_config.confdataproducts:
+        my_job.logprint(f"DP: {dp}, {dp.subtype}")
+        if ".param" in dp.filename:
+            param_dp = dp
+            # Check that all files needed are present (ie. images, sky files, etc)
+            my_job.logprint(f"{param_dp}, {param_dp.filename}")
+            param_path = param_dp.relativepath
+            param_filename = param_dp.filename
+            # # Run Dolphot
+            my_job.logprint(f"Running DOLPHOT on {param_dp.filename}")
+            dolphot_output = subprocess.run(
+                ["dolphot", "dolphotout", '-p' + param_path + "/" + param_filename], capture_output=True, text=True)
 
-    with open('dolphotout_stdout.log', 'w') as outlog:
-        outlog.write(f'{dolphot_output.stdout}')
-    with open('dolphotout_stderr.log', 'w') as errlog:
-        errlog.write(f'{dolphot_output.stderr}')
+            with open('dolphotout_stdout.log', 'w') as outlog:
+                outlog.write(f'{dolphot_output.stdout}')
+            with open('dolphotout_stderr.log', 'w') as errlog:
+                errlog.write(f'{dolphot_output.stderr}')
 
-#Create dataproducts for Dolphot output files
+        # Create dataproducts for Dolphot output files
 
-    out_files = glob('dolphotout*') #check that this gets file called just dolphotout
-    for file in out_files:
-        wp.DataProduct(my_config, filename = file, group="proc", subtype = "dolphot output")
+            # check that this gets file called just dolphotout
+            out_files = glob('dolphotout*')
+            for file in out_files:
+                dolphot_output_dp = wp.DataProduct(
+                    my_config, filename=file, group="proc", subtype="dolphot output")
+                my_job.logprint(
+                    f"Created dataproduct for {file}, {dolphot_output_dp}")
+        else:
+            pass

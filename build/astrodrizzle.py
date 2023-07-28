@@ -79,6 +79,14 @@ if __name__ == "__main__":
     my_config = my_job.config  # Get configuration for the job
     # my_job.logprint(f"{my_config}")
 
+    #! DeepCR
+    config_param = my_config.parameters
+    if config_param["RUN_DEEPCR"] == "True":
+        deepcr_resetbits = config_param["deepcr_resetbits"]
+    else:
+        config_param["RUN_DEEPCR"] == "False"
+        deepcr_resetbits = 4096  # ! Default astrodrizzle resetbits
+
     # Setting input parameters
     driz_param = [
         'reset_bits',
@@ -220,11 +228,14 @@ if __name__ == "__main__":
             median=False,
             blot=False,
             driz_cr=False,
+            # ! parameter for deepCR input
+            resetbits=deepcr_resetbits,
             **ind_input_dict,
         )
     else:
         astrodrizzle.AstroDrizzle(
-            input=inputall, context=True, build=True, **ind_input_dict
+            input=inputall, context=True, build=True, **ind_input_dict,
+            resetbits=deepcr_resetbits,  # ! parameter for deepCR input
         )
     my_job.logprint(
         f"AstroDrizzle complete for {my_target.name} in filter {my_filter}")

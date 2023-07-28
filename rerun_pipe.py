@@ -7,14 +7,24 @@ It then removes any existing "data" directory using the shutil module.
 After that, it deletes any previous pipeline runs using the "wingspipe delete" command. 
 The script then initializes the pipeline using the "wingspipe init" command with the necessary configuration files. 
 Finally, the pipeline is executed using the "wingspipe run" command. 
-Overall, this script streamlines the process of setting up and running the pipeline, saving time and reducing the risk of manual errors."""
+Overall, this script streamlines the process of setting up and running the pipeline, saving time and reducing the risk of manual errors.
+
+Example usage: 
+
+python /Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/rerun_pipe.py
+
+"""
+
+
 
 os.chdir(
-    "/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/test1/"
+    "/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/test_1c/"
 )
 
 if os.path.exists("./data"):
     shutil.rmtree("./data")
+else:
+    pass
 # os.system("rm -r data/*")
 os.system("wingspipe delete -y")
 os.system(

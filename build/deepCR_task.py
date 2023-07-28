@@ -12,52 +12,79 @@ def register(task):
     _temp = task.mask(source="*", name="deepCR", value="*")
 
 
-def imgclean(imgname, mdl):
-    print("image_name:", imgname)
+def imgclean(imgname, mdl, threshold, update=True):
+    """
+    imgname: input image name
+    mdl: deepCR model
+    threshold: threshold for deepCR
+    update: update the original fits file or not
+    Three options for CR identification in the pipeline running:
 
+    1. regular default pipeline (same as old pipeline):  
+    - Overwrite all original DQ cr flag (to zero) for raw flc.fits data from MAST, and then perform astrodrizzle to identify DQ flag for cr
+    - NOT need to specify the parameter "resetbits" in drizzlepac.astrodrizzle.AstroDrizzle, using default = 4096
+    - "resetbits" allow to specify which DQ bits should be reset to a value of 0; prior to starting any of AstroDrizzle process steps
+
+    2. NOT run deepCR within the pipeline, BUT use deepCR-processed images
+    - The raw flc.fits images haven been processed using deepCR beforehand. The original DQ flag cr from MAST raw data has been removed, and updated to the DQ cr flags using deepCR
+    - In the pipeline, NEED to specify the parameter "resetbits = 0" in drizzlepac.astrodrizzle.AstroDrizzle, to KEEP all deepCR-identified DQ bits, and then perform astrodrizzle TOO
+    - The cr identified in both steps would be combined together to the final DQ flag
+
+    3. RUN deepCR within the pipeline, go through deepCR task
+    - Input need: trained model; self-defined threshold; update= True
+    - And see option 2., also NEED to specify the parameter "resetbits = 0" to keep all deepCR-identified DQ bits, and then perform astrodrizzle TOO
+    Below is the python function to perform deepCR on each image, and update the DQ cr flag:
+
+    """
+    print('image_name:', imgname)
+    print('threshold:', threshold)
+    print('update is', update)
     # open the image with all extensions
-    imgall = fits.open(imgname, mode="update")
+    if update:
+        imgall = fits.open(imgname, mode='update')
+    else:
+        imgall = fits.open(imgname)
 
-    # process each chip/extension of the image, manually normalize the input for training
+    # process each chip/extension of the image, manually normalize the input
     imgorichip1 = imgall[1].data
     imgorichip1mean = imgorichip1.mean()
     imgorichip1std = imgorichip1.std()
-    print("imgchip1mean_std:", imgorichip1mean, imgorichip1std)
     imgnormchip1 = (imgorichip1 - imgorichip1mean) / imgorichip1std
-    print("chip1_normalize_done")
-
     imgorichip2 = imgall[4].data
     imgorichip2mean = imgorichip2.mean()
     imgorichip2std = imgorichip2.std()
-    print("imgchip2mean_std:", imgorichip2mean, imgorichip2std)
     imgnormchip2 = (imgorichip2 - imgorichip2mean) / imgorichip2std
-    print("chip2_normalize_done")
+    # print('----chip1----')
+    maskimgchip1, cleaned_imgchip1 = mdl.clean(
+        imgnormchip1, threshold=threshold, inpaint='medmask')
+    maskimgchip1 = np.float32(maskimgchip1)
+    dqchip1 = imgall[3].data
+    # print('original MAST DQ:', len(np.where((dqchip1&4096) == 4096)[0]))
+    dqchip1[dqchip1 & 4096 == 4096] ^= 4096
+    # print('remove original check:', len(np.where((dqchip1&4096) == 4096)[0]))
+    dqchip1[maskimgchip1 == 1] |= 4096
+    # print('after deepCR DQ:', len(np.where((dqchip1&4096) == 4096)[0]))
+    imgall[3].data = dqchip1
+    # print('CR DQ update done')
 
-    # # for tweakreg purpose, threshold = 0.1 is good, mis-recognition of real sources as cr is allowed in the step
-    # maskimgchip1, cleaned_imgchip1 = mdl.clean(
-    #     imgnormchip1, threshold=0.10, inpaint="medmask"
-    # )
-    # cleaned_imgchip1ori = (
-    #     cleaned_imgchip1 * imgorichip1std + imgorichip1mean
-    # )  # reverse process the image to get original absolute flux
-    # cleaned_imgchip1ori = np.float32(
-    #     cleaned_imgchip1ori
-    # )  # important! otherwise not accepted by tweakreg
-    # maskimgchip1 = np.float32(maskimgchip1)
-    # print("chip1_clean_done_scaleback")
-    # maskimgchip2, cleaned_imgchip2 = mdl.clean(
-    #     imgnormchip2, threshold=0.10, inpaint="medmask"
-    # )
-    # cleaned_imgchip2ori = cleaned_imgchip2 * imgorichip2std + imgorichip2mean
-    # cleaned_imgchip2ori = np.float32(cleaned_imgchip2ori)
-    # maskimgchip2 = np.float32(maskimgchip2)
-    # print("chip2_clean_done_scaleback")
-    # #  imgall[1].data = cleaned_imgchip1ori
-    # #  imgall[4].data = cleaned_imgchip2ori
-    # #  imgall.flush()
-    # print("update original fits file done")
-    # attention, backup original files beforehand, this step will change the values of the original images
-    # not good for scientific purpose
+    # print('----chip2----')/
+    maskimgchip2, cleaned_imgchip2 = mdl.clean(
+        imgnormchip2, threshold=threshold, inpaint='medmask')
+    maskimgchip2 = np.float32(maskimgchip2)
+    dqchip2 = imgall[6].data
+    # print('original MAST DQ:', len(np.where((dqchip2&4096) == 4096)[0]))
+    dqchip2[dqchip2 & 4096 == 4096] ^= 4096
+    # print('remove original check:', len(np.where((dqchip2&4096) == 4096)[0]))
+    dqchip2[maskimgchip2 == 1] |= 4096
+    # print('after deepCR DQ:', len(np.where((dqchip2&4096) == 4096)[0]))
+    imgall[6].data = dqchip2
+    # print('CR DQ update done')
+
+    if update:
+        imgall.flush()
+        print('update original fits file done')
+    else:
+        print('original fits file not updated!')
     return
 
 
@@ -76,8 +103,13 @@ if __name__ == "__main__":
     my_config = my_job.config
     my_dp_list = my_config.procdataproducts
     procdp_path = my_config.procpath
+
+    #! #########################################
+    #! DeepCR parameters from config file
     deepcr_pth_mask = my_config.parameters["deepcr_pth"]
-    my_job.logprint(f"{deepcr_pth_mask}")
+    threshold = my_config.parameters["deepcr_threshold"]
+    my_job.logprint(
+        f"DeepCR config parameters \n Mask .pth path{deepcr_pth_mask} \n Threshold {threshold}")
     mdl = deepCR(
         mask=deepcr_pth_mask,
         hidden=32,
@@ -91,17 +123,14 @@ if __name__ == "__main__":
             my_job.logprint(ext_flc)
             dp_filepath = procdp_path + "/" + my_dp.filename
             my_job.logprint(f"{dp_filepath}")
-            imgclean(dp_filepath, mdl)  # Run DeepCR on each image
+
+            # * imgclean function
+            threshold = 0.1
+
+            # Run DeepCR on each image
+            imgclean(dp_filepath, mdl, threshold, update=True)
         else:
             pass
-
-    #! DeepCR function
-    # imgfull = glob(pathimgs + "*flc.fits")
-    # print("all_imgs_name:", imgfull)
-    # import the trained model used for UVIS images
-    # mdl = deepCR(mask="/Users/mmckay/phd_projects/phat_pipeline_dev/phat_pypipeline_repo/2022-10-26_mymodel8_epoch30.pth", hidden=32)
-    # for ii in imgfull:
-    #     imgclean(ii, mdl)
 
     # * Fire next event
     my_event = my_job.child_event(

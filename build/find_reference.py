@@ -57,8 +57,8 @@ if __name__ == "__main__":
         exposures = []
         # filters=[]
         for dp in my_dps:
-            exposures.append(dp.options["Exposure_time"])
-            # filters.append(dp.options["Filter"])
+            exposures.append(dp.options["Exptime"])
+            # filters.append(dp.options["filter"])
         exposuresarr = np.array(exposures)
         # filtersarr = np.array(filters)
         max_exp = exposuresarr.max()

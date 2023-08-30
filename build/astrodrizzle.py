@@ -92,8 +92,8 @@ if __name__ == "__main__":
         'reset_bits',
         'skysub',
         'sky_method',
-        'driz_sep_pixfrac',
-        'driz_sep_scale',
+        #'driz_sep_pixfrac',
+        #'driz_sep_scale',
         'driz_sep_bits',
         'driz_sep_kernel',
         'combine_type',
@@ -129,50 +129,52 @@ if __name__ == "__main__":
     if (
         "driz_sep_kernel" not in my_config.parameters
     ):  # adjusting individual kernel default
-        if (
-            "driz_sep_pixfrac" not in my_config.parameters
-            or my_config.parameters["driz_sep_pixfrac"] == 1
-        ):
-            if (
-                "driz_sep_scale" not in my_config.parameters
-                or my_config.parameters["driz_sep_scale"] == 1
-            ):
-                input_dict["driz_sep_kernel"] = "lanczos3"
-                if "driz_sep_pixfrac" not in my_config.parameters:
-                    input_dict["driz_sep_pixfrac"] = 1
-                if "driz_sep_scale" not in my_config.parameters:
-                    input_dict["driz_sep_scale"] = 1
+        #if (
+        #    "driz_sep_pixfrac" not in my_config.parameters
+        #    or my_config.parameters["driz_sep_pixfrac"] == 1
+        #):
+        #    if (
+        #        "driz_sep_scale" not in my_config.parameters
+        #        or my_config.parameters["driz_sep_scale"] == "INDEF"
+        #    ):
+        input_dict["driz_sep_kernel"] = "lanczos3"
+        #        if "driz_sep_pixfrac" not in my_config.parameters:
+        #            input_dict["driz_sep_pixfrac"] = 1
+        #        if "driz_sep_scale" not in my_config.parameters:
+        #            input_dict["driz_sep_scale"] = "INDEF"
     if (
         "driz_sep_kernel" in my_config.parameters
         and my_config.parameters["driz_sep_kernel"] == "lanczos3"
     ):
-        if "driz_sep_pixfrac" not in my_config.parameters:
-            input_dict["driz_sep_pixfrac"] = 1
-        if "driz_sep_scale" not in my_config.parameters:
-            input_dict["driz_sep_scale"] = 1
+    #    if "driz_sep_pixfrac" not in my_config.parameters:
+    #        input_dict["driz_sep_pixfrac"] = 1
+    #    if "driz_sep_scale" not in my_config.parameters:
+    #        input_dict["driz_sep_scale"] = "INDEF"
+        input_dict["driz_sep_kernel"] = "lanczos3"
 
     if "final_kernel" not in my_config.parameters:  # adjusting final kernel default
-        if (
-            "final_pixfrac" not in my_config.parameters
-            or my_config.parameters["final_pixfrac"] == 1
-        ):
-            if (
-                "final_scale" not in my_config.parameters
-                or my_config.parameters["final_scale"] == 1
-            ):
-                input_dict["final_kernel"] = "lanczos3"
-                if "final_pixfrac" not in my_config.parameters:
-                    input_dict["final_pixfrac"] = 1
-                if "final_scale" not in my_config.parameters:
-                    input_dict["final_scale"] = 1
+        #if (
+        #    "final_pixfrac" not in my_config.parameters
+        #    or my_config.parameters["final_pixfrac"] == 1
+        #):
+        #    if (
+        #        "final_scale" not in my_config.parameters
+        #        or my_config.parameters["final_scale"] == "INDEF"
+        #    ):
+        input_dict["final_kernel"] = "lanczos3"
+        #        if "final_pixfrac" not in my_config.parameters:
+        #            input_dict["final_pixfrac"] = 1
+        #        if "final_scale" not in my_config.parameters:
+        #            input_dict["final_scale"] = "INDEF"
     if (
         "final_kernel" in my_config.parameters
         and my_config.parameters["final_kernel"] == "lanczos3"
     ):
-        if "final_pixfrac" not in my_config.parameters:
-            input_dict["final_pixfrac"] = 1
-        if "final_scale" not in my_config.parameters:
-            input_dict["final_scale"] = 1
+        input_dict["final_kernel"] = "lanczos3"
+        #if "final_pixfrac" not in my_config.parameters:
+        #    input_dict["final_pixfrac"] = 1
+        #if "final_scale" not in my_config.parameters:
+        #    input_dict["final_scale"] = 1
 
     # Getting image list and setting filter specific parameters
     my_dp = wp.DataProduct.select(
@@ -217,6 +219,13 @@ if __name__ == "__main__":
     # Running AstroDrizzle
     my_job.logprint(
         f"Starting AstroDrizzle for {my_target.name} in filter {my_filter}")
+    
+    my_job.logprint('astrodrizzle.AstroDrizzle(input=')
+    my_job.logprint(inputall)
+    my_job.logprint(',context=True, build=True,')
+    my_job.logprint(ind_input_dict)
+    my_job.logprint(',resetbits=deepcr_resetbits)')
+
     if (
         len_target_im == 1
     ):  # for filters with only 1 input image, only the sky subtraction and final drizzle can run
@@ -265,17 +274,17 @@ if __name__ == "__main__":
         # Create dataproduct owned by config for the target
         group="proc", data_type="image", subtype="drizzled",
         options={
-            "Filename": FILENAME,
-            "Telescope": TELESCOP,
-            "Instrument": INSTRUME,
-            "Target_name": TARGNAME,
-            "RA": RA_TARG,
-            "DEC": DEC_TARG,
-            "ProposalID": PROPOSID,
-            "Exposure_time": EXPTIME,
-            "Position_angle": PA_V3,
-            "Detector": DETECTOR,
-            "Filter": FILTER,
+            "filename": FILENAME,
+            "telescope": TELESCOP,
+            "instrument": INSTRUME,
+            "target_name": TARGNAME,
+            "ra": RA_TARG,
+            "dec": DEC_TARG,
+            "proposalid": PROPOSID,
+            "Exptime": EXPTIME,
+            "position_angle": PA_V3,
+            "detector": DETECTOR,
+            "filter": FILTER,
         },
     )
 

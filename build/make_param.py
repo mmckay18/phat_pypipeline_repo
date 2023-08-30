@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import wpipe as wp
+import time
 from astropy.io import fits
 
 
@@ -307,3 +308,4 @@ if __name__ == "__main__":
         options={"param_dp_id": param_dp.dp_id}
     )  # next event
     next_event.fire()
+    time.sleep(150)

@@ -65,15 +65,18 @@ if __name__ == "__main__":
     if this_dp_subtype == "drizzled":
         my_job.logprint(dp_fullpath)
         fitsname = dp_fullpath
-        f = fits.open(fitsname,mode='update')
-        f.info()
-        del f[4]
-        f.info()
-        f.close()
+        try: 
+           f = fits.open(fitsname,mode='update')
+           f.info()
+           del f[4]
+           f.info()
+           f.close()
+           fits_file = get_pkg_data_filename(fitsname)
+           a=fits.getval(fits_file, 'NCOMBINE', ext=1)
+           fits.setval(fits_file, 'NCOMBINE', value=a)
+        except:
+           pass
 
-        fits_file = get_pkg_data_filename(fitsname)
-        a=fits.getval(fits_file, 'NCOMBINE', ext=1)
-        fits.setval(fits_file, 'NCOMBINE', value=a)
     my_job.logprint(f'Starting wfc3mask on {dp_fullpath}')
     wfc3mask_output = subprocess.run(
         ["wfc3mask", dp_fullpath], capture_output=True, text=True)
@@ -92,11 +95,20 @@ if __name__ == "__main__":
         sp_dp_filename = splitgroup_output_file.split("/")[-1]
         my_job.logprint(f'created dataproduct for {sp_dp_filename}')
         sp_dp = wp.DataProduct(my_config,
-                               filename=sp_dp_filename, group="proc", data_type="image", subtype="splitgroups")
+                               filename=sp_dp_filename, group="proc", data_type="image", subtype="splitgroups", options={"detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]})
+            
         my_job.logprint(f'DP {sp_dp_filename}: {sp_dp}')
+        my_job.logprint(f'with option {sp_dp.options["detector"]}')
 
         #! CALCSKY - Calculates the sky background for each image for UVIS or IR.
         if this_dp.options["detector"] == "UVIS":
+            my_job.logprint(
+                f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
+            calcsky_output = subprocess.run(
+                ["calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+            my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
+
+        if this_dp.options["detector"] == "WFC":
             my_job.logprint(
                 f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
             calcsky_output = subprocess.run(

@@ -4,6 +4,7 @@
 # Modified and by Myles McKay
 import wpipe as wp
 # import os
+import sys
 import subprocess
 from glob import glob
 # from astropy.io import fits
@@ -19,10 +20,13 @@ if __name__ == "__main__":
     my_job = wp.Job()
     my_job.logprint("Starting DOLPHOT")
     my_config = my_job.config
+    my_target = my_job.target
     this_event = my_job.firing_event
     my_job.logprint(this_event)
     my_job.logprint(this_event.options)
-
+    my_config = my_job.config
+    logpath = my_config.logpath
+    procpath = my_config.procpath
 
 # Get parameter file
     param_dp_id = this_event.options["param_dp_id"]
@@ -38,20 +42,29 @@ if __name__ == "__main__":
             my_job.logprint(f"{param_dp}, {param_dp.filename}")
             param_path = param_dp.relativepath
             param_filename = param_dp.filename
+            dolphotout = procpath + "/" + my_target.name + ".phot"
+            dolphoterrlog = logpath + "/" + "dolphotout_stderr.log"
+            dolphotlog = logpath + "/" + "dolphotout_stdout.log"
             # # Run Dolphot
             my_job.logprint(f"Running DOLPHOT on {param_dp.filename}")
-            dolphot_output = subprocess.run(
-                ["dolphot", "dolphotout", '-p' + param_path + "/" + param_filename], capture_output=True, text=True)
+            #dolphot_output = subprocess.run(
+            #    ["dolphot", dolphotout, '-p' + param_path + "/" + param_filename], capture_output=True, text=True, cwd=procpath)
+            #with open(dolphotlog, 'w') as outlog:
+            #    outlog.write(f'{dolphot_output.stdout}')
+            #with open(dolphotouterrlog, 'w') as errlog:
+            #    errlog.write(f'{dolphot_output.stderr}')
 
-            with open('dolphotout_stdout.log', 'w') as outlog:
-                outlog.write(f'{dolphot_output.stdout}')
-            with open('dolphotout_stderr.log', 'w') as errlog:
-                errlog.write(f'{dolphot_output.stderr}')
-
+            dolphot_output = subprocess.Popen(
+                ["dolphot", dolphotout, '-p' + param_path + "/" + param_filename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, cwd=procpath)
+            
+            for line in dolphot_output.stdout:
+               # sys.stdout.write(line)
+               my_job.logprint(line)
+            dolphot_output.wait()
         # Create dataproducts for Dolphot output files
 
             # check that this gets file called just dolphotout
-            out_files = glob('dolphotout*')
+            out_files = glob('*.phot*')
             for file in out_files:
                 dolphot_output_dp = wp.DataProduct(
                     my_config, filename=file, group="proc", subtype="dolphot output")

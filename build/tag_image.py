@@ -203,7 +203,7 @@ if __name__ == "__main__":
                 ),  # ! need to set a tag for each event if firering multiple events with the same name
             )
             my_event.fire()
-            time.sleep(150)
+        time.sleep(150)
 
         # my_job.logprint(f"Firing Event Options: {my_event.options}")
 

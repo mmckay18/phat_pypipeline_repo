@@ -61,10 +61,14 @@ if __name__ == "__main__":
                # sys.stdout.write(line)
                my_job.logprint(line)
             dolphot_output.wait()
-        # Create dataproducts for Dolphot output files
+            # Create dataproducts for Dolphot output files
 
             # check that this gets file called just dolphotout
-            out_files = glob('*.phot*')
+            phot_dp = wp.DataProduct(
+                    my_config, filename=dolphotout, group="proc", subtype="dolphot output")
+                my_job.logprint(
+                    f"Created dataproduct for {dolphotout}, {phot_dp}")
+            out_files = glob('*.phot.*')
             for file in out_files:
                 dolphot_output_dp = wp.DataProduct(
                     my_config, filename=file, group="proc", subtype="dolphot output")
@@ -72,3 +76,11 @@ if __name__ == "__main__":
                     f"Created dataproduct for {file}, {dolphot_output_dp}")
         else:
             pass
+    next_event = my_job.child_event(
+      name="dolphot_done",
+      options={"dp_id": phot_dp.dp_id}
+    )  # next event
+    next_event.fire()
+    time.sleep(150)
+
+    

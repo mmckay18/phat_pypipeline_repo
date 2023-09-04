@@ -4,6 +4,7 @@
 # Modified and by Myles McKay
 import wpipe as wp
 # import os
+import time
 import sys
 import subprocess
 from glob import glob
@@ -66,7 +67,7 @@ if __name__ == "__main__":
             # check that this gets file called just dolphotout
             phot_dp = wp.DataProduct(
                     my_config, filename=dolphotout, group="proc", subtype="dolphot output")
-                my_job.logprint(
+            my_job.logprint(
                     f"Created dataproduct for {dolphotout}, {phot_dp}")
             out_files = glob('*.phot.*')
             for file in out_files:

@@ -351,7 +351,8 @@ if __name__ == '__main__':
 
 
  
-    photfile = my_config.procpath + '/' + my_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
+    photfile = this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
+    #photfile = my_config.procpath + '/' + this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
     colfile = photfile + '.columns'
     my_job.logprint('Photometry file: {}'.format(photfile))
     my_job.logprint('Columns file: {}'.format(colfile))
@@ -359,8 +360,8 @@ if __name__ == '__main__':
     
     import time
     t0 = time.time()
-    df = read_dolphot(photfile, columns_df, filters, args.to_hdf, args.full)
-    outfile = my_dp.filename + '.hdf5'
+    df = read_dolphot(photfile, columns_df, filters)
+    outfile = this_dp.filename + '.hdf5'
     hd5_dp = wp.DataProduct(my_config, filename=outfile, 
                               group="proc", data_type="hdf5 file", subtype="catalog")     
     t1 = time.time()

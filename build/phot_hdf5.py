@@ -361,7 +361,7 @@ if __name__ == '__main__':
     import time
     t0 = time.time()
     df = read_dolphot(photfile, columns_df, filters)
-    outfile = this_dp.filename + '.hdf5'
+    outfile = this_dp.filename + '_full.hdf5'
     hd5_dp = wp.DataProduct(my_config, filename=outfile, 
                               group="proc", data_type="hdf5 file", subtype="catalog")     
     t1 = time.time()

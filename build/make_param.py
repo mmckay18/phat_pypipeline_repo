@@ -91,7 +91,7 @@ if __name__ == "__main__":
                     parcount=0
                     for impar in im_pars:
                         param_name = "img"+str(count)+"_"+impar
-                        cam_name = "uvis_"+impar
+                        cam_name = "UVIS_"+impar
                         if cam_name in my_config.parameters:
                             p.write(
                                f'{param_name} = {my_config.parameters[cam_name]}\n')
@@ -109,7 +109,7 @@ if __name__ == "__main__":
                     parcount=0
                     for impar in im_pars:
                         param_name = "img"+str(count)+"_"+impar
-                        cam_name = "ir_"+impar
+                        cam_name = "IR_"+impar
                         if cam_name in my_config.parameters:
                             p.write(
                                f'{param_name} = {my_config.parameters[cam_name]}\n')
@@ -127,7 +127,7 @@ if __name__ == "__main__":
                     parcount=0
                     for impar in im_pars:
                         param_name = "img"+str(count)+"_"+impar
-                        cam_name = "wfc_"+impar
+                        cam_name = "WFC_"+impar
                         if cam_name in my_config.parameters:
                             p.write(
                                f'{param_name} = {my_config.parameters[cam_name]}\n')
@@ -240,11 +240,10 @@ if __name__ == "__main__":
 # Define global parameters
         my_job.logprint(
             f'Checking for user specified global parameters and defining any unspecified global parameters')
-        params_global = ["MaxIT","PSFPhot", "PSFPhotIt", "FitSky", "SkipSky", "SkySig", "SigFindMult", "FSat", 
-                         "PosStep", "sigPSF", "UseWCS", "NoiseMult", "SecondPass", "Force1", "WFC3UVISpsfType",
-                         "ACSpsfType","WFC3IRpsfType","ACSuseCTE", "WFC3useCTE","FlagMask","InterpPSFlib",
-                         "CombineChi", "RCombine", "PSFres"]
-        glob_vals = ["25","1","2","2","1","2.25","0.85","0.999","0.25","5.0","2","0.1","5","0","0","0","0","0","0","4","1","0","1.5","1"]  
+        params_global = ["UseWCS","PSFPhot","FitSky","SkipSky","SkySig","SecondPass","SearchMode","SigFind","SigFindMult","SigFinal","MaxIT","NoiseMult","FSat","FlagMask","ApCor","Force1","Align","aligntol","alignstep","ACSuseCTE","WFC3useCTE","Rotate","RCentroid","PosStep","dPosMax","RCombine","SigPSF","PSFres","psfoff","DiagPlotType","CombineChi","ACSpsfType","WFC3IRpsfType","WFC3UVISpsfType","PSFPhotIt"]
+        glob_vals = ["2","1","2","2","2.25","5","1","3.0","0.85","3.5","25","0.10","0.999","4","1","1","2","4","2","0","0","1","1","0.1","2.5","1.415","3.0","1","0.0","PNG","1","0","0","0","2"]
+        # params_global = ["MaxIT","PSFPhot", "PSFPhotIt", "FitSky", "SkipSky", "SkySig", "SigFindMult", "FSat", "PosStep", "sigPSF", "UseWCS", "NoiseMult", "SecondPass", "Force1", "WFC3UVISpsfType","ACSpsfType","WFC3IRpsfType","ACSuseCTE", "WFC3useCTE","FlagMask","InterpPSFlib", "CombineChi", "RCombine", "PSFres"]
+        #glob_vals = ["25","1","2","2","1","2.25","0.85","0.999","0.25","5.0","2","0.1","5","0","0","0","0","0","0","4","1","0","1.5","1"]  
         paramcount = 0
         for globpar in params_global:
             if globpar in my_config.parameters:  # check for any global parameters in config

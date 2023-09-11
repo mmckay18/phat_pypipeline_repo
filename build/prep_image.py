@@ -82,52 +82,60 @@ if __name__ == "__main__":
         ["wfc3mask", dp_fullpath], capture_output=True, text=True)
     my_job.logprint(f'wfc3mask stdout: {wfc3mask_output}')
 
-    #! SPLITGROUPS - Splits the SCI images into their own fits files.
-    proc_path = this_dp.target.datapath + "/proc_default/"
-    my_job.logprint(f'Starting splitgroups on {dp_fullpath}')
-    splitgroups_output = subprocess.run(
-        ["splitgroups", dp_fullpath], capture_output=True, text=True, cwd=proc_path)
-    my_job.logprint(f'splitgroups stdout: {splitgroups_output}\n')
+    #! SPLITGROUPS - Splits the SCI images into their own fits files for HST images.
+    if "JWST" not in this_dp.options["telescope"]:
+        proc_path = this_dp.target.datapath + "/proc_default/"
+        my_job.logprint(f'Starting splitgroups on {dp_fullpath}')
+        splitgroups_output = subprocess.run(
+            ["splitgroups", dp_fullpath], capture_output=True, text=True, cwd=proc_path)
+        my_job.logprint(f'splitgroups stdout: {splitgroups_output}\n')
 
 
-    #! make data products from splitgroups output <'....*chip1.fits'>
-    for splitgroup_output_file in glob.glob(proc_path + this_dp.filename[:-5] + '*chip*.fits'):
-        sp_dp_filename = splitgroup_output_file.split("/")[-1]
-        my_job.logprint(f'created dataproduct for {sp_dp_filename}')
-        sp_dp = wp.DataProduct(my_config,
-                               filename=sp_dp_filename, group="proc", data_type="image", subtype="splitgroups", options={"detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]})
+        #! make data products from splitgroups output <'....*chip1.fits'>
+        for splitgroup_output_file in glob.glob(proc_path + this_dp.filename[:-5] + '*chip*.fits'):
+            sp_dp_filename = splitgroup_output_file.split("/")[-1]
+            sp_dp_subtype = this_dp.subtype+"_"+prepped
+            my_job.logprint(f'created dataproduct for {sp_dp_filename}')
+            sp_dp = wp.DataProduct(my_config,filename=sp_dp_filename, group="proc", data_type="image", subtype=sp_dp_subtype, options={"detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]})
             
-        my_job.logprint(f'DP {sp_dp_filename}: {sp_dp}')
-        my_job.logprint(f'with option {sp_dp.options["detector"]}')
+            my_job.logprint(f'DP {sp_dp_filename}: {sp_dp}')
+            my_job.logprint(f'with option {sp_dp.options["detector"]}')
 
-        #! CALCSKY - Calculates the sky background for each image for UVIS or IR.
-        if this_dp.options["detector"] == "UVIS":
-            my_job.logprint(
-                f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
-            calcsky_output = subprocess.run(
-                ["calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
-            my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
+            #! CALCSKY - Calculates the sky background for each image for UVIS or IR.
+            if this_dp.options["detector"] == "UVIS":
+                my_job.logprint(
+                    f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
+                calcsky_output = subprocess.run(
+                    ["calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+                my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
 
-        if this_dp.options["detector"] == "WFC":
-            my_job.logprint(
-                f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
-            calcsky_output = subprocess.run(
-                ["calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
-            my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
+            if this_dp.options["detector"] == "WFC":
+                my_job.logprint(
+                    f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
+                calcsky_output = subprocess.run(
+                    ["calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+                my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
 
-        elif this_dp.options["detector"] == "IR":
-            my_job.logprint(
-                f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
-            calcsky_output = subprocess.run(
-                ["calcsky", sp_dp.filename[:-5], "10", "25", "2", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
-            my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
+            elif this_dp.options["detector"] == "IR":
+                my_job.logprint(
+                    f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
+                calcsky_output = subprocess.run(
+                    ["calcsky", sp_dp.filename[:-5], "10", "25", "2", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+                my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
 
-        elif this_dp.options["detector"] == "None":
-            my_job.logprint(
-                f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
-            calcsky_output = subprocess.run(
-                ["calcsky", sp_dp.filename[:-5], "10", "25", "2", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
-            my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
+            elif this_dp.options["detector"] == "None":
+                my_job.logprint(
+                    f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
+                calcsky_output = subprocess.run(
+                    ["calcsky", sp_dp.filename[:-5], "10", "25", "2", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+                my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
+    else:
+        #Just run calcsky on JWST images   
+        my_job.logprint(
+            f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
+        calcsky_output = subprocess.run(
+            ["calcsky", this_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+        my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
 
     # * Counter: Update parent job option to increase by 1 when done running splitgroups
     compname = this_event.options['compname']

@@ -35,6 +35,10 @@ if __name__ == "__main__":
             my_job.logprint(f"Tagged DP: {dp}, {dp.subtype}")
         else:
             pass
+    tagged_dps = wp.DataProduct.select(
+        config_id=my_config.config_id, 
+        data_type="image", 
+        subtype="SCIENCE_prepped")
     my_target = wp.Target(this_event.options["target_id"])
     my_job.logprint(f"###### This Target: {my_target}\n")
 
@@ -87,60 +91,35 @@ if __name__ == "__main__":
                 defined = []
                 count += 1
                 img = 'img'+str(count)
-                if dp.options['detector']=="UVIS":
-                    parcount=0
-                    for impar in im_pars:
-                        param_name = "img"+str(count)+"_"+impar
-                        cam_name = "UVIS_"+impar
-                        if cam_name in my_config.parameters:
-                            p.write(
-                               f'{param_name} = {my_config.parameters[cam_name]}\n')
-                            my_job.logprint(
-                               f'{param_name} parameter found in configuration')
-                            defined.append(1)                           
-                        else:
-                            p.write(
-                               f'{param_name} = {def_vals[parcount]}\n')
-                            my_job.logprint(
-                               f'{param_name} parameter default')
-                            defined.append(1)                           
-                        parcount += 1
-                if dp.options['detector']=="IR":
-                    parcount=0
-                    for impar in im_pars:
-                        param_name = "img"+str(count)+"_"+impar
-                        cam_name = "IR_"+impar
-                        if cam_name in my_config.parameters:
-                            p.write(
-                               f'{param_name} = {my_config.parameters[cam_name]}\n')
-                            my_job.logprint(
-                               f'{param_name} parameter found in configuration')
-                            defined.append(1)                           
-                        else:
-                            p.write(
-                               f'{param_name} = {def_vals[parcount]}\n')
-                            my_job.logprint(
-                               f'{param_name} parameter default')
-                            defined.append(1)                           
-                        parcount += 1
-                if dp.options['detector']=="WFC":
-                    parcount=0
-                    for impar in im_pars:
-                        param_name = "img"+str(count)+"_"+impar
-                        cam_name = "WFC_"+impar
-                        if cam_name in my_config.parameters:
-                            p.write(
-                               f'{param_name} = {my_config.parameters[cam_name]}\n')
-                            my_job.logprint(
-                               f'{param_name} parameter found in configuration')
-                            defined.append(1)                           
-                        else:
-                            p.write(
-                               f'{param_name} = {def_vals[parcount]}\n')
-                            my_job.logprint(
-                               f'{param_name} parameter default')
-                            defined.append(1)                           
-                        parcount += 1
+                parcount=0
+                for impar in im_pars:
+                    param_name = "img"+str(count)+"_"+impar
+                    cam_name = dp.options['detector']+"_"+impar
+                    try:
+                        p.write(
+                           f'{param_name} = {my_config.parameters[cam_name]}\n')
+                        my_job.logprint(
+                           f'{param_name} parameter found in configuration')
+                        defined.append(1)    
+                    except:
+                        p.write(
+                           f'{param_name} = {def_vals[parcount]}\n')
+                        my_job.logprint(
+                           f'{param_name} parameter default')
+                        defined.append(1)     
+                    #if cam_name in my_config.parameters:
+                    #    p.write(
+                    #       f'{param_name} = {my_config.parameters[cam_name]}\n')
+                    #    my_job.logprint(
+                    #       f'{param_name} parameter found in configuration')
+                    #    defined.append(1)                           
+                    #else:
+                    #    p.write(
+                    #       f'{param_name} = {def_vals[parcount]}\n')
+                    #    my_job.logprint(
+                    #       f'{param_name} parameter default')
+                    #    defined.append(1)                           
+                    parcount += 1
 ############################                    
         #params = ["img_shift", "img_xform", "img_RAper",
         #          "img_RChi", "img_RSky", "img_RSky2", "img_RPSF", "img_aprad", "img_apsky"]
@@ -246,12 +225,19 @@ if __name__ == "__main__":
         #glob_vals = ["25","1","2","2","1","2.25","0.85","0.999","0.25","5.0","2","0.1","5","0","0","0","0","0","0","4","1","0","1.5","1"]  
         paramcount = 0
         for globpar in params_global:
-            if globpar in my_config.parameters:  # check for any global parameters in config
+            try:
+                my_config.parameters[globpar]
                 p.write(f'{globpar} = {my_config.parameters[globpar]}\n')
                 my_job.logprint(f'{globpar} parameter found in configuration')
-            else:  # define defaults if not defined in config
+            except:
                 p.write(f'{globpar} = {glob_vals[paramcount]}\n')
                 my_job.logprint(f'{globpar} parameter set to default')
+            #if globpar in my_config.parameters:  # check for any global parameters in config
+            #    p.write(f'{globpar} = {my_config.parameters[globpar]}\n')
+            #    my_job.logprint(f'{globpar} parameter found in configuration')
+            #else:  # define defaults if not defined in config
+            #    p.write(f'{globpar} = {glob_vals[paramcount]}\n')
+            #    my_job.logprint(f'{globpar} parameter set to default')
             paramcount += 1
 ####################
             #    if globpar == "photsec":

@@ -33,13 +33,13 @@ def make_unsorted_df(my_input):
     for my_rawdp in my_input.rawdataproducts:
         my_rawdp_fits_path = my_rawdp.path
         hdu = fits.open(my_rawdp_fits_path)
-        TELESCOP = raw_hdu[0].header["TELESCOP"]
-        if (JWST not in TELESCOP):
+        TELESCOP = hdu[0].header["TELESCOP"]
+        if ("JWST" not in TELESCOP):
             PROP_ID = str(hdu[0].header["PROPOSID"])
             TARGNAME = hdu[0].header["TARGNAME"]
         else:
-            TARGNAME = raw_hdu[0].header["TARGPROP"]
-            PROP_ID = raw_hdu[0].header["PROGRAM"]
+            TARGNAME = hdu[0].header["TARGPROP"]
+            PROP_ID = hdu[0].header["PROGRAM"]
         FILENAME = hdu[0].header["FILENAME"]
         FILTER = hdu[0].header["FILTER"]
         TARGET_NAME = PROP_ID + "_" + TARGNAME
@@ -117,46 +117,23 @@ if __name__ == "__main__":
             my_rawdp = my_input.dataproduct(
                 filename=dp_fname, group="raw", data_type="image"
             )
-            proc_path = f"{target.datapath}/proc_default/"
-
-            #! Make copy from raw directory to proc directory
-            my_procdp = my_rawdp.make_copy(path=proc_path, group="proc")
-
-            # ! CHANGE NAME OF PROC FILES
-            hdu = fits.open(dp_fname_path)
-            filter_name = hdu[0].header["FILTER"]
-            dp_fname = dp_fname.split("_")
-            dp_fname = f"{dp_fname[0]}_{filter_name}_{dp_fname[1]}"
-            my_job.logprint(f"{dp_fname}")
-            # proc_dp_fname_path = proc_path + dp_fname  # * new dataproduct path
-
-            # ! New dataproduct for proc directory files
-            my_procdp.filename = dp_fname  # ! Changes filename
-            my_procdp = wp.DataProduct(
-                my_config,
-                filename=dp_fname,
-                group="proc",
-                data_type="image",
-                subtype="tagged",
-            )
-            my_job.logprint(f"{my_procdp}, {tot_untagged_im}")
-            my_job.logprint(f"{type(my_procdp.dp_id)}, {my_procdp.filename}")
 
             # Append current dataproduct id to list
-            dp_id_list.append(my_procdp.dp_id)
+            dp_id_list.append(my_rawdp.dp_id)
 
             # Fire next task (tag_image)
             my_job.logprint("Firing Job")
             my_event = my_job.child_event(
                 name="new_image",
-                tag=my_procdp.dp_id,
+                tag=my_rawdp.dp_id,
                 options={
-                    "dp_id": my_procdp.dp_id,
+                    "dp_id": my_rawdp.dp_id,
                     "to_run": tot_untagged_im,
-                    "filename": my_procdp.filename,
+                    "filename": my_rawdp.filename,
                     "target_name": target.name,
                     "target_id": target.target_id,
                     "dataproduct_list": dp_id_list,
+                    "dp_fname_path" : dp_fname_path,
                     "config_id": my_config.config_id,
                     "comp_name": "completed_" + target.name,
                 },

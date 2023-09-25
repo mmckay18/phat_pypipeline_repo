@@ -85,8 +85,8 @@ if __name__ == "__main__":
             im_fullfile = dp.filename
             im_file = im_fullfile.split('.fits')[0]  # get rid of extension
             p.write(f'img{loc}_file = {im_file}\n')
-            im_pars = ["apsky","shift","xform","raper","rchi","rsky0","rsky1","rsky2","rpsf"]
-            def_vals = ["20 35","0 0","1 0 0","2","1.5","15","35","3 10","15"]
+            im_pars = ["apsky","shift","xform","raper","rchi","rsky0","rsky1","rpsf"]
+            def_vals = ["20 35","0 0","1 0 0","2","1.5","15","35","15"]
             if 'drc' not in im_file:
                 defined = []
                 count += 1

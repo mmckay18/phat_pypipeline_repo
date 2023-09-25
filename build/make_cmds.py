@@ -191,6 +191,7 @@ if __name__ == "__main__":
     df = pd.read_hdf(photfile, key='data')
     ds = vaex.from_pandas(df)
     filters = my_config.parameters["filters"].split(',')
+    filters.sort()
     # how choose filters WHOM KNOWS
     #make_cmd(ds, red_filter, blue_filter, y_filter)
     #make_cmd(ds, 'f160w', 'f475w', 'f160w')

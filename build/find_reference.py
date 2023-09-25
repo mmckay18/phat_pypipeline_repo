@@ -30,8 +30,8 @@ if __name__ == "__main__":
     # dataproducts for the drizzled images for my_target
     my_dps = wp.DataProduct.select(
         config_id=my_config.config_id, 
-        data_type="image", 
-        subtype="DRIZZLED")
+        data_type="DRIZZLED", 
+        )
     # my_dps = wp.DataProduct.select(wp.si.DataProduct.filename.regexp_match("final*"), dpowner_id=my_job.config_id)
     # my_job.logprint(f"{my_dps}")
 
@@ -86,7 +86,9 @@ if __name__ == "__main__":
 
 # Firing the next event
     tagged_dps = wp.DataProduct.select(
-        config_id=my_config.config_id, data_type="image", subtype="tagged")  # all tagged dps
+        #config_id=my_config.config_id, data_type="SCIENCE", subtype="tagged")  # all tagged dps
+        config_id=my_config.config_id, subtype="SCIENCE")  # all tagged dps
+    print("LEN",len(tagged_dps))
     reference_dp = [new_ref_dp]  # making reference dp into a list
     all_dps = tagged_dps+reference_dp  # add reference dp to tagged dps
     my_job.logprint(f"ALL DPS {all_dps}")

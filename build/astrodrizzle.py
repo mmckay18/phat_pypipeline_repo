@@ -178,10 +178,13 @@ if __name__ == "__main__":
 
     # Getting image list and setting filter specific parameters
     my_dp = wp.DataProduct.select(
-        dpowner_id=my_config.config_id, data_type="image", type="SCIENCE"
+        #dpowner_id=my_config.config_id, data_type="image", type="SCIENCE"
+        dpowner_id=my_config.config_id, group="proc"
     )
     target_im = []
+    print("DPs are",len(my_dp))
     for dp in my_dp:
+        my_job.logprint(f"testing {dp.filename}")
         if (
             dp.options["filter"] == my_filter
         ):  # for the filter j, pulls out which dps have the same filter
@@ -272,7 +275,7 @@ if __name__ == "__main__":
         my_config,
         filename=drizzleim_path,
         # Create dataproduct owned by config for the target
-        group="proc", data_type="image", subtype="DRIZZLED",
+        group="proc", data_type="DRIZZLED", subtype="tagged",
         options={
             "filename": FILENAME,
             "telescope": TELESCOP,
@@ -285,7 +288,7 @@ if __name__ == "__main__":
             "position_angle": PA_V3,
             "detector": DETECTOR,
             "filter": FILTER,
-            "type": DRIZZLED,
+            "type": "DRIZZLED",
         },
     )
 

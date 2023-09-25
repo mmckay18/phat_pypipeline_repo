@@ -43,7 +43,11 @@ def tag_event_dataproduct(this_event):
     """
 
     # my_job.logprint(f"{this_event.options}")
+
+    my_job = wp.Job()
+    my_config = my_job.config
     this_dp_id = this_event.options["dp_id"]
+    dp_fname_path = this_event.options["dp_fname_path"]
     this_target_id = this_event.options["target_id"]
     # config_id = this_event.options["config_id"]
     # filename = this_event.options["filename"]
@@ -51,11 +55,51 @@ def tag_event_dataproduct(this_event):
 
     # Call dataproduct
     # this_dp = wp.DataProduct(this_dp_id, filename=filename, group="proc")
-    this_dp = wp.DataProduct(int(this_dp_id), group="proc")
+    my_rawdp = wp.DataProduct(int(this_dp_id), group="raw")
+    target = wp.Target(this_target_id)
+    proc_path = f"{target.datapath}/proc_default/"
+
+    #! Make copy from raw directory to proc directory
+    my_procdp = my_rawdp.make_copy(path=proc_path, group="proc")
+    dp_fname = my_procdp.filename
+
+    # ! CHANGE NAME OF PROC FILES
+    hdu = fits.open(dp_fname_path)
+    filter_name = hdu[0].header["FILTER"]
+    dp_fname = dp_fname.split("_")
+    dp_fname = f"{dp_fname[0]}_{filter_name}_{dp_fname[1]}"
+    my_job.logprint(f"{dp_fname}")
+    # proc_dp_fname_path = proc_path + dp_fname  # * new dataproduct path
+
+    # ! New dataproduct for proc directory files
+    my_procdp.filename = dp_fname  # ! Changes filename
+    FILENAME = dp_fname
+    if ("_i2d" in FILENAME):
+        TYPE = "DRIZZLED"
+    if ("_drc" in FILENAME):
+        TYPE = "DRIZZLED"
+    if ("_flc" in FILENAME):
+        TYPE = "SCIENCE"
+    if ("_flt" in FILENAME):
+        TYPE = "SCIENCE"
+    if ("_crf" in FILENAME):
+        TYPE = "SCIENCE"
+    if ("_cal" in FILENAME):
+        TYPE = "SCIENCE"
+    my_procdp = wp.DataProduct(
+        my_config,
+        filename=dp_fname,
+        group="proc",
+        data_type="tagged",
+        subtype=TYPE
+    )
+    #my_job.logprint(f"{my_procdp}, {tot_untagged_im}")
+    my_job.logprint(f"{type(my_procdp.dp_id)}, {my_procdp.filename}")
+
     # my_job.logprint(f"{this_dp}")
     # my_job.logprint(f"{this_dp.target.datapath}")
     # * Dataproduct file pat
-    procdp_path = this_dp.target.datapath + "/proc_default/" + this_dp.filename
+    procdp_path = my_procdp.target.datapath + "/proc_default/" + my_procdp.filename
 
     # Open FITS files and extract desired parameters to tag each image
     raw_hdu = fits.open(procdp_path)
@@ -81,31 +125,19 @@ def tag_event_dataproduct(this_event):
     DETECTOR = raw_hdu[0].header["DETECTOR"]
     CAM = raw_hdu[0].header["INSTRUME"]
     FILTER = raw_hdu[0].header["FILTER"]
-    if ("_i2d" in FILENAME):
-        TYPE = "DRIZZLED"
-    if ("_drc" in FILENAME):
-        TYPE = "DRIZZLED"
-    if ("_flc" in FILENAME):
-        TYPE = "SCIENCE"
-    if ("_flt" in FILENAME):
-        TYPE = "SCIENCE"
-    if ("_crf" in FILENAME):
-        TYPE = "SCIENCE"
-    if ("_cal" in FILENAME):
-        TYPE = "SCIENCE"
     raw_hdu.close()
 
     # tag_event_dataproduct
-    this_dp_id = this_event.options["dp_id"]
-    this_dp = wp.DataProduct(
-        int(this_dp_id),subtype=TYPE
+    my_procdp_id = my_procdp.dp_id
+    my_procdp = wp.DataProduct(
+        int(my_procdp_id),
         options={
             "filename": FILENAME,
             "ra": RA,
             "dec": DEC,
             "telescope": TELESCOP,
             "detector": DETECTOR,
-            "orientation": ORINT,
+            "orientation": PA,
             "Exptime": EXPTIME,
             "Expflag": EXPFLAG,
             "cam": CAM,
@@ -113,13 +145,14 @@ def tag_event_dataproduct(this_event):
             "targname": TARGNAME,
             "proposalid": PROPOSALID,
             "type": TYPE,
-            "dp_id": this_dp_id,
+            "dp_id": my_procdp_id,
             "target_id": this_target_id,
         },
     )
     my_job.logprint("Tagged Image Done")
-    my_job.logprint(f"Tagged Image options{this_dp.options}")
-    return this_dp
+    my_job.logprint(f"Subtype {my_procdp.subtype}")
+    my_job.logprint(f"Tagged Image options{my_procdp.options}")
+    return my_procdp
 
 def imgclean(imgname, mdl, threshold, update=True):
     """
@@ -211,8 +244,6 @@ if __name__ == "__main__":
     #! Write parent job event option parameters
     compname = this_event.options["comp_name"]
     parent_job = this_event.parent_job
-    my_job.logprint(f"parent_job options: {parent_job.options}")
-    my_job.logprint(f"{update_option}/{to_run} TAGGED")
 
     # ! Start tag_event_dataproduct function
     my_dp = tag_event_dataproduct(this_event)
@@ -254,20 +285,22 @@ if __name__ == "__main__":
 
         elif my_config_param['RUN_DEEPCR'] == 'F':
             my_job.logprint(f"Not running DeepCR")
-            tag = str(update_option),
+            #tag = str(update_option),
 
         elif my_config_param['RUN_DEEPCR'] == 'Keep':
             my_job.logprint(f"Keeping DQ as RUN_DEEPCR is set to Keep.")
-            tag = str(update_option),
+            #tag = str(update_option),
 
         else:
             my_job.logprint(f"RUN_DEEPCR parameter not set... Not running DeepCR.")
-            tag = str(update_option),
+            #tag = str(update_option),
 
     # ! Check of all images have been tagged
     update_option = parent_job.options[compname]
     update_option += 1
     to_run = this_event.options["to_run"]
+    my_job.logprint(f"parent_job options: {parent_job.options}")
+    my_job.logprint(f"{update_option}/{to_run} TAGGED")
     if this_event.options["to_run"] == update_option:
         my_job.logprint(f"This Job Options: {my_job.options}")
         compname = "completed_" + this_event.options["target_name"]
@@ -278,7 +311,7 @@ if __name__ == "__main__":
         # List of all filters in target
         my_config = my_job.config  # Get configuration for the job
         my_dp = wp.DataProduct.select(
-            dpowner_id=my_config.config_id, data_type="image", subtype="tagged"
+            dpowner_id=my_config.config_id, data_type="tagged"
         )  # Get dataproducts associated with configuration (ie. dps for my_target)
 
         filters = []  # Making list of filters for target
@@ -290,12 +323,12 @@ if __name__ == "__main__":
                jwfilters.append(dp.options["filter"])
             else:
                adrizfilters.append(dp.options["filter"])
-            all_filters = set(
-                filters
-            )  # Remove duplicates to get array of different filters for target
-            adriz_filters = set(
-                adrizfilters
-            )  # Remove duplicates to get array of different filters for target
+        all_filters = set(
+            filters
+        )  # Remove duplicates to get array of different filters for target
+        adriz_filters = set(
+            adrizfilters
+        )  # Remove duplicates to get array of different filters for target
 
         my_config.parameters["filters"] = ",".join(
             all_filters
@@ -309,7 +342,7 @@ if __name__ == "__main__":
         num_all_filters = len(all_filters)
         num_adriz_filters = len(adriz_filters)
         my_job.logprint(
-            f"{num_all_filters} filters found for target {dp.target.name}")
+            f"{num_all_filters} filters found for target {this_event.options['target_name']}")
 
         #! Fire next task astrodrizzle
         my_job.logprint("FIRING NEXT ASTRODRIZZLE TASK")
@@ -333,7 +366,7 @@ if __name__ == "__main__":
                 my_event.fire()
         else:
             my_job.logprint(
-                f"AstroDrizzle step complete for {my_target.name}, firing find reference task.")
+                f"AstroDrizzle step complete for {this_event.options['target_name']}, firing find reference task.")
             next_event = my_job.child_event(
                 name="find_ref",
                 options={"target_id": this_event.options["target_id"]}

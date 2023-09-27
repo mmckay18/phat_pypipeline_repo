@@ -56,7 +56,7 @@ if __name__ == "__main__":
             #    errlog.write(f'{dolphot_output.stderr}')
 
             dolphot_output = subprocess.Popen(
-                ["dolphot", dolphotout, '-p' + param_path + "/" + param_filename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, cwd=procpath)
+                [my_config.parameters["dolphot_path"]+"dolphot", dolphotout, '-p' + param_path + "/" + param_filename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, cwd=procpath)
             
             for line in dolphot_output.stdout:
                # sys.stdout.write(line)

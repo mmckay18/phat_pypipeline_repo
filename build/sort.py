@@ -80,7 +80,7 @@ if __name__ == "__main__":
         # * Get list of Filename for each target
         rawdp_fn_list = sorted_df["FILENAME"].tolist()
         # my_job.logprint(f"{rawdp_fn_list}")  # * for debugging purposes
-
+        print("FN ",rawdp_fn_list)
         # * Creates targets from the raw dataproducts in Unsorted directory
         my_targets = my_input.target(name=target_name, rawdps_to_add=rawdp_fn_list)
         my_job.logprint(

@@ -9,7 +9,7 @@ import time
 
 #! - It should take the data product ID it gets handed,
 #! - get the file associated with it,
-#! - and run the correct DOLPHOT masking routine for the camera that produced it.
+#! - and run the correct DOLPHOT masking routine for the detector that produced it.
 #! - Then it should run the DOLPHOT splitgroups routine on the output,.
 #! - Then it should run calcsky on the output from splitgroups.
 #! - Finally, it needs to make data products for all of the output files,
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     my_job.logprint(
         f"Dataproduct Subtype: {this_dp_subtype}, Datatype{this_dp.data_type}\n")
     #! WFC3MASK - Uses the DQ array to remove bad pixels from the image and convert image to units of electron.
-    if this_dp_subtype == "drizzled":
+    if this_dp_subtype == "DRIZZLED":
         my_job.logprint(dp_fullpath)
         fitsname = dp_fullpath
         try: 
@@ -77,17 +77,28 @@ if __name__ == "__main__":
         except:
            pass
 
-    my_job.logprint(f'Starting wfc3mask on {dp_fullpath}')
-    wfc3mask_output = subprocess.run(
-        ["wfc3mask", dp_fullpath], capture_output=True, text=True)
-    my_job.logprint(f'wfc3mask stdout: {wfc3mask_output}')
+    my_job.logprint(f'Starting mask on {dp_fullpath}')
+    my_job.logprint(f'Detector {this_dp.options["detector"]}')
+    if "UVIS" in this_dp.options["detector"]:
+        mask_output = subprocess.run(
+             [my_config.parameters['dolphot_path']+"wfc3mask", dp_fullpath], capture_output=True, text=True)
+    if "IR" in this_dp.options["detector"] and "NIRCAM" not in this_dp.options["detector"]:
+        mask_output = subprocess.run(
+             [my_config.parameters['dolphot_path']+"wfc3mask", dp_fullpath], capture_output=True, text=True)
+    if "WFC" in this_dp.options["detector"]:
+        mask_output = subprocess.run(
+             [my_config.parameters['dolphot_path']+"acsmask", dp_fullpath], capture_output=True, text=True)
+    if "NIRCAM" in this_dp.options["detector"]:
+        mask_output = subprocess.run(
+             [my_config.parameters['dolphot_path']+"nircammask", dp_fullpath], capture_output=True, text=True)
+    my_job.logprint(f'mask stdout: {mask_output}')
 
     #! SPLITGROUPS - Splits the SCI images into their own fits files for HST images.
     if "JWST" not in this_dp.options["telescope"]:
         proc_path = this_dp.target.datapath + "/proc_default/"
         my_job.logprint(f'Starting splitgroups on {dp_fullpath}')
         splitgroups_output = subprocess.run(
-            ["splitgroups", dp_fullpath], capture_output=True, text=True, cwd=proc_path)
+            [my_config.parameters['dolphot_path']+"splitgroups", dp_fullpath], capture_output=True, text=True, cwd=proc_path)
         my_job.logprint(f'splitgroups stdout: {splitgroups_output}\n')
 
 
@@ -106,35 +117,38 @@ if __name__ == "__main__":
                 my_job.logprint(
                     f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
                 calcsky_output = subprocess.run(
-                    ["calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+                    [my_config.parameters['dolphot_path']+"calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
                 my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
 
             if this_dp.options["detector"] == "WFC":
                 my_job.logprint(
                     f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
                 calcsky_output = subprocess.run(
-                    ["calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+                    [my_config.parameters['dolphot_path']+"calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
                 my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
 
             elif this_dp.options["detector"] == "IR":
                 my_job.logprint(
                     f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
                 calcsky_output = subprocess.run(
-                    ["calcsky", sp_dp.filename[:-5], "10", "25", "2", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+                    [my_config.parameters['dolphot_path']+"calcsky", sp_dp.filename[:-5], "10", "25", "2", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
                 my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
 
             elif this_dp.options["detector"] == "None":
                 my_job.logprint(
                     f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
                 calcsky_output = subprocess.run(
-                    ["calcsky", sp_dp.filename[:-5], "10", "25", "2", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+                    [my_config.parameters['dolphot_path']+"calcsky", sp_dp.filename[:-5], "10", "25", "2", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
                 my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
     else:
+        sp_dp = wp.DataProduct(my_config,filename=this_dp.filename, group="proc", data_type="image", subtype=this_dp.subtype+"_prepped", options={"detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]})
         #Just run calcsky on JWST images   
+
+        my_job.logprint(f'created {sp_dp.filename} with subtype {sp_dp.subtype}')
         my_job.logprint(
-            f'Starting calcsky on {sp_dp.filename[:-5]}, {this_dp.options["detector"]}')
+            f'Starting calcsky on {this_dp.filename[:-5]}, {this_dp.options["detector"]}')
         calcsky_output = subprocess.run(
-            ["calcsky", this_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+            [my_config.parameters['dolphot_path']+"calcsky", this_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
         my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
 
     # * Counter: Update parent job option to increase by 1 when done running splitgroups
@@ -146,7 +160,7 @@ if __name__ == "__main__":
 
     # When last image is done running splitgroups, run calcsky for outputs
 
-    if update_option == to_run:
+    if update_option >= to_run:
 
         #! Makes CALCSKY fits to pipeline dataproducts
         prep_dp_id_list = ''

@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # dataproducts for the drizzled images for my_target
     my_dps = wp.DataProduct.select(
         config_id=my_config.config_id, 
-        data_type="DRIZZLED", 
+        subtype="DRIZZLED", 
         )
     # my_dps = wp.DataProduct.select(wp.si.DataProduct.filename.regexp_match("final*"), dpowner_id=my_job.config_id)
     # my_job.logprint(f"{my_dps}")

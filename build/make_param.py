@@ -23,18 +23,19 @@ if __name__ == "__main__":
     # List of DP from prep image:
     # list_of_dps = this_event.options
     tagged_dps = []
-    for dp in my_config.procdataproducts:
-        # my_job.logprint(f"DP: {dp}, {dp.subtype}")
-        if "drc.chip1.fits" in dp.filename:
-            ref_dp = dp
-            dp.subtype == "reference"  # ? Not setting the subtype?
-            my_job.logprint(f"Reference DP: {dp}, {dp.subtype}")
+    #for dp in my_config.procdataproducts:
+    #    # my_job.logprint(f"DP: {dp}, {dp.subtype}")
+    #    if "drc.chip1.fits" in dp.filename:
+    #        ref_dp = dp
+    #        dp.subtype == "reference"  # ? Not setting the subtype?
+    #        my_job.logprint(f"Reference DP: {dp}, {dp.subtype}")
 
-        if "drc.chip1.fits" not in dp.filename and dp.subtype == "splitgroups":
-            tagged_dps.append(dp)
-            my_job.logprint(f"Tagged DP: {dp}, {dp.subtype}")
-        else:
-            pass
+    #    if "drc.chip1.fits" not in dp.filename and dp.subtype == "splitgroups":
+    #        tagged_dps.append(dp)
+    #        my_job.logprint(f"Tagged DP: {dp}, {dp.subtype}")
+    #    else:
+    #        pass
+    ref_dp= wp.DataProduct.select(config_id=my_config.config_id,subtype="reference_prepped")
     tagged_dps = wp.DataProduct.select(
         config_id=my_config.config_id, 
         data_type="image", 

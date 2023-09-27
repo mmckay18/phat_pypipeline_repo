@@ -66,8 +66,8 @@ def tag_event_dataproduct(this_event):
     # ! CHANGE NAME OF PROC FILES
     hdu = fits.open(dp_fname_path)
     filter_name = hdu[0].header["FILTER"]
-    dp_fname = dp_fname.split("_")
-    dp_fname = f"{dp_fname[0]}_{filter_name}_{dp_fname[1]}"
+    dp_fname = dp_fname.rpartition("_")
+    dp_fname = f"{dp_fname[0]}_{filter_name}_{dp_fname[2]}"
     my_job.logprint(f"{dp_fname}")
     # proc_dp_fname_path = proc_path + dp_fname  # * new dataproduct path
 
@@ -114,6 +114,7 @@ def tag_event_dataproduct(this_event):
         EXPFLAG = raw_hdu[0].header["EXPFLAG"]
         TARGNAME = raw_hdu[0].header["TARGNAME"]
         PROPOSALID = raw_hdu[0].header["PROPOSID"]
+        DETECTOR = raw_hdu[0].header["DETECTOR"]
     else:
         RA = raw_hdu[0].header["TARG_DEC"]
         DEC = raw_hdu[0].header["TARG_DEC"]
@@ -122,7 +123,7 @@ def tag_event_dataproduct(this_event):
         EXPFLAG = "MANNORMAL"
         TARGNAME = raw_hdu[0].header["TARGPROP"]
         PROPOSALID = raw_hdu[0].header["PROGRAM"]
-    DETECTOR = raw_hdu[0].header["DETECTOR"]
+        DETECTOR = raw_hdu[0].header["INSTRUME"]
     CAM = raw_hdu[0].header["INSTRUME"]
     FILTER = raw_hdu[0].header["FILTER"]
     raw_hdu.close()

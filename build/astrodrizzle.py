@@ -275,7 +275,7 @@ if __name__ == "__main__":
         my_config,
         filename=drizzleim_path,
         # Create dataproduct owned by config for the target
-        group="proc", data_type="DRIZZLED", subtype="tagged",
+        group="proc", subtype="DRIZZLED",
         options={
             "filename": FILENAME,
             "telescope": TELESCOP,

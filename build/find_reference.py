@@ -73,10 +73,13 @@ if __name__ == "__main__":
         #     ref_dp.filename.split('_drc')[0] + '_drc.fits'
         # my_job.logprint(f"Reference image name is {ref_name}")
 
-# Add new dp for reference image
-    new_ref_dp = ref_dp.make_copy(
-        path=f"{my_target.datapath}/proc_default/", subtype="reference")
-    my_job.logprint(f"{new_ref_dp}")
+# Update dp for reference image
+    #new_ref_dp = ref_dp.make_copy(
+    #    path=f"{my_target.datapath}/proc_default/", subtype="reference")
+    new_ref_dp = wp.DataProduct(my_config, filename=ref_dp.filename, group="proc")
+    new_ref_dp.subtype = "reference"
+    new_ref_dp.options = {"detector": ref_dp.options["detector"], "Exptime": ref_dp.options["Exptime"], "filter": ref_dp.options["filter"]}
+    my_job.logprint(f"Reference is {new_ref_dp.filename} is subtype {new_ref_dp.subtype}")
 
 # Set up count for prep_image
     comp_name = 'completed_' + my_target.name

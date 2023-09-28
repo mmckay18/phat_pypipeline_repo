@@ -48,8 +48,8 @@ if __name__ == "__main__":
 
     # ref_dp = wp.DataProduct.select(dpowner_id=my_config.config_id, data_type="image")
     #                                subtype="dolphot input reference")  # reference image
-    ref_dp_list = [ref_dp]  # making reference dp into a list
-    my_job.logprint(f"Reference DP: {ref_dp}, {type(ref_dp)}")
+    ref_dp_list = [ref_dp[0]]  # making reference dp into a list
+    my_job.logprint(f"Reference DP: {ref_dp[0].filename}, {type(ref_dp[0])}")
 
     # tagged_dps = wp.DataProduct.select(
     #     dpowner_id=my_config.config_id, data_type="image", subtype="dolphot input")  # all other images
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             p.write(f'img{loc}_file = {im_file}\n')
             im_pars = ["apsky","shift","xform","raper","rchi","rsky0","rsky1","rpsf"]
             def_vals = ["20 35","0 0","1 0 0","2","1.5","15","35","15"]
-            if 'drc' not in im_file:
+            if 'reference' not in dp.subtype:
                 defined = []
                 count += 1
                 img = 'img'+str(count)

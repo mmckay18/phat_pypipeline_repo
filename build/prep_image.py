@@ -62,7 +62,7 @@ if __name__ == "__main__":
     my_job.logprint(
         f"Dataproduct Subtype: {this_dp_subtype}, Datatype{this_dp.data_type}\n")
     #! WFC3MASK - Uses the DQ array to remove bad pixels from the image and convert image to units of electron.
-    if this_dp_subtype == "DRIZZLED":
+    if this_dp_subtype == "DRIZZLED" and "JWST" not in this_dp.options["telescope"]:
         my_job.logprint(dp_fullpath)
         fitsname = dp_fullpath
         try: 
@@ -141,9 +141,12 @@ if __name__ == "__main__":
                     [my_config.parameters['dolphot_path']+"calcsky", sp_dp.filename[:-5], "10", "25", "2", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
                 my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
     else:
-        sp_dp = wp.DataProduct(my_config,filename=this_dp.filename, group="proc", data_type="image", subtype=this_dp.subtype+"_prepped", options={"detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]})
+        #sp_dp = wp.DataProduct(my_config,filename=this_dp.filename, group="proc", data_type="image", subtype=this_dp.subtype+"_prepped", options={"detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]})
         #Just run calcsky on JWST images   
-
+        sp_dp = wp.DataProduct(my_config, filename=this_dp.filename, group="proc")
+        sp_dp.data_type = "image"
+        sp_dp.subtype = this_dp.subtype+"_prepped"
+        sp_dp.options = {"detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]}
         my_job.logprint(f'created {sp_dp.filename} with subtype {sp_dp.subtype}')
         my_job.logprint(
             f'Starting calcsky on {this_dp.filename[:-5]}, {this_dp.options["detector"]}')

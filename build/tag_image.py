@@ -2,6 +2,8 @@
 import wpipe as wp
 from astropy.io import fits
 import time
+import numpy as np
+from deepCR import deepCR
 
 
 def register(task):
@@ -93,7 +95,7 @@ def tag_event_dataproduct(this_event):
         data_type="tagged",
         subtype=TYPE
     )
-    #my_job.logprint(f"{my_procdp}, {tot_untagged_im}")
+    # my_job.logprint(f"{my_procdp}, {tot_untagged_im}")
     my_job.logprint(f"{type(my_procdp.dp_id)}, {my_procdp.filename}")
 
     # my_job.logprint(f"{this_dp}")
@@ -106,7 +108,7 @@ def tag_event_dataproduct(this_event):
     # my_job.logprint(f"{this_dp.path}")
     FILENAME = raw_hdu[0].header["FILENAME"]
     TELESCOP = raw_hdu[0].header["TELESCOP"]
-    if ("JWST" not in TELESCOP): 
+    if ("JWST" not in TELESCOP):
         RA = raw_hdu[0].header["RA_TARG"]
         DEC = raw_hdu[0].header["DEC_TARG"]
         PA = raw_hdu[0].header["PA_V3"]
@@ -155,6 +157,7 @@ def tag_event_dataproduct(this_event):
     my_job.logprint(f"Tagged Image options{my_procdp.options}")
     return my_procdp
 
+
 def imgclean(imgname, mdl, threshold, update=True):
     """
     imgname: input image name
@@ -179,9 +182,12 @@ def imgclean(imgname, mdl, threshold, update=True):
     Below is the python function to perform deepCR on each image, and update the DQ cr flag:
 
     """
-    print('image_name:', imgname)
-    print('threshold:', threshold)
-    print('update is', update)
+    # my_job.logprint("\nRunning DeepCR imgclean function")
+    my_job.logprint(
+        f"\n image_name: {imgname}, \nthreshold: {threshold}, \nupdate is: {update}")
+    # print('image_name:', imgname)
+    # print('threshold:', threshold)
+    # print('update is', update)
     # open the image with all extensions
     if update:
         imgall = fits.open(imgname, mode='update')
@@ -193,43 +199,61 @@ def imgclean(imgname, mdl, threshold, update=True):
     imgorichip1mean = imgorichip1.mean()
     imgorichip1std = imgorichip1.std()
     imgnormchip1 = (imgorichip1 - imgorichip1mean) / imgorichip1std
+    my_job.logprint(f"imgnormchip1: {imgnormchip1.shape}")
     imgorichip2 = imgall[4].data
     imgorichip2mean = imgorichip2.mean()
     imgorichip2std = imgorichip2.std()
     imgnormchip2 = (imgorichip2 - imgorichip2mean) / imgorichip2std
-    # print('----chip1----')
+    my_job.logprint(f"imgnormchip2: {imgnormchip2.shape}")
+
+    my_job.logprint('----chip1----')
+    my_job.logprint('mdl cleaning')
     maskimgchip1, cleaned_imgchip1 = mdl.clean(
-        imgnormchip1, threshold=threshold, inpaint='medmask')
+        imgnormchip1, threshold=threshold, inpaint='medmask')  # ! crashes computer
+    my_job.logprint('mdl DONE cleaning')
     maskimgchip1 = np.float32(maskimgchip1)
     dqchip1 = imgall[3].data
+    my_job.logprint(
+        f"original MAST DQ: {len(np.where((dqchip1&4096) == 4096)[0])}")
     # print('original MAST DQ:', len(np.where((dqchip1&4096) == 4096)[0]))
     dqchip1[dqchip1 & 4096 == 4096] ^= 4096
+    my_job.logprint(
+        f"remove original check: {len(np.where((dqchip1&4096) == 4096)[0])}")
     # print('remove original check:', len(np.where((dqchip1&4096) == 4096)[0]))
     dqchip1[maskimgchip1 == 1] |= 4096
+    my_job.logprint(
+        f"after deepCR DQ: {len(np.where((dqchip1&4096) == 4096)[0])}")
     # print('after deepCR DQ:', len(np.where((dqchip1&4096) == 4096)[0]))
     imgall[3].data = dqchip1
-    # print('CR DQ update done')
+    my_job.logprint('CR DQ update done')
 
-    # print('----chip2----')/
+    my_job.logprint('\n----chip2----')
+    my_job.logprint('mdl cleaning')
     maskimgchip2, cleaned_imgchip2 = mdl.clean(
         imgnormchip2, threshold=threshold, inpaint='medmask')
+    my_job.logprint('mdl DONE cleaning')
     maskimgchip2 = np.float32(maskimgchip2)
     dqchip2 = imgall[6].data
-    # print('original MAST DQ:', len(np.where((dqchip2&4096) == 4096)[0]))
+    # # print('original MAST DQ:', len(np.where((dqchip2&4096) == 4096)[0]))
+    my_job.logprint(
+        f'original MAST DQ: {len(np.where((dqchip2&4096) == 4096)[0])}')
     dqchip2[dqchip2 & 4096 == 4096] ^= 4096
-    # print('remove original check:', len(np.where((dqchip2&4096) == 4096)[0]))
+    # # print('remove original check:', len(np.where((dqchip2&4096) == 4096)[0]))
+    my_job.logprint(
+        f'remove original check: {len(np.where((dqchip2&4096) == 4096)[0])}')
     dqchip2[maskimgchip2 == 1] |= 4096
-    # print('after deepCR DQ:', len(np.where((dqchip2&4096) == 4096)[0]))
+    # # print('after deepCR DQ:', len(np.where((dqchip2&4096) == 4096)[0]))
+    my_job.logprint(
+        f'after deepCR DQ:: {len(np.where((dqchip2&4096) == 4096)[0])}')
     imgall[6].data = dqchip2
-    # print('CR DQ update done')
+    my_job.logprint('CR DQ update done')
 
     if update:
         imgall.flush()
-        print('update original fits file done')
+        my_job.logprint('update original fits file done')
     else:
-        print('original fits file not updated!')
+        my_job.logprint('original fits file not updated!')
     return
-
 
 
 if __name__ == "__main__":
@@ -257,44 +281,54 @@ if __name__ == "__main__":
         f"\n parameter atrributs: {dir(my_job.config.parameters)}")
     my_job.logprint(
         f"\nRUN_DEEPCR setting: {my_job.config.parameters['RUN_DEEPCR']}, {type(my_job.config.parameters['RUN_DEEPCR'])}")
-    if "JWST" not in my_dp.options["telescope"]: 
-        if my_config_param['RUN_DEEPCR'] == 'T':
-            my_job.logprint(f"{my_dp}, {type(my_dp)}")
-            if my_dp.filename.split("_")[-1] == "flc.fits":
-                ext_flc = my_dp.filename.split("_")[-1]
-                my_job.logprint(ext_flc)
-                dp_filepath = procdp_path + "/" + my_dp.filename
-                my_job.logprint(f"{dp_filepath}")
+    # if "JWST" not in my_dp.options["telescope"]:
+    #     if my_config_param['RUN_DEEPCR'] == 'T':
+    #     #! #########################################
+    #     #! DeepCR parameters from config file
+    #     deepcr_pth_mask = my_config_param["deepcr_pth"]
+    #     threshold = my_config_param["deepcr_threshold"]
+    #     mdl = deepCR(mask=deepcr_pth_mask, hidden=32)
 
-                # * imgclean function
-                threshold = 0.1
+    #     #! Run DeepCR on each dataproducts
+    #     procdp_path = my_dp.target.datapath + "/proc_default/"  # file path to image
+    #     my_job.logprint(f"\n {my_dp}, {type(my_dp)}, {procdp_path}")
 
-                # Run DeepCR on each image
-                imgclean(dp_filepath, mdl, threshold, update=True)
+    #     if my_dp.filename.split("_")[-1] == "flc.fits":
+    #         ext_flc = my_dp.filename.split("_")[-1]
+    #         # my_job.logprint(ext_flc)
 
-            deepCR_event = my_job.child_event(
-                name="deepCR",
-                options={
-                    "target_name": this_event.options["target_name"],
-                    "target_id": this_event.options["target_id"],
-                    "config_id": this_event.options["config_id"],
-                },
-                # ! need to set a tag for each event if firing multiple events with the same name
-                tag=str(update_option),
-            )
-            deepCR_event.fire()
+    #         dp_filepath = procdp_path + "/" + my_dp.filename
+    #         my_job.logprint(f"{dp_filepath}")
 
-        elif my_config_param['RUN_DEEPCR'] == 'F':
-            my_job.logprint(f"Not running DeepCR")
-            #tag = str(update_option),
+    # * imgclean function
+    # Run DeepCR on each image
+    # my_job.logprint("Running DeepCR imgclean function")
+    #! imgclean(dp_filepath, mdl, threshold, update=True)
 
-        elif my_config_param['RUN_DEEPCR'] == 'Keep':
-            my_job.logprint(f"Keeping DQ as RUN_DEEPCR is set to Keep.")
-            #tag = str(update_option),
+    # deepCR_event = my_job.child_event(
+    #     name="deepCR",
+    #     options={
+    #         "target_name": this_event.options["target_name"],
+    #         "target_id": this_event.options["target_id"],
+    #         "config_id": this_event.options["config_id"],
+    #     },
+    #     # ! need to set a tag for each event if firing multiple events with the same name
+    #     tag=str(update_option),
+    # )
+    # deepCR_event.fire()
 
-        else:
-            my_job.logprint(f"RUN_DEEPCR parameter not set... Not running DeepCR.")
-            #tag = str(update_option),
+    # elif my_config_param['RUN_DEEPCR'] == 'F':
+    #     my_job.logprint(f"Not running DeepCR")
+    #     # tag = str(update_option),
+
+    # elif my_config_param['RUN_DEEPCR'] == 'Keep':
+    #     my_job.logprint(f"Keeping DQ as RUN_DEEPCR is set to Keep.")
+    #     # tag = str(update_option),
+
+    # else:
+    #     my_job.logprint(
+    #         f"RUN_DEEPCR parameter not set... Not running DeepCR.")
+    #     # tag = str(update_option),
 
     # ! Check of all images have been tagged
     update_option = parent_job.options[compname]
@@ -318,12 +352,50 @@ if __name__ == "__main__":
         filters = []  # Making list of filters for target
         jwfilters = []
         adrizfilters = []
+        my_job.logprint(
+            "All Dataproducts that are done being tagged and ready for DeepCR task!")
         for dp in my_dp:
+            my_job.logprint(f"\n{dp.filename}, {dp.options['filter']}")
             filters.append(dp.options["filter"])
             if dp.options["telescope"] == "JWST":
-               jwfilters.append(dp.options["filter"])
+                jwfilters.append(dp.options["filter"])
             else:
-               adrizfilters.append(dp.options["filter"])
+                adrizfilters.append(dp.options["filter"])
+                if my_config_param['RUN_DEEPCR'] == 'T':
+                    my_job.logprint("Running DeepCR imgclean function")
+                    #! #########################################
+                    #! DeepCR parameters from config file
+                    deepcr_pth_mask = my_config_param["deepcr_pth"]
+                    threshold = my_config_param["deepcr_threshold"]
+                    mdl = deepCR(mask=deepcr_pth_mask, hidden=32)
+
+                    #! Run DeepCR on each dataproducts
+                    procdp_path = dp.target.datapath + "/proc_default/"  # file path to image
+                    # my_job.logprint(f"\n {dp}, {type(dp)}, {procdp_path}")
+
+                    if dp.filename.split("_")[-1] == "flc.fits":
+                        ext_flc = dp.filename.split("_")[-1]
+                        # my_job.logprint(ext_flc)
+
+                        dp_filepath = procdp_path + "/" + dp.filename
+                        my_job.logprint(
+                            f"Running imgclean on {dp.filename}...")
+                        imgclean(dp_filepath, mdl, threshold, update=True)
+
+                elif my_config_param['RUN_DEEPCR'] == 'F':
+                    my_job.logprint(f"Not running DeepCR")
+                    # tag = str(update_option),
+
+                elif my_config_param['RUN_DEEPCR'] == 'Keep':
+                    my_job.logprint(
+                        f"Keeping DQ as RUN_DEEPCR is set to Keep.")
+                    # tag = str(update_option),
+
+                else:
+                    my_job.logprint(
+                        f"RUN_DEEPCR parameter not set... Not running DeepCR.")
+                    # tag = str(update_option),
+
         all_filters = set(
             filters
         )  # Remove duplicates to get array of different filters for target
@@ -373,7 +445,7 @@ if __name__ == "__main__":
                 options={"target_id": this_event.options["target_id"]}
             )  # next event
             next_event.fire()
- 
+
         time.sleep(150)
 
         # my_job.logprint(f"Firing Event Options: {my_event.options}")

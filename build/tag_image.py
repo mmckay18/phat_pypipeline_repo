@@ -281,54 +281,37 @@ if __name__ == "__main__":
         f"\n parameter atrributs: {dir(my_job.config.parameters)}")
     my_job.logprint(
         f"\nRUN_DEEPCR setting: {my_job.config.parameters['RUN_DEEPCR']}, {type(my_job.config.parameters['RUN_DEEPCR'])}")
-    # if "JWST" not in my_dp.options["telescope"]:
-    #     if my_config_param['RUN_DEEPCR'] == 'T':
-    #     #! #########################################
-    #     #! DeepCR parameters from config file
-    #     deepcr_pth_mask = my_config_param["deepcr_pth"]
-    #     threshold = my_config_param["deepcr_threshold"]
-    #     mdl = deepCR(mask=deepcr_pth_mask, hidden=32)
+    if "JWST" not in my_dp.options["telescope"]:
+        if my_config_param['RUN_DEEPCR'] == 'T' and my_config_param['machine'] == 'remote':
+            my_job.logprint("Running DeepCR REMOTELY)")
+            #! #########################################
+            #! DeepCR parameters from config file
+            deepcr_pth_mask = my_config_param["deepcr_pth"]
+            threshold = my_config_param["deepcr_threshold"]
+            mdl = deepCR(mask=deepcr_pth_mask, hidden=32)
+            # file path to image being tagged currently
+            procdp_path = my_dp.target.datapath + "/proc_default/"
+            my_job.logprint(f"\n {my_dp}, {type(my_dp)}, {procdp_path}")
 
-    #     #! Run DeepCR on each dataproducts
-    #     procdp_path = my_dp.target.datapath + "/proc_default/"  # file path to image
-    #     my_job.logprint(f"\n {my_dp}, {type(my_dp)}, {procdp_path}")
+            dp_filepath = procdp_path + "/" + my_dp.filename
+            my_job.logprint(f"{dp_filepath}")
 
-    #     if my_dp.filename.split("_")[-1] == "flc.fits":
-    #         ext_flc = my_dp.filename.split("_")[-1]
-    #         # my_job.logprint(ext_flc)
+            # * imgclean function
+            # Run DeepCR on each image
+            imgclean(dp_filepath, mdl, threshold, update=True)
 
-    #         dp_filepath = procdp_path + "/" + my_dp.filename
-    #         my_job.logprint(f"{dp_filepath}")
+    elif my_config_param['RUN_DEEPCR'] == 'F':
+        my_job.logprint(f"Not running DeepCR")
+        # tag = str(update_option),
 
-    # * imgclean function
-    # Run DeepCR on each image
-    # my_job.logprint("Running DeepCR imgclean function")
-    #! imgclean(dp_filepath, mdl, threshold, update=True)
+    elif my_config_param['RUN_DEEPCR'] == 'Keep':
+        my_job.logprint(f"Keeping DQ as RUN_DEEPCR is set to Keep.")
+        # tag = str(update_option),
 
-    # deepCR_event = my_job.child_event(
-    #     name="deepCR",
-    #     options={
-    #         "target_name": this_event.options["target_name"],
-    #         "target_id": this_event.options["target_id"],
-    #         "config_id": this_event.options["config_id"],
-    #     },
-    #     # ! need to set a tag for each event if firing multiple events with the same name
-    #     tag=str(update_option),
-    # )
-    # deepCR_event.fire()
-
-    # elif my_config_param['RUN_DEEPCR'] == 'F':
-    #     my_job.logprint(f"Not running DeepCR")
-    #     # tag = str(update_option),
-
-    # elif my_config_param['RUN_DEEPCR'] == 'Keep':
-    #     my_job.logprint(f"Keeping DQ as RUN_DEEPCR is set to Keep.")
-    #     # tag = str(update_option),
-
-    # else:
-    #     my_job.logprint(
-    #         f"RUN_DEEPCR parameter not set... Not running DeepCR.")
-    #     # tag = str(update_option),
+    else:
+        my_job.logprint(
+            f"RUN_DEEPCR parameter not set... Not running DeepCR.")
+        # tag = str(update_option),
 
     # ! Check of all images have been tagged
     update_option = parent_job.options[compname]
@@ -361,8 +344,8 @@ if __name__ == "__main__":
                 jwfilters.append(dp.options["filter"])
             else:
                 adrizfilters.append(dp.options["filter"])
-                if my_config_param['RUN_DEEPCR'] == 'T':
-                    my_job.logprint("Running DeepCR imgclean function")
+                if my_config_param['RUN_DEEPCR'] == 'T' and my_config_param['machine'] == 'local':
+                    my_job.logprint("Running DeepCR LOCALLY")
                     #! #########################################
                     #! DeepCR parameters from config file
                     deepcr_pth_mask = my_config_param["deepcr_pth"]
@@ -453,9 +436,7 @@ if __name__ == "__main__":
     else:
         pass
 
-    # TODO:
-    # * Enable the pipeline to countdown the number of dataproducts for a target
-    # * Fire astrodrizzle task after the last image for a target finish tagging
+
 ########################################
 # Code originally from astrodrizzle that can be used here instead
 

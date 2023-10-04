@@ -48,7 +48,8 @@ def register(task):
 # need better way to do this
 
 def make_cmd(ds, path, targname, red_filter, blue_filter, y_filter, n_err=12,
-             density_kwargs={'f':'log10', 'colormap':'viridis', 'linewidth':2},
+             #density_kwargs={'f':'log10', 'colormap':'viridis', 'linewidth':2},
+             density_kwargs={'f':'log10', 'colormap':'viridis'},
              scatter_kwargs={'c':'k', 'alpha':0.5, 's':1, 'linewidth':2}):
     """Plot a CMD with (blue_filter - red_filter) on the x-axis and 
     y_filter on the y-axis.
@@ -190,9 +191,10 @@ if __name__ == "__main__":
     import pandas as pd
     df = pd.read_hdf(photfile, key='data')
     ds = vaex.from_pandas(df)
-    filters = my_config.parameters["filters"].split(',')
+    #filters = my_config.parameters["filters"].split(',')
+    filters = my_config.parameters["det_filters"].split(',')
     filters.sort()
-    # how choose filters WHOM KNOWS
+    # how choose filters WHO KNOWS
     #make_cmd(ds, red_filter, blue_filter, y_filter)
     #make_cmd(ds, 'f160w', 'f475w', 'f160w')
     #make_cmd(ds, 'f160w', 'f110w', 'f160w')

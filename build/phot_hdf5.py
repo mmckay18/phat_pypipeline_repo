@@ -77,10 +77,10 @@ colname_mappings = {
     'Photometry quality flag,'           : 'flag',
 }
 
-def cull_photometry(df, filter_detectors, snrcut=4.,
-                    cut_params={'irsharp'   : 0.15, 'ircrowd'   : 2.25,
-                                'uvissharp' : 0.15, 'uviscrowd' : 1.30,
-                                'wfcsharp'  : 0.20, 'wfccrowd'  : 2.25}):
+def cull_photometry(df, filter_detectors, my_config, snrcut=4.0):
+                    #cut_params={'irsharp'   : 0.15, 'ircrowd'   : 2.25,
+                    #            'uvissharp' : 0.15, 'uviscrowd' : 1.30,
+                    #            'wfcsharp'  : 0.20, 'wfccrowd'  : 2.25}):
     """Add 'ST' and 'GST' flag columns based on stellar parameters.
 
     TODO:
@@ -108,28 +108,82 @@ def cull_photometry(df, filter_detectors, snrcut=4.,
         table read in by read_dolphot, with ST and GST columns added
         (name format: '<filter>_(g)st')
     """
+    try:
+        snrcut = my_config.parameters["snrcut"]
+    except:
+        snrcut = 4.0
+        print("No parameter for snrcut, setting to 4")
     for filt in filter_detectors:
-        d, f = filt.lower().split('-') # split into detector + filter
+        d, f = filt.lower().split('_') # split into detector + filter
+        if d=='wfc3' and 'f1' in f:
+           d = 'ir'
+           try:
+               test = my_config.parameters["ir_sharp"]
+           except:
+               print("No parameter for ir_sharp, setting to 0.15")
+               my_config.parameters["ir_sharp"] = 0.15 
+           try:
+               test = my_config.parameters["ir_crowd"]
+           except:
+               print("No parameter for ir_crowd, setting to 2.25")
+               my_config.parameters["ir_crowd"] = 2.25 
+        if d=='wfc3' and 'f1' not in f:
+           d = 'uvis'
+           try:
+               test = my_config.parameters["uvis_sharp"]
+           except:
+               print("No parameter for uvis_sharp, setting to 0.15")
+               my_config.parameters["uvis_sharp"] = 0.15 
+           try:
+               test = my_config.parameters["uvis_crowd"]
+           except:
+               print("No parameter for uvis_crowd, setting to 1.3")
+               my_config.parameters["uvis_crowd"] = 1.3 
+        if d == 'acs':
+           d = 'wfc'
+           try:
+               test = my_config.parameters["wfc_sharp"]
+           except:
+               print("No parameter for wfc_sharp, setting to 0.2")
+               my_config.parameters["wfc_sharp"] = 0.2 
+           try:
+               test = my_config.parameters["wfc_crowd"]
+           except:
+               print("No parameter for wfc_crowd, setting to 2.25")
+               my_config.parameters["wfc_crowd"] = 2.25 
+        if d == 'nircam':
+           try:
+               test = my_config.parameters["nircam_sharp"]
+           except:
+               print("No parameter for nircam_sharp, setting to 0.01")
+               my_config.parameters["nircam_sharp"] = 0.01 
+           try:
+               test = my_config.parameters["nircam_crowd"]
+           except:
+               print("No parameter for nircam_crowd, setting to 0.5")
+               my_config.parameters["nircam_crowd"] = 0.5 
         try:
-            print('Making ST and GST cuts for {}'.format(f))
+            print('Making ST and GST cuts for {}'.format(filt))
             # make boolean arrays for each set of culling parameters
-            snr_condition = df.loc[:,'{}_snr'.format(f)] > snrcut
-            sharp_condition = df.loc[:,'{}_sharp'.format(f)]**2 < cut_params['{}sharp'.format(d)]
-            crowd_condition = df.loc[:,'{}_crowd'.format(f)] < cut_params['{}crowd'.format(d)]
+            snr_condition = df.loc[:,'{}_snr'.format(filt.lower())] > snrcut
+            #sharp_condition = df.loc[:,'{}_sharp'.format(f)]**2 < cut_params['{}sharp'.format(d)]
+            #crowd_condition = df.loc[:,'{}_crowd'.format(f)] < cut_params['{}crowd'.format(d)]
+            sharp_condition = df.loc[:,'{}_sharp'.format(filt.lower())]**2 < my_config.parameters['{}_sharp'.format(d)]
+            crowd_condition = df.loc[:,'{}_crowd'.format(filt.lower())] < my_config.parameters['{}_crowd'.format(d)]
             # add st and gst columns
-            df.loc[:,'{}_st'.format(f)] = (snr_condition & sharp_condition).astype(bool)
-            df.loc[:,'{}_gst'.format(f)] = (df['{}_st'.format(f)] & crowd_condition).astype(bool)
+            df.loc[:,'{}_st'.format(filt.lower())] = (snr_condition & sharp_condition).astype(bool)
+            df.loc[:,'{}_gst'.format(filt.lower())] = (df['{}_st'.format(filt.lower())] & crowd_condition).astype(bool)
             print('Found {} out of {} stars meeting ST criteria for {}'.format(
-                df.loc[:,'{}_st'.format(f)].sum(), df.shape[0], f))
+                df.loc[:,'{}_st'.format(filt.lower())].sum(), df.shape[0], filt.lower()))
             print('Found {} out of {} stars meeting GST criteria for {}'.format(
-                df.loc[:,'{}_gst'.format(f)].sum(), df.shape[0], f))
+                df.loc[:,'{}_gst'.format(filt.lower())].sum(), df.shape[0], filt.lower()))
         except Exception:
-            df.loc[:,'{}_st'.format(f)] = np.nan
-            df.loc[:,'{}_gst'.format(f)] = np.nan
-            print('Could not perform culling for {}.\n{}'.format(f, traceback.format_exc()))
+            df.loc[:,'{}_st'.format(filt.lower())] = np.nan
+            df.loc[:,'{}_gst'.format(filt.lower())] = np.nan
+            print('Could not perform culling for {}.\n{}'.format(filt.lower(), traceback.format_exc()))
     return df
 
-def make_header_table(fitsdir, search_string='*fl?.chip?.fits'):
+def make_header_table(my_config, fitsdir, search_string='*.chip?.fits'):
     """Construct a table of key-value pairs from FITS headers of images
     used in dolphot run. Columns are the set of all keywords that appear
     in any header, and rows are per image.
@@ -149,14 +203,19 @@ def make_header_table(fitsdir, search_string='*fl?.chip?.fits'):
     """
     keys = []
     headers = {}
-    fitslist = list(fitsdir.glob(search_string))
+    fitslist = wp.DataProduct.select(
+        config_id=my_config.config_id, 
+        data_type="image", 
+        subtype="SCIENCE_prepped")
+    #fitslist = list(fitsdir.glob(search_string))
     if len(fitslist) == 0: # this shouldn't happen
         print('No fits files found in {}!'.format(fitsdir))
         return pd.DataFrame()
     # get headers from each image
     for fitsfile in fitslist:
-        fitsname = fitsfile.name # filename without preceding path
-        head = fits.getheader(fitsfile, ignore_missing_end=True)
+        fitsname = fitsfile.filename # filename without preceding path
+        fitspath = fitsfile.config.procpath + "/" + fitsname
+        head = fits.getheader(fitspath, ignore_missing_end=True)
         headers.update({fitsname:head})
         keys += [k for k in head.keys()]
     unique_keys = np.unique(keys).tolist()
@@ -231,7 +290,7 @@ def name_columns(colfile):
     print('Filters found: {}'.format(filters_final))
     return df, filters_final
 
-def add_wcs(df, photfile):
+def add_wcs(df, photfile, my_config):
     """Converts x and y columns to world coordinates using drizzled file
     that dolphot uses for astrometry
 
@@ -248,14 +307,15 @@ def add_wcs(df, photfile):
         A table of column descriptions and their corresponding names,
         with new 'ra' and 'dec' columns added.
     """
-    drzfiles = list(Path(photfile).parent.glob('*_dr?.chip1.fits'))
+    #drzfiles = list(Path(photfile).parent.glob('*_dr?.chip1.fits'))
+    drzfiles = wp.DataProduct.select(config_id=my_config.config_id, subtype="reference_prepped") 
     # neither of these should happen but just in case
     if len(drzfiles) == 0:
         print('No drizzled files found; skipping RA and Dec')
     elif len(drzfiles) > 1:
         print('Multiple drizzled files found: {}'.format(drzfiles))
     else:
-        drzfile = str(drzfiles[0])
+        drzfile = str(drzfiles[0].filename)
         print('Using {} as astrometric reference'.format(drzfile))
         ra, dec = WCS(drzfile).all_pix2world(df.x.values, df.y.values, 0)
         df.insert(4, 'ra', ra)
@@ -263,7 +323,7 @@ def add_wcs(df, photfile):
     return df
 
 
-def read_dolphot(photfile, columns_df, filters):
+def read_dolphot(my_config, photfile, columns_df, filters):
     """Reads in raw dolphot output (.phot file) to a DataFrame with named
     columns, and optionally writes it to a HDF5 file.
 
@@ -305,16 +365,22 @@ def read_dolphot(photfile, columns_df, filters):
     outfile = photfile + '.hdf5'
     print('Reading in header information from individual images')
     fitsdir = Path(photfile).parent
-    header_df = make_header_table(fitsdir)
+    header_df = make_header_table(my_config, fitsdir)
     header_df.to_hdf(outfile, key='fitsinfo', mode='w', format='table',
                      complevel=9, complib='zlib')
     # lambda function to construct detector-filter pairs
     lamfunc = lambda x: '-'.join(x[~(x.str.startswith('CLEAR')|x.str.startswith('nan'))])
-    filter_detectors = header_df.filter(regex='(DETECTOR)|(FILTER)').astype(str).apply(lamfunc, axis=1).unique()
+    #filter_detectors = header_df.filter(regex='(DETECTOR)|(FILTER)').astype(str).apply(lamfunc, axis=1).unique()
+    #cut_params = {'irsharp'   : 0.15, 'ircrowd'   : my, 'uvissharp' : 0.15, 'uviscrowd' : 1.30, 'wfcsharp'  : 0.20, 'wfccrowd'  : 2.25}
     print('Writing photometry to {}'.format(outfile))
-    df0 = df[colnames[colnames.str.find(r'.chip') == -1]]
-    df0 = cull_photometry(df0, filter_detectors)
-    df0 = add_wcs(df0, photfile)
+    #df0 = df[colnames[colnames.str.find(r'.chip') == -1]]
+    df0 = df[colnames[colnames.str.find(r'\ (') == -1]]
+    #print("columns are:")
+    #print(df0.columns.tolist())  
+    #df0 = cull_photometry(df0, filter_detectors,my_config)
+    df0 = cull_photometry(df0, filters,my_config)
+    my_config.parameters["det_filters"] = ','.join(filters)
+    df0 = add_wcs(df0, photfile, my_config)
     df0.to_hdf(outfile, key='data', mode='a', format='table', 
                complevel=9, complib='zlib')
     outfile_full = outfile.replace('.hdf5','_full.hdf5')
@@ -357,10 +423,11 @@ if __name__ == '__main__':
     my_job.logprint('Photometry file: {}'.format(photfile))
     my_job.logprint('Columns file: {}'.format(colfile))
     columns_df, filters = name_columns(colfile)
+    print("columns_df is ",columns_df)
     
     import time
     t0 = time.time()
-    df = read_dolphot(photfile, columns_df, filters)
+    df = read_dolphot(my_config, photfile, columns_df, filters)
     outfile = this_dp.filename + '_full.hdf5'
     hd5_dp = wp.DataProduct(my_config, filename=outfile, 
                               group="proc", data_type="hdf5 file", subtype="catalog")     

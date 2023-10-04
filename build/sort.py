@@ -72,17 +72,20 @@ if __name__ == "__main__":
     my_input = my_pipe.inputs[0]
 
     # Make a list of target names in Unsorted diectory proposal id and targetname
-    unsorted_df, unsorted_targetnames_list = make_unsorted_df(my_pipe.inputs[0])
+    unsorted_df, unsorted_targetnames_list = make_unsorted_df(
+        my_pipe.inputs[0])
 
     # my_job.logprint(f"{unsorted_targetnames_list}")  # * for debugging purposes
     for target_name in unsorted_targetnames_list:
-        sorted_df = unsorted_df[unsorted_df["PROPOSID_TARGNAME"] == target_name]
+        sorted_df = unsorted_df[unsorted_df["PROPOSID_TARGNAME"]
+                                == target_name]
         # * Get list of Filename for each target
         rawdp_fn_list = sorted_df["FILENAME"].tolist()
         # my_job.logprint(f"{rawdp_fn_list}")  # * for debugging purposes
-        print("FN ",rawdp_fn_list)
+        print("FN ", rawdp_fn_list)
         # * Creates targets from the raw dataproducts in Unsorted directory
-        my_targets = my_input.target(name=target_name, rawdps_to_add=rawdp_fn_list)
+        my_targets = my_input.target(
+            name=target_name, rawdps_to_add=rawdp_fn_list)
         my_job.logprint(
             f"{my_targets.name} {my_targets.target_id}, {my_targets.input_id}"
         )
@@ -109,10 +112,9 @@ if __name__ == "__main__":
         comp_name = "completed_" + target.name
         new_option = {comp_name: 0}
         my_job.options = new_option
-        # my_job
+        #! Iterate through target dataproducts and start tagging job
         for dp_fname_path in target_dp_list:
-            #     i -= 1
-            # my_job.logprint(f"tagging image {i}")
+            # my_job.logprint(f"tagging image {dp_fname_path}")
             dp_fname = dp_fname_path.split("/")[-1]
             my_rawdp = my_input.dataproduct(
                 filename=dp_fname, group="raw", data_type="image"
@@ -133,7 +135,7 @@ if __name__ == "__main__":
                     "target_name": target.name,
                     "target_id": target.target_id,
                     "dataproduct_list": dp_id_list,
-                    "dp_fname_path" : dp_fname_path,
+                    "dp_fname_path": dp_fname_path,
                     "config_id": my_config.config_id,
                     "comp_name": "completed_" + target.name,
                 },

@@ -138,6 +138,7 @@ if __name__ == "__main__":
                     "dp_fname_path": dp_fname_path,
                     "config_id": my_config.config_id,
                     "comp_name": "completed_" + target.name,
+                    "memory" : "300G"
                 },
             )
             my_event.fire()

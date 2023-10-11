@@ -35,13 +35,12 @@ def make_unsorted_df(my_input):
         hdu = fits.open(my_rawdp_fits_path)
         TELESCOP = hdu[0].header["TELESCOP"]
         if ("JWST" not in TELESCOP):
-            PROP_ID = str(hdu[0].header["PROPOSID"])
+            PROP_ID = str(hdu[0].header["PROPOSID"]).zfill(5)
             TARGNAME = hdu[0].header["TARGNAME"]
         else:
             TARGNAME = hdu[0].header["TARGPROP"]
-            PROP_ID = hdu[0].header["PROGRAM"]
+            PROP_ID = hdu[0].header["PROGRAM"].zfill(5)
         FILENAME = hdu[0].header["FILENAME"]
-        FILTER = hdu[0].header["FILTER"]
         TARGET_NAME = PROP_ID + "_" + TARGNAME
         hdu.close()
 
@@ -134,7 +133,7 @@ if __name__ == "__main__":
                     "filename": my_rawdp.filename,
                     "target_name": target.name,
                     "target_id": target.target_id,
-                    "dataproduct_list": dp_id_list,
+                    #"dataproduct_list": dp_id_list,
                     "dp_fname_path": dp_fname_path,
                     "config_id": my_config.config_id,
                     "comp_name": "completed_" + target.name,

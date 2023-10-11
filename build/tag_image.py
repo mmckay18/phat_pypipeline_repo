@@ -67,9 +67,44 @@ def tag_event_dataproduct(this_event):
 
     # ! CHANGE NAME OF PROC FILES
     hdu = fits.open(dp_fname_path)
-    filter_name = hdu[0].header["FILTER"]
+
+    FILENAME = hdu[0].header["FILENAME"]
+    TELESCOP = hdu[0].header["TELESCOP"]
+    CAM = hdu[0].header["INSTRUME"]
+
+    if ("JWST" not in TELESCOP):
+        RA = hdu[0].header["RA_TARG"]
+        DEC = hdu[0].header["DEC_TARG"]
+        PA = hdu[0].header["PA_V3"]
+        EXPTIME = hdu[0].header["EXPTIME"]
+        EXPFLAG = hdu[0].header["EXPFLAG"]
+        TARGNAME = hdu[0].header["TARGNAME"]
+        PROPOSALID = hdu[0].header["PROPOSID"]
+        DETECTOR = hdu[0].header["DETECTOR"]
+        if ("WFC" in DETECTOR):
+            FILTER1 = hdu[0].header["FILTER1"]
+            FILTER2 = hdu[0].header["FILTER2"]
+            if ("CLEAR" not in FILTER1):
+                FILTER = FILTER1
+            if ("CLEAR" not in FILTER2):
+                FILTER = FILTER2
+        else:
+            FILTER = hdu[0].header["FILTER"]
+    else:
+        RA = hdu[0].header["TARG_DEC"]
+        DEC = hdu[0].header["TARG_DEC"]
+        PA = hdu[0].header["GS_V3_PA"]
+        EXPTIME = hdu[0].header["EFFEXPTM"]
+        EXPFLAG = "MANNORMAL"
+        TARGNAME = hdu[0].header["TARGPROP"]
+        PROPOSALID = hdu[0].header["PROGRAM"]
+        DETECTOR = hdu[0].header["INSTRUME"]
+        FILTER = hdu[0].header["FILTER"]
+
+
+    hdu.close()
     dp_fname = dp_fname.rpartition("_")
-    dp_fname = f"{dp_fname[0]}_{filter_name}_{dp_fname[2]}"
+    dp_fname = f"{dp_fname[0]}_{FILTER}_{dp_fname[2]}"
     my_job.logprint(f"{dp_fname}")
     # proc_dp_fname_path = proc_path + dp_fname  # * new dataproduct path
 
@@ -101,34 +136,6 @@ def tag_event_dataproduct(this_event):
     # my_job.logprint(f"{this_dp}")
     # my_job.logprint(f"{this_dp.target.datapath}")
     # * Dataproduct file pat
-    procdp_path = my_procdp.target.datapath + "/proc_default/" + my_procdp.filename
-
-    # Open FITS files and extract desired parameters to tag each image
-    raw_hdu = fits.open(procdp_path)
-    # my_job.logprint(f"{this_dp.path}")
-    FILENAME = raw_hdu[0].header["FILENAME"]
-    TELESCOP = raw_hdu[0].header["TELESCOP"]
-    if ("JWST" not in TELESCOP):
-        RA = raw_hdu[0].header["RA_TARG"]
-        DEC = raw_hdu[0].header["DEC_TARG"]
-        PA = raw_hdu[0].header["PA_V3"]
-        EXPTIME = raw_hdu[0].header["EXPTIME"]
-        EXPFLAG = raw_hdu[0].header["EXPFLAG"]
-        TARGNAME = raw_hdu[0].header["TARGNAME"]
-        PROPOSALID = raw_hdu[0].header["PROPOSID"]
-        DETECTOR = raw_hdu[0].header["DETECTOR"]
-    else:
-        RA = raw_hdu[0].header["TARG_DEC"]
-        DEC = raw_hdu[0].header["TARG_DEC"]
-        PA = raw_hdu[0].header["GS_V3_PA"]
-        EXPTIME = raw_hdu[0].header["EFFEXPTM"]
-        EXPFLAG = "MANNORMAL"
-        TARGNAME = raw_hdu[0].header["TARGPROP"]
-        PROPOSALID = raw_hdu[0].header["PROGRAM"]
-        DETECTOR = raw_hdu[0].header["INSTRUME"]
-    CAM = raw_hdu[0].header["INSTRUME"]
-    FILTER = raw_hdu[0].header["FILTER"]
-    raw_hdu.close()
 
     # tag_event_dataproduct
     my_procdp_id = my_procdp.dp_id
@@ -281,7 +288,7 @@ if __name__ == "__main__":
         f"\n parameter atrributs: {dir(my_job.config.parameters)}")
     my_job.logprint(
         f"\nRUN_DEEPCR setting: {my_job.config.parameters['RUN_DEEPCR']}, {type(my_job.config.parameters['RUN_DEEPCR'])}")
-    if "JWST" not in my_dp.options["telescope"]:
+    if "UVIS" in my_dp.options["detector"]:
         if my_config_param['RUN_DEEPCR'] == 'T' and my_config_param['machine'] == 'remote':
             my_job.logprint("Running DeepCR REMOTELY)")
             #! #########################################

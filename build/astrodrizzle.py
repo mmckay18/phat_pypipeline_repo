@@ -189,6 +189,7 @@ if __name__ == "__main__":
             dp.options["filter"] == my_filter
         ):  # for the filter j, pulls out which dps have the same filter
             target_im.append(dp.filename)
+            detector = dp.options["detector"]
     inputall = target_im[0]  # the first image name in the array
     for ii in range(len(target_im) - 1):
         inputall = (
@@ -253,22 +254,28 @@ if __name__ == "__main__":
         f"AstroDrizzle complete for {my_target.name} in filter {my_filter}")
 
     # Create Dataproducts for drizzled images
-    drizzleim_path = (
-        out_name + "_drc.fits"
-    )  # Already in proc directory so this is just the file name
+    print("DETEC",detector)
+    if ("IR" in detector):
+        drizzleim_path = (
+            out_name + "_drz.fits"
+        )  # Already in proc directory so this is just the file name
+    else:    
+        drizzleim_path = (
+            out_name + "_drc.fits"
+        )  # Already in proc directory so this is just the file name
     driz_hdu = fits.open(drizzleim_path)
 
     FILENAME = driz_hdu[0].header["FILENAME"]  # Parameters from header
     TELESCOP = driz_hdu[0].header["TELESCOP"]
     INSTRUME = driz_hdu[0].header["INSTRUME"]
     TARGNAME = driz_hdu[0].header["TARGNAME"]
-    RA_TARG = driz_hdu[0].header["RA_TARG"]
-    DEC_TARG = driz_hdu[0].header["DEC_TARG"]
+    RA_TARG = driz_hdu[1].header["RA_APER"]
+    DEC_TARG = driz_hdu[1].header["DEC_APER"]
     PROPOSID = driz_hdu[0].header["PROPOSID"]
     EXPTIME = driz_hdu[0].header["EXPTIME"]
-    PA_V3 = driz_hdu[0].header["PA_V3"]
+    PA_V3 = driz_hdu[1].header["ORIENTAT"]
     DETECTOR = driz_hdu[0].header["DETECTOR"]
-    FILTER = driz_hdu[0].header["FILTER"]
+    FILTER = my_filter
     driz_hdu.close()
 
     driz_dp = wp.DataProduct(

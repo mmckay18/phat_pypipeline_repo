@@ -2,12 +2,12 @@
 
 # Authors:
 
-Myles McKay
-Ben Williams
-Shelby Albrecht
-Adrien Thob
-Tristan
-Zhuo Chen
+- Myles McKay
+- Ben Williams
+- Shelby Albrecht
+- Adrien Thob
+- Tristan
+- Zhuo Chen
 
 # Description:
 

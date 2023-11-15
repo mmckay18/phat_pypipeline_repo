@@ -39,24 +39,29 @@ if __name__ == "__main__":
         f"{len(my_dps)} drizzled images found for {my_target.name}.")
 
 # Choosing the best reference image
-    if (
-        'reference_filter' in my_config.parameters
-    ):  # checking for set reference in parameter file
+    try:
         ref_filt = my_config.parameters['reference_filter']
-        # ref_name = 'drizzle' + ref_filt + _drc.fits
-        ref_name = my_target.name + ref_filt + '_drc.fits'
-        my_job.logprint(
-            f"Reference image parameter found, using {ref_name} as reference image."
-        )
-
-        ref_dp = wp.DataProduct.select(
-            group="proc", dpowner_id=my_job.config_id, filename=ref_name
-        )  # pull correct dp for reference
-    else:  # setting reference as longest exposure time
         
-        exposures = []
-        # filters=[]
+        my_job.logprint(
+            f"Reference image filter found, using {ref_filt} as reference image."
+        )
+    except:  # setting reference as longest exposure time
+        ref_filt = "None"
+
+    if "F" in ref_filt:
         for dp in my_dps:
+            if ref_filt in dp.options["filter"]:
+                ref_dp = dp
+            else:
+                continue
+        
+    try:
+        filename=ref_dp.filename
+    except:
+        exposures = []
+        for dp in my_dps:
+            if "LONG" in dp.options["channel"]:
+                continue
             exposures.append(dp.options["Exptime"])
             # filters.append(dp.options["filter"])
         exposuresarr = np.array(exposures)
@@ -64,18 +69,8 @@ if __name__ == "__main__":
         max_exp = exposuresarr.max()
         max_exp_ind = np.where(exposuresarr == max_exp)[0][0]
         ref_dp = my_dps[max_exp_ind]
-        # y_job.logprint(f"{my_dps}")
-        # my_job.logprint(f"{exposuresarr}")
-        # my_job.logprint(f"{ref_dp}")
-        # my_job.logprint(
-        #     f"Reference image for {my_target.name} is {ref_dp.filename}")
-        # ref_name = my_target.name + '_' + \
-        #     ref_dp.filename.split('_drc')[0] + '_drc.fits'
-        # my_job.logprint(f"Reference image name is {ref_name}")
 
-# Update dp for reference image
-    #new_ref_dp = ref_dp.make_copy(
-    #    path=f"{my_target.datapath}/proc_default/", subtype="reference")
+    # Update dp for reference image
     new_ref_dp = wp.DataProduct(my_config, filename=ref_dp.filename, group="proc")
     new_ref_dp.subtype = "reference"
     new_ref_dp.options = {"detector": ref_dp.options["detector"], "Exptime": ref_dp.options["Exptime"], "filter": ref_dp.options["filter"]}

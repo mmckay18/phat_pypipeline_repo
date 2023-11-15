@@ -96,6 +96,9 @@ if __name__ == "__main__":
                 for impar in im_pars:
                     param_name = "img"+str(count)+"_"+impar
                     cam_name = dp.options['detector']+"_"+impar
+                    if "NIRCAM" in dp.options['detector']:
+                       if "LONG" in dp.options['channel']:
+                           cam_name = dp.options['detector']+"LW_"+impar
                     try:
                         p.write(
                            f'{param_name} = {my_config.parameters[cam_name]}\n')
@@ -354,7 +357,7 @@ if __name__ == "__main__":
         f"\nDOLPHOT parameter file complete for {my_target.name}, firing DOLPHOT task")
     next_event = my_job.child_event(
         name="DOLPHOT",
-        options={"param_dp_id": param_dp.dp_id}
+        options={"param_dp_id": param_dp.dp_id, "walltime": "500:00:00"}
     )  # next event
     next_event.fire()
     time.sleep(150)

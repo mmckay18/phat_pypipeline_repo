@@ -81,6 +81,7 @@ def tag_event_dataproduct(this_event):
         TARGNAME = hdu[0].header["TARGNAME"]
         PROPOSALID = hdu[0].header["PROPOSID"]
         DETECTOR = hdu[0].header["DETECTOR"]
+        CHANNEL = hdu[0].header["DETECTOR"]
         if ("WFC" in DETECTOR):
             FILTER1 = hdu[0].header["FILTER1"]
             FILTER2 = hdu[0].header["FILTER2"]
@@ -99,6 +100,7 @@ def tag_event_dataproduct(this_event):
         TARGNAME = hdu[0].header["TARGPROP"]
         PROPOSALID = hdu[0].header["PROGRAM"]
         DETECTOR = hdu[0].header["INSTRUME"]
+        CHANNEL = hdu[0].header["CHANNEL"]
         FILTER = hdu[0].header["FILTER"]
 
 
@@ -150,6 +152,7 @@ def tag_event_dataproduct(this_event):
             "orientation": PA,
             "Exptime": EXPTIME,
             "Expflag": EXPFLAG,
+            "channel": CHANNEL,
             "cam": CAM,
             "filter": FILTER,
             "targname": TARGNAME,

@@ -106,8 +106,7 @@ if __name__ == "__main__":
         sp_dp_filename = splitgroup_output_file.split("/")[-1]
         sp_dp_subtype = this_dp.subtype+"_"+"prepped"
         my_job.logprint(f'created dataproduct for {sp_dp_filename}')
-        sp_dp = wp.DataProduct(my_config,filename=sp_dp_filename, group="proc", data_type="image", subtype=sp_dp_subtype, options={"detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]})
-            
+        sp_dp = wp.DataProduct(my_config,filename=sp_dp_filename, group="proc", data_type="image", subtype=sp_dp_subtype, options={"telescope" : this_dp.options["telescope"], "channel" : this_dp.options["channel"], "detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]})
         my_job.logprint(f'DP {sp_dp_filename}: {sp_dp}')
         my_job.logprint(f'with option {sp_dp.options["detector"]}')
 

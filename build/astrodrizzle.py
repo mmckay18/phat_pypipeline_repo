@@ -79,106 +79,75 @@ if __name__ == "__main__":
     my_config = my_job.config  # Get configuration for the job
     # my_job.logprint(f"{my_config}")
 
-    #! DeepCR
-    config_param = my_config.parameters
-    if config_param["RUN_DEEPCR"] == "True":
-        deepcr_resetbits = config_param["deepcr_resetbits"]
-    else:
-        config_param["RUN_DEEPCR"] == "False"
-        deepcr_resetbits = 4096  # ! Default astrodrizzle resetbits
-
     # Setting input parameters
-    driz_param = [
-        'reset_bits',
-        'skysub',
-        'sky_method',
-        #'driz_sep_pixfrac',
-        #'driz_sep_scale',
-        'driz_sep_bits',
-        'driz_sep_kernel',
-        'combine_type',
-        'combine_nlow',
-        'combine_nhigh',
-        'driz_cr_scale',
-        'driz_cr_snr',
-        'final_bits',
-        'final_pixfrac',
-        'final_scale',
-        'final_kernel',
-    ]  # possible parameters
+    #driz_param = [
+    #    'skysub',
+    #    'sky_method',
+    #    #'driz_sep_pixfrac',
+    #    #'driz_sep_scale',
+    #    'driz_sep_bits',
+    #    'driz_sep_kernel',
+    #    'combine_type',
+    #    'combine_nlow',
+    #    'combine_nhigh',
+    #    'driz_cr_scale',
+    #    'driz_cr_snr',
+    #    'final_bits',
+    #    'final_pixfrac',
+    #    'final_scale',
+    #    'final_kernel',
+    #]  # possible parameters
     input_dict = {}  # parameters that will be put into AstroDrizzle
     # my_job.logprint(my_config.parameters)
-    for param in driz_param:
-        if param in my_config.parameters:
-            param_val = my_config.parameters[
-                param
-            ]  # set param to value in config file otherwise leaves it as the default value
-            input_dict[param] = param_val
-    if len(input_dict) >= 1:
+    #for param in driz_param:
+    #    if param in my_config.parameters:
+    #        param_val = my_config.parameters[
+    #            param
+    #        ]  # set param to value in config file otherwise leaves it as the default value
+    #        input_dict[param] = param_val
+    #if len(input_dict) >= 1:
 
-        my_job.logprint(
-            f"Custom AstroDrizzle parameters found for {my_target.name}: {input_dict}"
-        )
+    #    my_job.logprint(
+    #        f"Custom AstroDrizzle parameters found for {my_target.name}: {input_dict}"
+    #    )
 
-    else:
-        my_job.logprint(
-            f"No custom AstroDrizzle parameters found for {my_target.name}, using default parameters."
-        )
-    input_dict["clean"] = "Yes"  # clean up directory
+    #else:
+    #    my_job.logprint(
+    #        f"No custom AstroDrizzle parameters found for {my_target.name}, using default parameters."
+    #    )
+    input_dict["clean"] = True  # clean up directory
+    input_dict["preserve"] = False
 
-    if (
-        "driz_sep_kernel" not in my_config.parameters
-    ):  # adjusting individual kernel default
-        #if (
-        #    "driz_sep_pixfrac" not in my_config.parameters
-        #    or my_config.parameters["driz_sep_pixfrac"] == 1
-        #):
-        #    if (
-        #        "driz_sep_scale" not in my_config.parameters
-        #        or my_config.parameters["driz_sep_scale"] == "INDEF"
-        #    ):
-        input_dict["driz_sep_kernel"] = "lanczos3"
-        #        if "driz_sep_pixfrac" not in my_config.parameters:
-        #            input_dict["driz_sep_pixfrac"] = 1
-        #        if "driz_sep_scale" not in my_config.parameters:
-        #            input_dict["driz_sep_scale"] = "INDEF"
-    if (
-        "driz_sep_kernel" in my_config.parameters
-        and my_config.parameters["driz_sep_kernel"] == "lanczos3"
-    ):
+    #if (
+    #    "driz_sep_kernel" not in my_config.parameters
+    #):  # adjusting individual kernel default
+    #    #if (
+    #    #    "driz_sep_pixfrac" not in my_config.parameters
+    #    #    or my_config.parameters["driz_sep_pixfrac"] == 1
+    #    #):
+    #    #    if (
+    #    #        "driz_sep_scale" not in my_config.parameters
+    #    #        or my_config.parameters["driz_sep_scale"] == "INDEF"
+    #    #    ):
+    #     input_dict["driz_sep_kernel"] = "lanczos3"
+    #    #        if "driz_sep_pixfrac" not in my_config.parameters:
+    #    #            input_dict["driz_sep_pixfrac"] = 1
+    #    #        if "driz_sep_scale" not in my_config.parameters:
+    #    #            input_dict["driz_sep_scale"] = "INDEF"
+    #if (
+    #    "driz_sep_kernel" in my_config.parameters
+    #    and my_config.parameters["driz_sep_kernel"] == "lanczos3"
+    #):
     #    if "driz_sep_pixfrac" not in my_config.parameters:
     #        input_dict["driz_sep_pixfrac"] = 1
     #    if "driz_sep_scale" not in my_config.parameters:
     #        input_dict["driz_sep_scale"] = "INDEF"
-        input_dict["driz_sep_kernel"] = "lanczos3"
+    input_dict["driz_sep_kernel"] = "lanczos3"
 
-    if "final_kernel" not in my_config.parameters:  # adjusting final kernel default
-        #if (
-        #    "final_pixfrac" not in my_config.parameters
-        #    or my_config.parameters["final_pixfrac"] == 1
-        #):
-        #    if (
-        #        "final_scale" not in my_config.parameters
-        #        or my_config.parameters["final_scale"] == "INDEF"
-        #    ):
-        input_dict["final_kernel"] = "lanczos3"
-        #        if "final_pixfrac" not in my_config.parameters:
-        #            input_dict["final_pixfrac"] = 1
-        #        if "final_scale" not in my_config.parameters:
-        #            input_dict["final_scale"] = "INDEF"
-    if (
-        "final_kernel" in my_config.parameters
-        and my_config.parameters["final_kernel"] == "lanczos3"
-    ):
-        input_dict["final_kernel"] = "lanczos3"
-        #if "final_pixfrac" not in my_config.parameters:
-        #    input_dict["final_pixfrac"] = 1
-        #if "final_scale" not in my_config.parameters:
-        #    input_dict["final_scale"] = 1
+    input_dict["final_kernel"] = "lanczos3"
 
     # Getting image list and setting filter specific parameters
     my_dp = wp.DataProduct.select(
-        #dpowner_id=my_config.config_id, data_type="image", type="SCIENCE"
         dpowner_id=my_config.config_id, group="proc"
     )
     target_im = []
@@ -191,6 +160,15 @@ if __name__ == "__main__":
             target_im.append(dp.filename)
             detector = dp.options["detector"]
     inputall = target_im[0]  # the first image name in the array
+    #! DeepCR
+    config_param = my_config.parameters
+    if detector == "UVIS" and config_param["RUN_DEEPCR"] == "T":
+        input_dict["resetbits"] = config_param["deepcr_resetbits"]
+    if detector == "IR":
+        input_dict["driz_cr"] = False
+        input_dict["resetbits"] = 0
+        input_dict["median"] = False
+        input_dict["blot"] = False
     for ii in range(len(target_im) - 1):
         inputall = (
             inputall + "," + target_im[ii + 1]
@@ -216,39 +194,37 @@ if __name__ == "__main__":
         len_target_im >= 4 and "combine_type" not in my_config.parameters
     ):  # with at least 4 input images, median is better than default of minmed
         ind_input_dict["combine_type"] = "median"
-        ind_input_dict[
-            "combine_nhigh"
-        ] = 1  # for 4 input images nhigh should be 1, could need to be raised for >4
+        #ind_input_dict[
+        #    "combine_nhigh"
+        #] = 1  # for 4 input images nhigh should be 1, could need to be raised for >4
 
     # Running AstroDrizzle
     my_job.logprint(
         f"Starting AstroDrizzle for {my_target.name} in filter {my_filter}")
     
-    my_job.logprint('astrodrizzle.AstroDrizzle(input=')
-    my_job.logprint(inputall)
-    my_job.logprint(',context=True, build=True,')
-    my_job.logprint(ind_input_dict)
-    my_job.logprint(',resetbits=deepcr_resetbits)')
-
-    if (
-        len_target_im == 1
-    ):  # for filters with only 1 input image, only the sky subtraction and final drizzle can run
-        astrodrizzle.AstroDrizzle(
-            input=inputall,
-            context=True,
-            build=True,
-            driz_separate=False,
-            median=False,
-            blot=False,
-            driz_cr=False,
-            # ! parameter for deepCR input
-            resetbits=deepcr_resetbits,
-            **ind_input_dict,
+    
+    if len_target_im == 1:  # for filters with only 1 input image, only the sky subtraction and final drizzle can run
+        ind_input_dict["blot"] = False
+        ind_input_dict["driz_separate"] = False
+        ind_input_dict["driz_cr"] = False
+        ind_input_dict["median"] = False
+        my_job.logprint('astrodrizzle.AstroDrizzle(input=')
+        my_job.logprint(inputall)
+        my_job.logprint(', context=True, build=True,')
+        my_job.logprint(ind_input_dict)
+        my_job.logprint(",)")
+        astrodrizzle.AstroDrizzle(input=inputall, context=True, build=True, **ind_input_dict,
         )
     else:
+        my_job.logprint('astrodrizzle.AstroDrizzle(input=')
+        my_job.logprint(inputall)
+        my_job.logprint(',context=True, build=True,')
+        my_job.logprint(ind_input_dict)
+        my_job.logprint(",)")
+
         astrodrizzle.AstroDrizzle(
+            #input=inputall, context=True, build=True, preserve=False, driz_cr=False, blot=False, median=False, **ind_input_dict,
             input=inputall, context=True, build=True, **ind_input_dict,
-            resetbits=deepcr_resetbits,  # ! parameter for deepCR input
         )
     my_job.logprint(
         f"AstroDrizzle complete for {my_target.name} in filter {my_filter}")
@@ -275,6 +251,7 @@ if __name__ == "__main__":
     EXPTIME = driz_hdu[0].header["EXPTIME"]
     PA_V3 = driz_hdu[1].header["ORIENTAT"]
     DETECTOR = driz_hdu[0].header["DETECTOR"]
+    CHANNEL = driz_hdu[0].header["DETECTOR"]
     FILTER = my_filter
     driz_hdu.close()
 
@@ -294,6 +271,7 @@ if __name__ == "__main__":
             "Exptime": EXPTIME,
             "position_angle": PA_V3,
             "detector": DETECTOR,
+            "channel": CHANNEL,
             "filter": FILTER,
             "type": "DRIZZLED",
         },

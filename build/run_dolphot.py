@@ -3,7 +3,7 @@
 # Original script by Shellby Albrecht
 # Modified and by Myles McKay
 import wpipe as wp
-# import os
+import os
 import time
 import sys
 import subprocess
@@ -48,9 +48,9 @@ if __name__ == "__main__":
             dolphotlog = logpath + "/" + "dolphotout_stdout.log"
             # # Run Dolphot
             logdp = my_job.logprint()
-            logfilename = logdp.filename
+            logfile = logpath + "/" + logdp.filename
             my_job.logprint(f"Running DOLPHOT on {param_dp.filename}")
-            dolphot_command = "cd "+procpath+" && "+my_config.parameters["dolphot_path"]+"dolphot " +dolphotout+' -p' + param_path + "/" + param_filename + " > "+logfilename
+            dolphot_command = "cd "+procpath+" && "+my_config.parameters["dolphot_path"]+"dolphot " +dolphotout+' -p' + param_path + "/" + param_filename + " > "+logfile
             my_job.logprint(dolphot_command)
             dolphot_output = os.system(dolphot_command)
             #    ["dolphot", dolphotout, '-p' + param_path + "/" + param_filename + " > " + logfilename], cwd=procpath)

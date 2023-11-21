@@ -100,9 +100,15 @@ def make_cmd(ds, path, targname, red_filter, blue_filter, y_filter, n_err=12,
     ymin = np.nanmin(ds_gst[y_vega].tolist())
     ymax = np.nanmax(ds_gst[y_vega].tolist())
     if xmin < -2.5:
-        xmin = -2.5
+        if "f2" in blue_filter:
+            xmin = -3
+        else:
+            xmin = -2
     if xmax > 10.0:
-        xmax = 10.0
+        if "f2" in blue_filter:
+            xmax = 7
+        else:
+            xmax = 10
     if ymin < 15.0:
         ymin = 15.0
     print(blue_filter,red_filter," has ",ds_gst.length()," stars in CMD.")
@@ -117,9 +123,9 @@ def make_cmd(ds, path, targname, red_filter, blue_filter, y_filter, n_err=12,
                     limits=[[xmin,xmax],[ymax,ymin]],
                     **density_kwargs)
         plt.rcParams['axes.linewidth'] = 5
-        plt.xticks(np.arange(xmin, xmax+1, 1.0))
-        plt.yticks(fontsize=20)
-        plt.xticks(fontsize=20)
+        plt.xticks(np.arange(int(xmin-0.5), int(xmax+0.5), 1.0),fontsize=20)
+        plt.yticks(np.arange(int(ymin-0.5), int(ymax+0.5), 1.0),fontsize=20)
+
         ax.xaxis.set_tick_params(which='minor',direction='in', length=6, width=2, top=True, right=True)
         ax.yaxis.set_tick_params(which='minor',direction='in', length=6, width=2, top=True, right=True)
         ax.xaxis.set_tick_params(direction='in', length=8, width=2, top=True, right=True)
@@ -130,16 +136,13 @@ def make_cmd(ds, path, targname, red_filter, blue_filter, y_filter, n_err=12,
         plt.ylabel(ylab,fontsize=20)
         plt.xlabel(color,fontsize=20)
     else:
-        plt.xlim(xmin,xmax)
-        plt.ylim(ymin,ymax)
         fig, ax = plt.subplots(1, figsize=(7.,5.5), linewidth=5)
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
         ds_gst.scatter(color, y_vega,  **scatter_kwargs)
         plt.rcParams['axes.linewidth'] =5 
-        plt.xticks(np.arange(xmin, xmax+1, 1.0))
-        plt.yticks(fontsize=20)
-        plt.xticks(fontsize=20)
+        plt.xticks(np.arange(int(xmin-0.5), int(xmax+0.5), 1.0),fontsize=20)
+        plt.yticks(np.arange(int(ymin-0.5), int(ymax+0.5), 1.0),fontsize=20)
         ax.xaxis.set_tick_params(which='minor',direction='in', length=6, width=2, top=True, right=True)
         ax.yaxis.set_tick_params(which='minor',direction='in', length=6, width=2, top=True, right=True)
         ax.xaxis.set_tick_params(direction='in', length=8, width=2, top=True, right=True)
@@ -147,11 +150,11 @@ def make_cmd(ds, path, targname, red_filter, blue_filter, y_filter, n_err=12,
         for axis in ['top','bottom','left','right']:
            ax.spines[axis].set_linewidth(2)
         plt.minorticks_on()
-        plt.xlim(xmin,xmax)
-        plt.ylim(ymin,ymax)
-        plt.ylabel(ylab,fontsize=20)
-        plt.xlabel(color,fontsize=20)
-        ax.invert_yaxis()
+    plt.xlim(int(xmin-0.5), int(xmax+0.5))
+    plt.ylim(int(ymin-0.5), int(ymax+0.5))
+    plt.ylabel(ylab,fontsize=20)
+    plt.xlabel(color,fontsize=20)
+    ax.invert_yaxis()
     y_binned = ds_gst.mean(y_vega, binby=ds_gst[y_vega], shape=n_err)
     xerr = ds_gst.median_approx('({}_err**2 + {}_err**2)**0.5'.format(blue_filter, red_filter),
                                  binby=ds_gst[y_vega], shape=n_err)
@@ -193,28 +196,32 @@ if __name__ == "__main__":
     ds = vaex.from_pandas(df)
     #filters = my_config.parameters["filters"].split(',')
     filters = my_config.parameters["det_filters"].split(',')
-    filters.sort()
-    # how choose filters WHO KNOWS
-    #make_cmd(ds, red_filter, blue_filter, y_filter)
-    #make_cmd(ds, 'f160w', 'f475w', 'f160w')
-    #make_cmd(ds, 'f160w', 'f110w', 'f160w')
-    #make_cmd(ds, 'f160w', 'f814w', 'f160w')
-    #make_cmd(ds, 'f814w', 'f475w', 'f814w')
-    #make_cmd(ds, 'f475w', 'f336w', 'f475w')
-    #make_cmd(ds, 'f475w', 'f275w', 'f475w')
+    waves = []
+    for filt in filters:
+        pre, suf = filt.split('_')
+        wave = suf[1:4]
+        if "NIRCAM" in pre:
+            wave = 10*int(wave)
+        if "WFC3" in pre and "F1" in suf:
+            wave = 10*int(wave)
+        my_job.logprint(waves)  
+        waves.append(int(wave))
+    my_job.logprint(waves)  
+    sort_inds = np.argsort(waves)
+        
     num_all_filters = len(filters)
     for i in range(num_all_filters-1):
-       my_job.logprint("FILTERS:")  
-       my_job.logprint(filters)  
-       my_job.logprint(filters[i])  
-       my_job.logprint(filters[i+1])  
-       make_cmd(ds, procpath, my_target.name, filters[i+1].lower(),filters[i].lower(),filters[i+1].lower())
+       for j in range(num_all_filters-i-1):
+           ind2=i+1+j
+           my_job.logprint(filters[sort_inds[i]])  
+           my_job.logprint(filters[sort_inds[ind2]])  
+           make_cmd(ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower(),filters[sort_inds[ind2]].lower())
        
     next_event = my_job.child_event(
     name="cmds_ready",
     options={"target_id": my_target.target_id}
     )  # next event
-    next_event.fire()
+    next_event.fire() 
     time.sleep(150)
  
 

@@ -1,4 +1,27 @@
 #!/usr/bin/env python
+
+"""
+Prep Image Task Description:
+-------------------
+This script is a component of a data processing pipeline designed for Flexible Image Transport System (FITS) files. It carries out several key tasks:
+
+1. Sets the processing path and logs the start of the 'splitgroups' operation on the data product.
+
+2. Executes the 'splitgroups' operation using a subprocess. This operation splits the data product into individual groups.
+
+3. Creates data products from the output of the 'splitgroups' operation. These data products are images that have been prepped for further processing.
+
+4. Logs the creation of each data product and its associated options.
+
+5. Calculates the sky background for each image. If the detector option is 'UVIS', it runs the 'calcsky' operation. If the detector option is 'WFC', it logs the start of the 'calcsky' operation.
+
+6. Creates data products from the output of the 'calcsky' operation. These data products are images that have been prepped for further processing.
+
+7. Fires make_param event when all images are finished running prep_image
+
+This script relies on the 'wpipe' library, a Python package designed for efficient pipeline management and execution.
+"""
+
 import wpipe as wp
 from astropy.io import fits
 from astropy.utils.data import get_pkg_data_filename
@@ -65,32 +88,32 @@ if __name__ == "__main__":
     if this_dp_subtype == "DRIZZLED" and "JWST" not in this_dp.options["telescope"]:
         my_job.logprint(dp_fullpath)
         fitsname = dp_fullpath
-        try: 
-           f = fits.open(fitsname,mode='update')
-           f.info()
-           del f[4]
-           f.info()
-           f.close()
-           fits_file = get_pkg_data_filename(fitsname)
-           a=fits.getval(fits_file, 'NCOMBINE', ext=1)
-           fits.setval(fits_file, 'NCOMBINE', value=a)
+        try:
+            f = fits.open(fitsname, mode='update')
+            f.info()
+            del f[4]
+            f.info()
+            f.close()
+            fits_file = get_pkg_data_filename(fitsname)
+            a = fits.getval(fits_file, 'NCOMBINE', ext=1)
+            fits.setval(fits_file, 'NCOMBINE', value=a)
         except:
-           pass
+            pass
 
     my_job.logprint(f'Starting mask on {dp_fullpath}')
     my_job.logprint(f'Detector {this_dp.options["detector"]}')
     if "UVIS" in this_dp.options["detector"]:
         mask_output = subprocess.run(
-             [my_config.parameters['dolphot_path']+"wfc3mask", dp_fullpath], capture_output=True, text=True)
+            [my_config.parameters['dolphot_path']+"wfc3mask", dp_fullpath], capture_output=True, text=True)
     if "IR" in this_dp.options["detector"] and "NIRCAM" not in this_dp.options["detector"]:
         mask_output = subprocess.run(
-             [my_config.parameters['dolphot_path']+"wfc3mask", dp_fullpath], capture_output=True, text=True)
+            [my_config.parameters['dolphot_path']+"wfc3mask", dp_fullpath], capture_output=True, text=True)
     if "WFC" in this_dp.options["detector"]:
         mask_output = subprocess.run(
-             [my_config.parameters['dolphot_path']+"acsmask", dp_fullpath], capture_output=True, text=True)
+            [my_config.parameters['dolphot_path']+"acsmask", dp_fullpath], capture_output=True, text=True)
     if "NIRCAM" in this_dp.options["detector"]:
         mask_output = subprocess.run(
-             [my_config.parameters['dolphot_path']+"nircammask", dp_fullpath], capture_output=True, text=True)
+            [my_config.parameters['dolphot_path']+"nircammask", dp_fullpath], capture_output=True, text=True)
     my_job.logprint(f'mask stdout: {mask_output}')
 
     #! SPLITGROUPS - Splits the SCI images into their own fits files for HST images.
@@ -100,13 +123,13 @@ if __name__ == "__main__":
         [my_config.parameters['dolphot_path']+"splitgroups", dp_fullpath], capture_output=True, text=True, cwd=proc_path)
     my_job.logprint(f'splitgroups stdout: {splitgroups_output}\n')
 
-
     #! make data products from splitgroups output <'....*chip1.fits'>
     for splitgroup_output_file in glob.glob(proc_path + this_dp.filename[:-5] + '*chip*.fits'):
         sp_dp_filename = splitgroup_output_file.split("/")[-1]
         sp_dp_subtype = this_dp.subtype+"_"+"prepped"
         my_job.logprint(f'created dataproduct for {sp_dp_filename}')
-        sp_dp = wp.DataProduct(my_config,filename=sp_dp_filename, group="proc", data_type="image", subtype=sp_dp_subtype, options={"telescope" : this_dp.options["telescope"], "channel" : this_dp.options["channel"], "detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]})
+        sp_dp = wp.DataProduct(my_config, filename=sp_dp_filename, group="proc", data_type="image", subtype=sp_dp_subtype, options={
+                               "telescope": this_dp.options["telescope"], "channel": this_dp.options["channel"], "detector": this_dp.options["detector"], "Exptime": this_dp.options["Exptime"], "filter": this_dp.options["filter"]})
         my_job.logprint(f'DP {sp_dp_filename}: {sp_dp}')
         my_job.logprint(f'with option {sp_dp.options["detector"]}')
 
@@ -138,7 +161,7 @@ if __name__ == "__main__":
             calcsky_output = subprocess.run(
                 [my_config.parameters['dolphot_path']+"calcsky", sp_dp.filename[:-5], "10", "25", "2", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
             my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
-        elif this_dp.options["detector"] == "NIRCAM": 
+        elif this_dp.options["detector"] == "NIRCAM":
             my_job.logprint(
                 f'Starting calcsky on {this_dp.filename[:-5]}, {this_dp.options["detector"]}')
             calcsky_output = subprocess.run(

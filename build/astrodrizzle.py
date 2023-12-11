@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+
+"""
+Astrodrizzle Task Description:
+-------------------
+This script is a component of a data processing pipeline designed for Flexible Image Transport System (FITS) files. It carries out several key tasks:
+
+1. Navigates to the /proc directory of the target from the firing parent event and loads the appropriate configuration file. This configuration file contains parameters that control the behavior of the pipeline.
+
+2. Retrieves the filter from the firing event. This filter is used to select specific raw data products from the list, creating a filtered list of data products for further processing.
+
+3. If the RUN_DEEPCR parameter is set to 'T' and the files are Ultraviolet Imaging Spectrograph (UVIS) files, it runs the DeepCR algorithm, which is designed to identify and replace cosmic rays in the images. If the detector is Infrared (IR) or if RUN_DEEPCR is set to 'F', this step is skipped.
+
+4. Sets the default parameters for AstroDrizzle using the first image in the list. AstroDrizzle is a software package used for the automated combination of dithered images into a single composite image. These parameters are then appended to the configuration file.
+
+5. Executes AstroDrizzle on the list of images using the default parameters. This step combines the dithered images into a single, cleaned image then fires find_reference.py.
+
+This script relies on the 'wpipe' library, a Python package designed for efficient pipeline management and execution.
+"""
+
 import wpipe as wp
 import numpy as np
 import glob
@@ -15,40 +34,6 @@ def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
     _temp = task.mask(source="*", name="astrodrizzle", value="*")
 
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Old pipeline docstring
-# This is a perl task that is part of the acs reduction pipeline.
-# It's job is to run astrodrizzle on images in a target directory
-# to flag cosmic rays for dolphot.
-#
-#
-# This task is meant to be invoked in a target subdirectory -
-# Configuration information is obtained from the target configuration
-# utilites, which reference data stored in a configuration database.
-#
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# if __name__ == "__main__":
-#     my_pipe = wp.Pipeline()
-#     my_job = wp.Job()
-#     my_input = my_pipe.inputs[0]
-#     my_targets = my_input.targets
-#     my_job.logprint("Starting AstroDrizzle")
-
-#     # my_targets = wp.Target(my_input)
-#     # my_job.logprint(f"{my_targets.name}")
-#     for targetname in my_targets.name:
-#         my_job.logprint(f"{targetname}")
-#         new_target = my_input.target(targetname)
-
-#         my_job.logprint(f"{new_target}")
-#         my_job.logprint(f"{my_input.procdataproducts}")
-
-#     #! 1 - Seperate target images by filter
-#     #! 2 - Run astrodrizzle on each target image using the default configuration
-#     #! 3 - read in config file for each target
-#     #! 4 - Fire next task
 
 # Setting up the task
 if __name__ == "__main__":
@@ -80,7 +65,7 @@ if __name__ == "__main__":
     # my_job.logprint(f"{my_config}")
 
     # Setting input parameters
-    #driz_param = [
+    # driz_param = [
     #    'skysub',
     #    'sky_method',
     #    #'driz_sep_pixfrac',
@@ -96,31 +81,31 @@ if __name__ == "__main__":
     #    'final_pixfrac',
     #    'final_scale',
     #    'final_kernel',
-    #]  # possible parameters
+    # ]  # possible parameters
     input_dict = {}  # parameters that will be put into AstroDrizzle
     # my_job.logprint(my_config.parameters)
-    #for param in driz_param:
+    # for param in driz_param:
     #    if param in my_config.parameters:
     #        param_val = my_config.parameters[
     #            param
     #        ]  # set param to value in config file otherwise leaves it as the default value
     #        input_dict[param] = param_val
-    #if len(input_dict) >= 1:
+    # if len(input_dict) >= 1:
 
     #    my_job.logprint(
     #        f"Custom AstroDrizzle parameters found for {my_target.name}: {input_dict}"
     #    )
 
-    #else:
+    # else:
     #    my_job.logprint(
     #        f"No custom AstroDrizzle parameters found for {my_target.name}, using default parameters."
     #    )
     input_dict["clean"] = True  # clean up directory
     input_dict["preserve"] = False
 
-    #if (
+    # if (
     #    "driz_sep_kernel" not in my_config.parameters
-    #):  # adjusting individual kernel default
+    # ):  # adjusting individual kernel default
     #    #if (
     #    #    "driz_sep_pixfrac" not in my_config.parameters
     #    #    or my_config.parameters["driz_sep_pixfrac"] == 1
@@ -134,10 +119,10 @@ if __name__ == "__main__":
     #    #            input_dict["driz_sep_pixfrac"] = 1
     #    #        if "driz_sep_scale" not in my_config.parameters:
     #    #            input_dict["driz_sep_scale"] = "INDEF"
-    #if (
+    # if (
     #    "driz_sep_kernel" in my_config.parameters
     #    and my_config.parameters["driz_sep_kernel"] == "lanczos3"
-    #):
+    # ):
     #    if "driz_sep_pixfrac" not in my_config.parameters:
     #        input_dict["driz_sep_pixfrac"] = 1
     #    if "driz_sep_scale" not in my_config.parameters:
@@ -151,7 +136,7 @@ if __name__ == "__main__":
         dpowner_id=my_config.config_id, group="proc"
     )
     target_im = []
-    print("DPs are",len(my_dp))
+    print("DPs are", len(my_dp))
     for dp in my_dp:
         my_job.logprint(f"testing {dp.filename}")
         if (
@@ -194,15 +179,14 @@ if __name__ == "__main__":
         len_target_im >= 4 and "combine_type" not in my_config.parameters
     ):  # with at least 4 input images, median is better than default of minmed
         ind_input_dict["combine_type"] = "median"
-        #ind_input_dict[
+        # ind_input_dict[
         #    "combine_nhigh"
-        #] = 1  # for 4 input images nhigh should be 1, could need to be raised for >4
+        # ] = 1  # for 4 input images nhigh should be 1, could need to be raised for >4
 
     # Running AstroDrizzle
     my_job.logprint(
         f"Starting AstroDrizzle for {my_target.name} in filter {my_filter}")
-    
-    
+
     if len_target_im == 1:  # for filters with only 1 input image, only the sky subtraction and final drizzle can run
         ind_input_dict["blot"] = False
         ind_input_dict["driz_separate"] = False
@@ -214,7 +198,7 @@ if __name__ == "__main__":
         my_job.logprint(ind_input_dict)
         my_job.logprint(",)")
         astrodrizzle.AstroDrizzle(input=inputall, context=True, build=True, **ind_input_dict,
-        )
+                                  )
     else:
         my_job.logprint('astrodrizzle.AstroDrizzle(input=')
         my_job.logprint(inputall)
@@ -223,19 +207,19 @@ if __name__ == "__main__":
         my_job.logprint(",)")
 
         astrodrizzle.AstroDrizzle(
-            #input=inputall, context=True, build=True, preserve=False, driz_cr=False, blot=False, median=False, **ind_input_dict,
+            # input=inputall, context=True, build=True, preserve=False, driz_cr=False, blot=False, median=False, **ind_input_dict,
             input=inputall, context=True, build=True, **ind_input_dict,
         )
     my_job.logprint(
         f"AstroDrizzle complete for {my_target.name} in filter {my_filter}")
 
     # Create Dataproducts for drizzled images
-    print("DETEC",detector)
+    print("DETEC", detector)
     if ("IR" in detector):
         drizzleim_path = (
             out_name + "_drz.fits"
         )  # Already in proc directory so this is just the file name
-    else:    
+    else:
         drizzleim_path = (
             out_name + "_drc.fits"
         )  # Already in proc directory so this is just the file name

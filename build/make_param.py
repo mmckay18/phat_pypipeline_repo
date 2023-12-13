@@ -1,4 +1,20 @@
 #!/usr/bin/env python
+"""
+Make Param Task Description:
+-------------------
+This script is a component of a data processing pipeline designed for Flexible Image Transport System (FITS) files. It carries out several key tasks:
+
+1. Checks for user-specified parameters in the configuration. If a parameter is not specified by the user, it sets a default value for that parameter.
+
+2. Writes the parameters and their values to the targets configuration file. This file is used as input for other scripts in the pipeline.
+
+3. Defines global parameters for the pipeline. These parameters control the behavior of the pipeline and are used across multiple scripts for running DOLPHOT.
+
+4. Fires DOLPHOT events for the target.
+
+This script relies on the 'wpipe' library, a Python package designed for efficient pipeline management and execution.
+"""
+
 import wpipe as wp
 import time
 from astropy.io import fits
@@ -23,7 +39,7 @@ if __name__ == "__main__":
     # List of DP from prep image:
     # list_of_dps = this_event.options
     tagged_dps = []
-    #for dp in my_config.procdataproducts:
+    # for dp in my_config.procdataproducts:
     #    # my_job.logprint(f"DP: {dp}, {dp.subtype}")
     #    if "drc.chip1.fits" in dp.filename:
     #        ref_dp = dp
@@ -35,10 +51,11 @@ if __name__ == "__main__":
     #        my_job.logprint(f"Tagged DP: {dp}, {dp.subtype}")
     #    else:
     #        pass
-    ref_dp= wp.DataProduct.select(config_id=my_config.config_id,subtype="reference_prepped")
+    ref_dp = wp.DataProduct.select(
+        config_id=my_config.config_id, subtype="reference_prepped")
     tagged_dps = wp.DataProduct.select(
-        config_id=my_config.config_id, 
-        data_type="image", 
+        config_id=my_config.config_id,
+        data_type="image",
         subtype="SCIENCE_prepped")
     my_target = wp.Target(this_event.options["target_id"])
     my_job.logprint(f"###### This Target: {my_target}\n")
@@ -86,51 +103,52 @@ if __name__ == "__main__":
             im_fullfile = dp.filename
             im_file = im_fullfile.split('.fits')[0]  # get rid of extension
             p.write(f'img{loc}_file = {im_file}\n')
-            im_pars = ["apsky","shift","xform","raper","rchi","rsky0","rsky1","rpsf"]
-            def_vals = ["20 35","0 0","1 0 0","2","1.5","15","35","15"]
+            im_pars = ["apsky", "shift", "xform",
+                       "raper", "rchi", "rsky0", "rsky1", "rpsf"]
+            def_vals = ["20 35", "0 0", "1 0 0", "2", "1.5", "15", "35", "15"]
             if 'reference' not in dp.subtype:
                 defined = []
                 count += 1
                 img = 'img'+str(count)
-                parcount=0
+                parcount = 0
                 for impar in im_pars:
                     param_name = "img"+str(count)+"_"+impar
                     cam_name = dp.options['detector']+"_"+impar
                     if "NIRCAM" in dp.options['detector']:
-                       if "LONG" in dp.options['channel']:
-                           cam_name = dp.options['detector']+"LW_"+impar
+                        if "LONG" in dp.options['channel']:
+                            cam_name = dp.options['detector']+"LW_"+impar
                     try:
                         p.write(
-                           f'{param_name} = {my_config.parameters[cam_name]}\n')
+                            f'{param_name} = {my_config.parameters[cam_name]}\n')
                         my_job.logprint(
-                           f'{param_name} parameter found in configuration')
-                        defined.append(1)    
+                            f'{param_name} parameter found in configuration')
+                        defined.append(1)
                     except:
                         p.write(
-                           f'{param_name} = {def_vals[parcount]}\n')
+                            f'{param_name} = {def_vals[parcount]}\n')
                         my_job.logprint(
-                           f'{param_name} parameter default')
-                        defined.append(1)     
-                    #if cam_name in my_config.parameters:
+                            f'{param_name} parameter default')
+                        defined.append(1)
+                    # if cam_name in my_config.parameters:
                     #    p.write(
                     #       f'{param_name} = {my_config.parameters[cam_name]}\n')
                     #    my_job.logprint(
                     #       f'{param_name} parameter found in configuration')
-                    #    defined.append(1)                           
-                    #else:
+                    #    defined.append(1)
+                    # else:
                     #    p.write(
                     #       f'{param_name} = {def_vals[parcount]}\n')
                     #    my_job.logprint(
                     #       f'{param_name} parameter default')
-                    #    defined.append(1)                           
+                    #    defined.append(1)
                     parcount += 1
-############################                    
-        #params = ["img_shift", "img_xform", "img_RAper",
+############################
+        # params = ["img_shift", "img_xform", "img_RAper",
         #          "img_RChi", "img_RSky", "img_RSky2", "img_RPSF", "img_aprad", "img_apsky"]
 
         # define any image specific parameters given in config file
-        #all_individual = {}
-        #for param in params:  # run for all image specific parameters
+        # all_individual = {}
+        # for param in params:  # run for all image specific parameters
         #    name_parts = param.split('_')
         #    defined = []
         #    for i in range(0, len(all_dps)):  # for every input image
@@ -144,14 +162,14 @@ if __name__ == "__main__":
         #            defined.append(1)
         #    # if image s
 
-        #specific parameter is defined for all input images
+        # specific parameter is defined for all input images
         #    if len(defined) == len(all_dps):
         #        all_individual[param] = "Yes"
         #    else:
         #        all_individual[param] = "No"
 
         # define img_ default parameters which are used if img#_ parameter for an image isn't defined, replace if in config file
-        #for param in params:  # run for all image specific parameters
+        # for param in params:  # run for all image specific parameters
         #    if param in my_config.parameters:  # check config for this parameter
         #        p.write(f'{param} = {my_config.parameters[param]}\n')
         #        my_job.logprint(f'{param} parameter found in configuration')
@@ -223,10 +241,12 @@ if __name__ == "__main__":
 # Define global parameters
         my_job.logprint(
             f'Checking for user specified global parameters and defining any unspecified global parameters')
-        params_global = ["UseWCS","PSFPhot","FitSky","SkipSky","SkySig","SecondPass","SearchMode","SigFind","SigFindMult","SigFinal","MaxIT","NoiseMult","FSat","FlagMask","ApCor","Force1","Align","aligntol","alignstep","ACSuseCTE","WFC3useCTE","Rotate","RCentroid","PosStep","dPosMax","RCombine","SigPSF","PSFres","psfoff","DiagPlotType","CombineChi","ACSpsfType","WFC3IRpsfType","WFC3UVISpsfType","PSFPhotIt"]
-        glob_vals = ["2","1","2","2","2.25","5","1","3.0","0.85","3.5","25","0.10","0.999","4","1","1","2","4","2","0","0","1","1","0.1","2.5","1.415","3.0","1","0.0","PNG","1","0","0","0","2"]
+        params_global = ["UseWCS", "PSFPhot", "FitSky", "SkipSky", "SkySig", "SecondPass", "SearchMode", "SigFind", "SigFindMult", "SigFinal", "MaxIT", "NoiseMult", "FSat", "FlagMask", "ApCor", "Force1", "Align", "aligntol",
+                         "alignstep", "ACSuseCTE", "WFC3useCTE", "Rotate", "RCentroid", "PosStep", "dPosMax", "RCombine", "SigPSF", "PSFres", "psfoff", "DiagPlotType", "CombineChi", "ACSpsfType", "WFC3IRpsfType", "WFC3UVISpsfType", "PSFPhotIt"]
+        glob_vals = ["2", "1", "2", "2", "2.25", "5", "1", "3.0", "0.85", "3.5", "25", "0.10", "0.999", "4", "1", "1",
+                     "2", "4", "2", "0", "0", "1", "1", "0.1", "2.5", "1.415", "3.0", "1", "0.0", "PNG", "1", "0", "0", "0", "2"]
         # params_global = ["MaxIT","PSFPhot", "PSFPhotIt", "FitSky", "SkipSky", "SkySig", "SigFindMult", "FSat", "PosStep", "sigPSF", "UseWCS", "NoiseMult", "SecondPass", "Force1", "WFC3UVISpsfType","ACSpsfType","WFC3IRpsfType","ACSuseCTE", "WFC3useCTE","FlagMask","InterpPSFlib", "CombineChi", "RCombine", "PSFres"]
-        #glob_vals = ["25","1","2","2","1","2.25","0.85","0.999","0.25","5.0","2","0.1","5","0","0","0","0","0","0","4","1","0","1.5","1"]  
+        # glob_vals = ["25","1","2","2","1","2.25","0.85","0.999","0.25","5.0","2","0.1","5","0","0","0","0","0","0","4","1","0","1.5","1"]
         paramcount = 0
         for globpar in params_global:
             try:
@@ -236,10 +256,10 @@ if __name__ == "__main__":
             except:
                 p.write(f'{globpar} = {glob_vals[paramcount]}\n')
                 my_job.logprint(f'{globpar} parameter set to default')
-            #if globpar in my_config.parameters:  # check for any global parameters in config
+            # if globpar in my_config.parameters:  # check for any global parameters in config
             #    p.write(f'{globpar} = {my_config.parameters[globpar]}\n')
             #    my_job.logprint(f'{globpar} parameter found in configuration')
-            #else:  # define defaults if not defined in config
+            # else:  # define defaults if not defined in config
             #    p.write(f'{globpar} = {glob_vals[paramcount]}\n')
             #    my_job.logprint(f'{globpar} parameter set to default')
             paramcount += 1

@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+
+"""
+Find Reference Task Description:
+-------------------
+This script is a component of a data processing pipeline designed for Flexible Image Transport System (FITS) files. It carries out several key tasks:
+
+1. Using the target ID, it retrieves the targets associated dataproducts from the database with the subtype='DRIZZLED'. 
+
+2.Looks for a reference image filter in the job configuration. If a reference image filter is found, it selects the drizzled image with the filter specified in the job configuration. If no reference image filter is found, it selects the drizzled image with the longest exposure time.
+
+3. Update the seclected reference image subtype to 'reference' and group to 'proc'. 
+
+4. Logs the number of drizzled images found for the target. This information is useful for tracking the progress of the pipeline.
+
+5. Fires the prep_image task for all tagged images and the reference image.
+
+This script relies on the 'wpipe' library, a Python package designed for efficient pipeline management and execution.
+"""
+
 import wpipe as wp
 from astropy.io import fits
 import numpy as np
@@ -29,9 +48,9 @@ if __name__ == "__main__":
 
     # dataproducts for the drizzled images for my_target
     my_dps = wp.DataProduct.select(
-        config_id=my_config.config_id, 
-        subtype="DRIZZLED", 
-        )
+        config_id=my_config.config_id,
+        subtype="DRIZZLED",
+    )
     # my_dps = wp.DataProduct.select(wp.si.DataProduct.filename.regexp_match("final*"), dpowner_id=my_job.config_id)
     # my_job.logprint(f"{my_dps}")
 
@@ -41,7 +60,7 @@ if __name__ == "__main__":
 # Choosing the best reference image
     try:
         ref_filt = my_config.parameters['reference_filter']
-        
+
         my_job.logprint(
             f"Reference image filter found, using {ref_filt} as reference image."
         )
@@ -54,9 +73,9 @@ if __name__ == "__main__":
                 ref_dp = dp
             else:
                 continue
-        
+
     try:
-        filename=ref_dp.filename
+        filename = ref_dp.filename
     except:
         exposures = []
         for dp in my_dps:
@@ -71,10 +90,13 @@ if __name__ == "__main__":
         ref_dp = my_dps[max_exp_ind]
 
     # Update dp for reference image
-    new_ref_dp = wp.DataProduct(my_config, filename=ref_dp.filename, group="proc")
+    new_ref_dp = wp.DataProduct(
+        my_config, filename=ref_dp.filename, group="proc")
     new_ref_dp.subtype = "reference"
-    new_ref_dp.options = {"detector": ref_dp.options["detector"], "Exptime": ref_dp.options["Exptime"], "filter": ref_dp.options["filter"]}
-    my_job.logprint(f"Reference is {new_ref_dp.filename} is subtype {new_ref_dp.subtype}")
+    new_ref_dp.options = {"detector": ref_dp.options["detector"],
+                          "Exptime": ref_dp.options["Exptime"], "filter": ref_dp.options["filter"]}
+    my_job.logprint(
+        f"Reference is {new_ref_dp.filename} is subtype {new_ref_dp.subtype}")
 
 # Set up count for prep_image
     comp_name = 'completed_' + my_target.name
@@ -84,9 +106,9 @@ if __name__ == "__main__":
 
 # Firing the next event
     tagged_dps = wp.DataProduct.select(
-        #config_id=my_config.config_id, data_type="SCIENCE", subtype="tagged")  # all tagged dps
+        # config_id=my_config.config_id, data_type="SCIENCE", subtype="tagged")  # all tagged dps
         config_id=my_config.config_id, subtype="SCIENCE")  # all tagged dps
-    print("LEN",len(tagged_dps))
+    print("LEN", len(tagged_dps))
     reference_dp = [new_ref_dp]  # making reference dp into a list
     all_dps = tagged_dps+reference_dp  # add reference dp to tagged dps
     my_job.logprint(f"ALL DPS {all_dps}")

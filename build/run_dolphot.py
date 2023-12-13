@@ -15,6 +15,10 @@ def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
     _temp = task.mask(source="*", name="DOLPHOT", value="*")
 
+import signal
+def handler(signum, frame):
+    print("Forever is over!")
+    raise ValueError("end of time")
 
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
@@ -70,8 +74,14 @@ if __name__ == "__main__":
             # Create dataproducts for Dolphot output files
 
             # check that this gets file called just dolphotout
-            phot_dp = wp.DataProduct(
+            signal.signal(signal.SIGALRM, handler)    
+            signal.alarm(1000)
+            try:
+                phot_dp = wp.DataProduct(
                     my_config, filename=dolphotout, group="proc", subtype="dolphot output")
+            except:
+                ValueError("Failed to create phot file DP. Exiting.") 
+            signal.alarm(0)
             my_job.logprint(
                     f"Created dataproduct for {dolphotout}, {phot_dp}")
             out_files = glob('*.phot.*')
@@ -82,11 +92,21 @@ if __name__ == "__main__":
                     f"Created dataproduct for {file}, {dolphot_output_dp}")
         else:
             pass
-    next_event = my_job.child_event(
-      name="dolphot_done",
-      options={"dp_id": phot_dp.dp_id}
-    )  # next event
-    next_event.fire()
-    time.sleep(150)
+    if my_config.parameters["run_single"] == True:
+        next_event = my_job.child_event(
+          name="dolphot_done",
+          options={"dp_id": phot_dp.dp_id, "memory": "50G"}
+        )  # next event
+        next_event.fire()
+        time.sleep(150)
+
+
+    else:
+        next_event = my_job.child_event(
+          name="dolphot_done",
+          options={"dp_id": phot_dp.dp_id, "memory": "150G"}
+        )  # next event
+        next_event.fire()
+        time.sleep(150)
 
     

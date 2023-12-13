@@ -28,6 +28,7 @@ import wpipe as wp
 from astropy.io import fits
 import glob
 import pandas as pd
+import time
 
 
 def register(task):
@@ -172,3 +173,4 @@ if __name__ == "__main__":
                 },
             )
             my_event.fire()
+            time.sleep(0.5)

@@ -357,7 +357,7 @@ if __name__ == "__main__":
         f"\nDOLPHOT parameter file complete for {my_target.name}, firing DOLPHOT task")
     next_event = my_job.child_event(
         name="DOLPHOT",
-        options={"param_dp_id": param_dp.dp_id, "walltime": "500:00:00"}
+        options={"param_dp_id": param_dp.dp_id, "walltime": "400:00:00"}
     )  # next event
     next_event.fire()
     time.sleep(150)

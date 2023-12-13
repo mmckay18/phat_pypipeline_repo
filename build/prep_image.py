@@ -100,6 +100,10 @@ if __name__ == "__main__":
         [my_config.parameters['dolphot_path']+"splitgroups", dp_fullpath], capture_output=True, text=True, cwd=proc_path)
     my_job.logprint(f'splitgroups stdout: {splitgroups_output}\n')
 
+    try:
+        run_single = my_config.parameter["run_single"]
+    except:
+        run_single = False
 
     #! make data products from splitgroups output <'....*chip1.fits'>
     for splitgroup_output_file in glob.glob(proc_path + this_dp.filename[:-5] + '*chip*.fits'):
@@ -142,52 +146,61 @@ if __name__ == "__main__":
             my_job.logprint(
                 f'Starting calcsky on {this_dp.filename[:-5]}, {this_dp.options["detector"]}')
             calcsky_output = subprocess.run(
-                [my_config.parameters['dolphot_path']+"calcsky", this_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+                [my_config.parameters['dolphot_path']+"calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
             my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
+    
+        if run_single == True:
+            my_event = my_job.child_event(name="make_single_param", options={"target_id": this_event.options["target_id"], "dpid": sp_dp.dp_id, "to_run": this_event.options['to_run']
+            }) 
+            my_event.fire()
 
+            
     # * Counter: Update parent job option to increase by 1 when done running splitgroups
-    compname = this_event.options['compname']
-    update_option = parent_job.options[compname]
-    to_run = this_event.options['to_run']
-    update_option += 1
-    my_job.logprint(f'update_option: {update_option}, to_run: {to_run}\n')
-
-    # When last image is done running splitgroups, run calcsky for outputs
-
-    if update_option >= to_run:
-
-        #! Makes CALCSKY fits to pipeline dataproducts
-        prep_dp_id_list = ''
-        for calcsky_output_file in glob.glob(proc_path + '*sky.fits'):
-            cs_dp_filename = calcsky_output_file.split("/")[-1]
-            my_job.logprint(f'created dataproduct for {cs_dp_filename}')
-            cs_dp = wp.DataProduct(my_config,
-                                   filename=cs_dp_filename, group="proc", data_type="image", subtype="calcsky")
-            my_job.logprint(f'DP {cs_dp_filename}: {cs_dp}')
-
-            # * Create event option for all prep_image dataproducts
-            # prep_dp_id_list.append(cs_dp.dp_id)
-            # ! Add dp id to list
-            prep_dp_id_list += str(cs_dp.dp_id) + ', '
-        #
-
-        #! Makes the prep dp id list to a string
-        prep_dp_id_list = str(prep_dp_id_list)
-        my_job.logprint(f'List of prep image dps: {prep_dp_id_list}\n')
-
-        my_job.logprint(f'DONE: ALL DATAPRODUCTS CREATED\n')
-
-        #! Fire event to make DOLPHOT parameter file
-        # ! Attempting to read in a list of dps as a config parameter
-        # config_parameters[{'prep_image_dp_ids': prep_dp_id_list}]
-        # my_job.logprint("Config Parameters: ", config_parameters)
-        my_event = my_job.child_event(name="make_param", options={
-            "target_id": this_event.options["target_id"],
-            # "list_prep_image_dp_ids": prep_dp_id_list,
-        },
-        )
-        my_event.fire()
-
+    if run_single == True:
+        time.sleep(150)
     else:
-        pass
-    time.sleep(150)
+        compname = this_event.options['compname']
+        update_option = parent_job.options[compname]
+        to_run = this_event.options['to_run']
+        update_option += 1
+        my_job.logprint(f'update_option: {update_option}, to_run: {to_run}\n')
+
+        # When last image is done running splitgroups, run calcsky for outputs
+
+        if update_option >= to_run:
+
+            #! Makes CALCSKY fits to pipeline dataproducts
+            prep_dp_id_list = ''
+            for calcsky_output_file in glob.glob(proc_path + '*sky.fits'):
+                cs_dp_filename = calcsky_output_file.split("/")[-1]
+                my_job.logprint(f'created dataproduct for {cs_dp_filename}')
+                cs_dp = wp.DataProduct(my_config,
+                                       filename=cs_dp_filename, group="proc", data_type="image", subtype="calcsky")
+                my_job.logprint(f'DP {cs_dp_filename}: {cs_dp}')
+    
+                # * Create event option for all prep_image dataproducts
+                # prep_dp_id_list.append(cs_dp.dp_id)
+                # ! Add dp id to list
+                prep_dp_id_list += str(cs_dp.dp_id) + ', '
+            #
+    
+            #! Makes the prep dp id list to a string
+            prep_dp_id_list = str(prep_dp_id_list)
+            my_job.logprint(f'List of prep image dps: {prep_dp_id_list}\n')
+    
+            my_job.logprint(f'DONE: ALL DATAPRODUCTS CREATED\n')
+    
+            #! Fire event to make DOLPHOT parameter file
+            # ! Attempting to read in a list of dps as a config parameter
+            # config_parameters[{'prep_image_dp_ids': prep_dp_id_list}]
+            # my_job.logprint("Config Parameters: ", config_parameters)
+            my_event = my_job.child_event(name="make_param", options={
+                "target_id": this_event.options["target_id"],
+                # "list_prep_image_dp_ids": prep_dp_id_list,
+            },
+            )
+            my_event.fire()
+            time.sleep(150)
+
+        else:
+            pass

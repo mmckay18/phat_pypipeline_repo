@@ -37,6 +37,7 @@ def register(task):
 import signal
 def handler(signum, frame):
     print("Forever is over!")
+    sys.exit(1)
     raise ValueError("end of time")
 
 if __name__ == "__main__":
@@ -116,7 +117,7 @@ if __name__ == "__main__":
     if my_config.parameters["run_single"] == True:
         next_event = my_job.child_event(
           name="dolphot_done",
-          options={"dp_id": phot_dp.dp_id, "memory": "50G"}
+          options={"dp_id": phot_dp.dp_id, "memory": "50G", "to_run": this_event.options["to_run"], "tracking_job_id": this_event.options["tracking_job_id"]}
         )  # next event
         next_event.fire()
         time.sleep(150)

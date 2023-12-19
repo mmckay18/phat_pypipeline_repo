@@ -434,10 +434,25 @@ if __name__ == '__main__':
     t1 = time.time()
     timedelta = t1 - t0
     print('Finished in {}'.format(str(timedelta)) )
-    next_event = my_job.child_event(
-    name="hdf5_ready",
-    options={"dp_id": hd5_dp.dp_id}
-    )  # next event
-    next_event.fire()
-    time.sleep(150)
+    if my_config.parameters["run_single"]==True:
+        tracking_job=wp.Job(this_event.options["tracking_job_id"])
+        to_run = this_event.options["to_run"]
+        comp_name = 'completed_' + my_target.name
+        update_option = tracking_job.options[comp_name]
+        update_option += 1
+        if update_option == to_run:
+            next_event = my_job.child_event(
+            name="singles_complete",
+            options={"dp_id": hd5_dp.dp_id}
+            )  # next event
+            next_event.fire()
+            time.sleep(150)
+ 
+    else:
+        next_event = my_job.child_event(
+        name="hdf5_ready",
+        options={"dp_id": hd5_dp.dp_id}
+        )  # next event
+        next_event.fire()
+        time.sleep(150)
 

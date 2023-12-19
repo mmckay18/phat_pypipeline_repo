@@ -127,6 +127,7 @@ if __name__ == "__main__":
         run_single = my_config.parameter["run_single"]
     except:
         run_single = False
+        my_config.parameter["run_single"] = False
 
     #! make data products from splitgroups output <'....*chip1.fits'>
     for splitgroup_output_file in glob.glob(proc_path + this_dp.filename[:-5] + '*chip*.fits'):

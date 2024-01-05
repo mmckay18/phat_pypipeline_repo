@@ -98,7 +98,7 @@ if __name__ == "__main__":
     my_job.logprint(dolphot_command)
     dolphot_output = os.system(dolphot_command)
     # check that this gets file called just dolphotout
-    phot_dp = wp.DataProduct(my_config, filename=dolphotout+".fake", group="proc", subtype="fake output")
+    phot_dp = wp.DataProduct(my_config, filename=dolphotout+".fake", group="proc", subtype="fake_output")
 
     my_job.logprint(
         f"Created dataproduct for {dolphotout}.fake, {phot_dp}")

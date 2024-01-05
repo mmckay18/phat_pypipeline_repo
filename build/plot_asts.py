@@ -35,7 +35,7 @@ import time
 
 def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
-    _temp = task.mask(source="*", name="hdf5_ready", value="*")
+    _temp = task.mask(source="*", name="fake_hdf5_ready", value="*")
 
 
 
@@ -47,7 +47,8 @@ def register(task):
 
 # need better way to do this
 
-def make_spatial(ds, path, targname, red_filter, blue_filter, 
+def make_resid_plot(my_job,ds, path, targname, filter, n_err=12,
+             #density_kwargs={'f':'log10', 'colormap':'viridis', 'linewidth':2},
              density_kwargs={'f':'log10', 'colormap':'viridis'},
              scatter_kwargs={'c':'k', 'alpha':0.5, 's':1, 'linewidth':2}):
     """Plot a CMD with (blue_filter - red_filter) on the x-axis and 
@@ -79,26 +80,48 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
     -------
     some plots dude
     """
-    ylab = 'Declination (J2000)'
-    gst_criteria = ds['{}_gst'.format(red_filter)] & ds['{}_gst'.format(blue_filter)]
-    name = path + "/" + targname + "_" + blue_filter + "_" + red_filter + "_" + "gst_spatial.png"
+    vega = '{}_vega'.format(filter)
+    #find input mags
+    check = 0
+    for colname in ds.get_column_names():
+        if "magin" not in colname or check > 0:
+            continue
+        else:
+            image = colname.split("_magin")[0]
+            imdp=wp.DataProduct.select(config_id=this_config.id, filename=image+".fits", group="proc")
+            camera = imdp.options["camera"]
+            filt = imdp.option["filter"]
+            camfilt = camera+"_"+filt
+            if camfilt in filter:
+                incolname = colname
+                check += 1
+    try:
+        my_job.logprint(f"found input column {incolname} for {vega}")
+    except:
+        my_job.logprint(f"No found input column for {vega}")
+        raise ValueError("No input column found")
+    xlab = '{}'.format(filter.upper())+" IN"
+    ylab = "Out - In" 
+    gst_criteria = ds['{}_gst'.format(filter)] 
+    name = path + "/" + targname + "_" + filter + "_" + "gst_asts.png"
+    # cut dataset down to gst stars
+    # could use ds.select() but i don't like it that much
     ds_gst = ds[gst_criteria]
     # haxx
-    xmin = np.nanmin(ds_gst[ra].tolist())
-    xmax = np.nanmax(ds_gst[ra].tolist())
-    ymin = np.nanmin(ds_gst[dec].tolist())
-    ymax = np.nanmax(ds_gst[dec].tolist())
-    meddec = np.nanmed(ds_gst[dec].tolist())
-    cosdec = np.cos(meddec*np.pi/180.0)
-    print(blue_filter,red_filter," has ",ds_gst.length()," stars in map.")
-    
+    xmin = np.nanmin(ds_gst[incolname].tolist())
+    xmax = np.nanmax(ds_gst[incolname].tolist())
+    ymin = -1.0
+    ymax = 1.0
+    diff = ds_gst[vega] - ds_gst[incolname]
+    my_job.logprint(f"{filter} has {ds_gst.length}/{ds.length} stars recovered.")
+
     if ds_gst.length() >= 50000:
-        fig, ax = plt.subplots(1, figsize=(7.0/cosdec,5.5))
+        fig, ax = plt.subplots(1, figsize=(7.,5.5))
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
         #data_shape = int(np.sqrt(ds_gst.length()))
         data_shape = 200
-        ds_gst.plot(ra, dec, shape=data_shape,
+        ds_gst.plot(vega, diff, shape=data_shape,
                     limits=[[xmin,xmax],[ymax,ymin]],
                     **density_kwargs)
         plt.rcParams['axes.linewidth'] = 5
@@ -113,12 +136,12 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
            ax.spines[axis].set_linewidth(4)
         plt.minorticks_on()
         plt.ylabel(ylab,fontsize=20)
-        plt.xlabel("Right Ascensiton (J2000)",fontsize=20)
+        plt.xlabel(color,fontsize=20)
     else:
-        fig, ax = plt.subplots(1, figsize=(7.0/cosdec,5.5), linewidth=5)
+        fig, ax = plt.subplots(1, figsize=(7.,5.5), linewidth=5)
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
-        ds_gst.scatter(ra, dec,  **scatter_kwargs)
+        ds_gst.scatter(color, y_vega,  **scatter_kwargs)
         plt.rcParams['axes.linewidth'] =5 
         plt.xticks(np.arange(int(xmin-0.5), int(xmax+0.5), 1.0),fontsize=20)
         plt.yticks(np.arange(int(ymin-0.5), int(ymax+0.5), 1.0),fontsize=20)
@@ -132,10 +155,19 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
     plt.xlim(int(xmin-0.5), int(xmax+0.5))
     plt.ylim(int(ymin-0.5), int(ymax+0.5))
     plt.ylabel(ylab,fontsize=20)
-    plt.xlabel("Right Ascensiton (J2000)",fontsize=20)
+    plt.xlabel(color,fontsize=20)
+    ax.invert_yaxis()
+    y_binned = ds_gst.mean(y_vega, binby=ds_gst[y_vega], shape=n_err)
+    xerr = ds_gst.median_approx('({}_err**2 + {}_err**2)**0.5'.format(blue_filter, red_filter),
+                                 binby=ds_gst[y_vega], shape=n_err)
+    yerr = ds_gst.median_approx('{}_err'.format(y_filter),
+                                 binby=ds_gst[y_vega], shape=n_err)
+    x_binned = [xmax*0.9]*n_err
+    ax.errorbar(x_binned, y_binned, yerr=yerr, xerr=xerr,
+                fmt=',', color='k', lw=1.5)
     fig.savefig(name)
     new_dp = wp.DataProduct(my_config, filename=name, 
-                             group="proc", data_type="Map file", subtype="Map") 
+                             group="proc", data_type="CMD file", subtype="CMD") 
 
 
 if __name__ == "__main__":
@@ -185,7 +217,7 @@ if __name__ == "__main__":
            ind2=i+1+j
            my_job.logprint(filters[sort_inds[i]])  
            my_job.logprint(filters[sort_inds[ind2]])  
-           make_spatial(ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower())
+           make_cmd(my_job, ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower(),filters[sort_inds[ind2]].lower())
        
     next_event = my_job.child_event(
     name="cmds_ready",

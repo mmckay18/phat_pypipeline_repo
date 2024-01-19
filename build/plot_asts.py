@@ -121,7 +121,7 @@ def make_resid_plot(my_job,ds, path, targname, filter, n_err=12,
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
         #data_shape = int(np.sqrt(ds_gst.length()))
         data_shape = 200
-        ds_gst.plot(vega, diff, shape=data_shape,
+        ds_gst.plot(incolname, diff, shape=data_shape,
                     limits=[[xmin,xmax],[ymax,ymin]],
                     **density_kwargs)
         plt.rcParams['axes.linewidth'] = 5
@@ -141,7 +141,7 @@ def make_resid_plot(my_job,ds, path, targname, filter, n_err=12,
         fig, ax = plt.subplots(1, figsize=(7.,5.5), linewidth=5)
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
-        ds_gst.scatter(color, y_vega,  **scatter_kwargs)
+        ds_gst.scatter(incolname, diff,  **scatter_kwargs)
         plt.rcParams['axes.linewidth'] =5 
         plt.xticks(np.arange(int(xmin-0.5), int(xmax+0.5), 1.0),fontsize=20)
         plt.yticks(np.arange(int(ymin-0.5), int(ymax+0.5), 1.0),fontsize=20)

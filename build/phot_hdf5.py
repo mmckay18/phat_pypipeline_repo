@@ -434,7 +434,7 @@ if __name__ == '__main__':
     t1 = time.time()
     timedelta = t1 - t0
     print('Finished in {}'.format(str(timedelta)) )
-    if my_config.parameters["run_single"]==True:
+    if my_config.parameters["run_single"]=="T":
         tracking_job=wp.Job(this_event.options["tracking_job_id"])
         to_run = this_event.options["to_run"]
         comp_name = 'completed_' + my_target.name
@@ -454,5 +454,9 @@ if __name__ == '__main__':
         options={"dp_id": hd5_dp.dp_id}
         )  # next event
         next_event.fire()
+        next_event = my_job.child_event(
+        name="spatial",
+        options={"dp_id": hd5_dp.dp_id}
+        )  # next event
         time.sleep(150)
 

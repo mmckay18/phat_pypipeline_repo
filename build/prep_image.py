@@ -124,10 +124,10 @@ if __name__ == "__main__":
     my_job.logprint(f'splitgroups stdout: {splitgroups_output}\n')
 
     try:
-        run_single = my_config.parameter["run_single"]
+        run_single = my_config.parameters["run_single"]
     except:
-        run_single = False
-        my_config.parameter["run_single"] = False
+        run_single = "F"
+        my_config.parameters["run_single"] = "F"
 
     #! make data products from splitgroups output <'....*chip1.fits'>
     for splitgroup_output_file in glob.glob(proc_path + this_dp.filename[:-5] + '*chip*.fits'):
@@ -174,14 +174,15 @@ if __name__ == "__main__":
                 [my_config.parameters['dolphot_path']+"calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
             my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
     
-        if run_single == True:
-            my_event = my_job.child_event(name="make_single_param", options={"target_id": this_event.options["target_id"], "dpid": sp_dp.dp_id, "to_run": this_event.options['to_run']
+        if run_single == "T":
+            my_job.logprint(f'firing event for {sp_dp.filename}\n')
+            my_event = my_job.child_event(name="make_single_param", tag=sp_dp.dp_id,options={"target_id": this_event.options["target_id"], "dpid": sp_dp.dp_id, "to_run": this_event.options['to_run']
             }) 
             my_event.fire()
 
             
     # * Counter: Update parent job option to increase by 1 when done running splitgroups
-    if run_single == True:
+    if run_single == "T":
         time.sleep(150)
     else:
         compname = this_event.options['compname']

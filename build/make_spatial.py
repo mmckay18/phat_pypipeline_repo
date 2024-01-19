@@ -35,7 +35,7 @@ import time
 
 def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
-    _temp = task.mask(source="*", name="hdf5_ready", value="*")
+    _temp = task.mask(source="*", name="spatial", value="*")
 
 
 

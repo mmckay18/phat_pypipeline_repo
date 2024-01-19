@@ -19,7 +19,7 @@ if __name__ == "__main__":
     my_job.logprint(f"{this_event.options}")
     dpid=this_event.options["dpid"]
     # Get the dataproduct prep_image sent
-    dp= wp.DataProduct.select(dp_id=dpid)
+    dp=  wp.DataProduct(int(dpid))
     my_target = wp.Target(this_event.options["target_id"])
     my_job.logprint(f"###### This Target: {my_target}\n")
 
@@ -45,14 +45,14 @@ if __name__ == "__main__":
             f'Checking for user specified individual parameters and defining any unspecified individual parameters')
         my_job.logprint(f'Checking {dp.filename}, {dp}')
 
-        p.write(f'img{loc}_file = {im_file}\n')
+        p.write(f'img1_file = {im_file}\n')
         im_pars = ["apsky","shift","xform","raper","rchi","rsky0","rsky1","rpsf"]
         def_vals = ["20 35","0 0","1 0 0","2","1.5","15","35","15"]
         defined = []
         img = 'img1'
         parcount=0
         for impar in im_pars:
-            param_name = "img"+str(count)+"_"+impar
+            param_name = "img1"+"_"+impar
             cam_name = dp.options['detector']+"_"+impar
             if "NIRCAM" in dp.options['detector']:
                if "LONG" in dp.options['channel']:
@@ -69,7 +69,7 @@ if __name__ == "__main__":
                 my_job.logprint(
                    f'{param_name} parameter default')
                 defined.append(1)     
-
+            parcount += 1
 # Define global parameters
         my_job.logprint(
             f'Checking for user specified global parameters and defining any unspecified global parameters')
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     my_job.logprint(
         f"\nDOLPHOT parameter file complete for {my_target.name}, firing DOLPHOT task")
     next_event = my_job.child_event(
-        name="SINGLE_DOLPHOT",
+        name="DOLPHOT",
         options={"param_dp_id": param_dp.dp_id, "walltime": "20:00:00", "to_run":this_event.options["to_run"], "tracking_job_id":parent_job.job_id}
     )  # next event
     next_event.fire()

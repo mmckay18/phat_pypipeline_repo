@@ -116,6 +116,9 @@ if __name__ == "__main__":
 
     for dp in all_dps:  # fire prep image for all tagged images and the reference image
         filename = dp.filename
+        subtype = dp.subtype
+        if subtype=="reference" and my_config.parameters["run_single"]=="T":
+           continue
         my_job.logprint(f"Firing prep image task for {filename}")
         # have to define dp_id outside of the event or else it sets it as the same for all dps
         dp_id = dp.dp_id

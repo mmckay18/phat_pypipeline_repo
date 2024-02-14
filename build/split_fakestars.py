@@ -7,7 +7,7 @@ This script is a component of a data processing pipeline designed for Flexible I
 
 1. Using the configuration ID in the parent event, it searches the configuration. 
 
-2.Looks for files in the configuration proc/ subdirectory for a file ending in .fakelist. If no such file is found, it reports that to the log and exits.  If it is found, it creates a data product, divides the file into subfiles each containing 100 lines.
+2.Looks for files in the configuration proc/ subdirectory for a file ending in .fakelist. If no such file is found, it reports that to the log and exits.  If it is found, it creates a data product, divides the file into subfiles each containing 50 lines.
 
 3. It creates data products for each of the newly-generated list files
 
@@ -64,14 +64,14 @@ if __name__ == "__main__":
 # divding up the fake stars and making dataproducts
 
     fsarr = np.loadtxt(my_fsdp.fullpath)
-    totfiles = int(math.ceil(len(fsarr)/100.0))
+    totfiles = int(math.ceil(len(fsarr)/50.0))
     comp_name = "completed_" + target.name
     new_option = {comp_name: 0}
     my_job.options = new_option
     for i in np.arange(totfiles):
         filename = "fake_"+str(i)+".lst"
-        min = int((i-1)*100)+1
-        max = min+99
+        min = int((i-1)*50)+1
+        max = min+49
         if max > len(fsarr):
             max = len(fsarr)
         with open(filename, 'w') as f:

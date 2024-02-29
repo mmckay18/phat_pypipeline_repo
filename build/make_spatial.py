@@ -84,11 +84,11 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
     name = path + "/" + targname + "_" + blue_filter + "_" + red_filter + "_" + "gst_spatial.png"
     ds_gst = ds[gst_criteria]
     # haxx
-    xmin = np.nanmin(ds_gst[ra].tolist())
-    xmax = np.nanmax(ds_gst[ra].tolist())
-    ymin = np.nanmin(ds_gst[dec].tolist())
-    ymax = np.nanmax(ds_gst[dec].tolist())
-    meddec = np.nanmed(ds_gst[dec].tolist())
+    xmin = np.nanmin(ds_gst['ra'].tolist())
+    xmax = np.nanmax(ds_gst['ra'].tolist())
+    ymin = np.nanmin(ds_gst['dec'].tolist())
+    ymax = np.nanmax(ds_gst['dec'].tolist())
+    meddec = (np.pi/180.0)*(ymax + ymin)/2.0
     cosdec = np.cos(meddec*np.pi/180.0)
     print(blue_filter,red_filter," has ",ds_gst.length()," stars in map.")
     
@@ -98,7 +98,7 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
         #data_shape = int(np.sqrt(ds_gst.length()))
         data_shape = 200
-        ds_gst.plot(ra, dec, shape=data_shape,
+        ds_gst.plot('ra', 'dec', shape=data_shape,
                     limits=[[xmin,xmax],[ymax,ymin]],
                     **density_kwargs)
         plt.rcParams['axes.linewidth'] = 5
@@ -115,15 +115,15 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
         plt.ylabel(ylab,fontsize=20)
         plt.xlabel("Right Ascensiton (J2000)",fontsize=20)
     else:
-        fig, ax = plt.subplots(1, figsize=(7.0/cosdec,5.5), linewidth=5)
+        fig, ax = plt.subplots(1, figsize=(5.5/cosdec,5.5), linewidth=2)
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
-        ds_gst.scatter(ra, dec,  **scatter_kwargs)
+        ds_gst.scatter('ra', 'dec',  **scatter_kwargs)
         plt.rcParams['axes.linewidth'] =5 
         plt.xticks(np.arange(int(xmin-0.5), int(xmax+0.5), 1.0),fontsize=20)
         plt.yticks(np.arange(int(ymin-0.5), int(ymax+0.5), 1.0),fontsize=20)
-        ax.xaxis.set_tick_params(which='minor',direction='in', length=6, width=2, top=True, right=True)
-        ax.yaxis.set_tick_params(which='minor',direction='in', length=6, width=2, top=True, right=True)
+        ax.xaxis.set_tick_params(which='minor',direction='in', length=6, width=1, top=True, right=True)
+        ax.yaxis.set_tick_params(which='minor',direction='in', length=6, width=1, top=True, right=True)
         ax.xaxis.set_tick_params(direction='in', length=8, width=2, top=True, right=True)
         ax.yaxis.set_tick_params(direction='in', length=8, width=2, top=True, right=True)
         for axis in ['top','bottom','left','right']:

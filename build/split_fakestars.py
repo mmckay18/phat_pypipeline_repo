@@ -21,6 +21,7 @@ import numpy as np
 import math
 import time
 import glob
+import os
 
 # Task will look at all drizzled images for a target and choose the best
 #  reference to use for DOLPHOT
@@ -28,14 +29,14 @@ import glob
 
 def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
-    _temp = task.mask(source="*", name="hdf5_ready", value="*")
+    _temp = task.mask(source="*", name="fakelist_ready", value="*")
 
 
 # Setting up the task
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
-
+    starsper = 1000.0
 # Defining the target and dataproducts
     this_event = my_job.firing_event  # parent astrodrizzle event firing
     #   my_job.logprint(f"{parent_event}")
@@ -52,8 +53,9 @@ if __name__ == "__main__":
     if (len(fs_list) == 0):
         my_job.logprint("No Fakestars Found")
         raise ValueError('No Fakestars Found')
+    head_tail = os.path.split(fs_list[0])
     my_fsdp = my_config.dataproduct(
-                filename=fs_list[0], group="proc", data_type="raw_fakelist"
+                filename=head_tail[1], group="proc", data_type="raw_fakelist"
             )
     # my_dps = wp.DataProduct.select(wp.si.DataProduct.filename.regexp_match("final*"), dpowner_id=my_job.config_id)
     # my_job.logprint(f"{my_dps}")
@@ -62,20 +64,23 @@ if __name__ == "__main__":
         f"{fs_list[0]} found for {my_target.name}, {my_config.name}.")
 
 # divding up the fake stars and making dataproducts
-
-    fsarr = np.loadtxt(my_fsdp.fullpath)
-    totfiles = int(math.ceil(len(fsarr)/50.0))
-    comp_name = "completed_" + target.name
+    fullpath = fs_list[0]
+    fsarr = np.loadtxt(fullpath, dtype='str')
+    totfiles = int(math.ceil(len(fsarr)/starsper))
+    comp_name = "completed_" + my_target.name
     new_option = {comp_name: 0}
     my_job.options = new_option
     for i in np.arange(totfiles):
-        filename = "fake_"+str(i)+".lst"
-        min = int((i-1)*50)+1
-        max = min+49
+        filename = "fake_"+str(i+1)+".lst"
+        filepath = my_config.procpath + "/" + filename
+        min = int(i*starsper)
+        max = min+int(starsper)
         if max > len(fsarr):
             max = len(fsarr)
-        with open(filename, 'w') as f:
-            f.write(fsarr[min:max,:]) 
+        newarr = fsarr[min:max,:]
+        #with open(filepath, 'w') as f:
+        #    f.write("\n".join(" ".join(map(str, x)) for x in (newarr))) 
+        np.savetxt(filepath, newarr, fmt="%s")
         my_sub = my_config.dataproduct(
             filename=filename, group="proc", subtype="sub_fakelist"
         )
@@ -89,12 +94,14 @@ if __name__ == "__main__":
                 'dp_id': dp_id,
                 'to_run': totfiles,
                 'compname': comp_name,
-                'config_id': this_event.options['config_id'],
+                'config_id': my_config.config_id,
                 'account': "astro-ckpt",
                 'partition': "ckpt",
                 'walltime': "6:00:00",
-                'run_number': i
+                'run_number': i,
+                'memory': "200G"
             }
         )
         my_event.fire()
+        time.sleep(0.5)
     time.sleep(150)

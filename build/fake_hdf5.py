@@ -10,11 +10,9 @@ Authors
 
 Use
 ---
-    This script is intended to be executed from the command line as
-    such:
-    ::
-        python ingest_dolphot.py ['filebase'] ['--to_hdf'] ['--full']
-    
+    This script is intended to be part of a wpipe pipeline
+    It takes the ascii output from a DOLPHOT fake star run and puts it into an hdf5 file with 
+    column names that reflect those in the .columns file provided by dolphot
     Parameters:
     (Required) [filebase] - Path to .phot file, with or without .phot extension.
     (Optional) [--to_hdf] - Whether to write the dataframe to an HDF5 
@@ -23,8 +21,6 @@ Use
     individual exposures). Default is False.
 """
 
-# Original script by Shellby Albrecht and Meredith Durbin
-# Modified and by Myles McKay and Ben Williams to work for AST data
 import wpipe as wp
 import dask.dataframe as dd
 import numpy as np
@@ -41,10 +37,22 @@ def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
     _temp = task.mask(source="*", name="fakestars_done", value="*")
 
-#fake columns have 4 for input location, and then 2 each for input mag and counts
-fakepos_columns = ['ext_in','chip_in','x_in','y_in']
+
+if __name__ == "__main__":
+    my_pipe = wp.Pipeline()
+    my_job = wp.Job()
+    my_job.logprint("processing phot file...")
+    my_config = my_job.config
+    my_target = my_job.target
+    this_event = my_job.firing_event
+    my_job.logprint(this_event)
+    my_job.logprint(this_event.options)
+    my_config = my_job.config
+    logpath = my_config.logpath
+    procpath = my_config.procpath
+
 # global photometry values
-# first 11 columns after that in fake dolphot output
+# first 11 columns in raw dolphot output
 global_columns = ['ext','chip','x','y','chi_gl','snr_gl','sharp_gl', 
                   'round_gl','majax_gl','crowd_gl','objtype_gl']
 
@@ -65,7 +73,7 @@ colname_mappings = {
     'Photometry quality flag,'           : 'flag',
 }
 
-def cull_fakestars(df, filter_detectors, my_config, snrcut=4.0):
+def cull_photometry(df, filter_detectors, my_config, snrcut=4.0):
                     #cut_params={'irsharp'   : 0.15, 'ircrowd'   : 2.25,
                     #            'uvissharp' : 0.15, 'uviscrowd' : 1.30,
                     #            'wfcsharp'  : 0.20, 'wfccrowd'  : 2.25}):
@@ -239,18 +247,14 @@ def make_header_table(my_config, fitsdir, search_string='*.chip?.fits'):
             df.loc[:,c] = df.loc[:,c].astype(str)
     return df
 
-def name_columns(colfile,infofile,filts):
-    """Construct a table of column names for original dolphot output, as well as 
-    the info file that describes the image.  The columns file has indices
-    corresponding to the column number in the original dolphot output file, but
-    fakestar output has leading columns describing the input star.
+def name_columns(colfile):
+    """Construct a table of column names for dolphot output, with indices
+    corresponding to the column number in dolphot output file.
 
     Inputs
     ------
     colfile : path
         path to file containing dolphot column descriptions
-    infofile : path
-        path to file containing input data descriptions
 
     Returns
     -------
@@ -259,28 +263,11 @@ def name_columns(colfile,infofile,filts):
     filters : list
         List of filters included in output
     """
-    infodf = pd.DataFrame(data=np.loadtxt(infofile, delimiter=' ', dtype=str),
-                          columns=['imnames','imnumber'])
     df = pd.DataFrame(data=np.loadtxt(colfile, delimiter='. ', dtype=str),
                           columns=['index','desc']).drop('index', axis=1)
     df = df.assign(colnames='')
-    #set input column names
-    df.loc[:3,'colnames'] = fakepos_columns
-    countim = 0
-    for image in imnames:
-        if "chip" not in image:
-            continue
-        else:
-            imdp=wp.DataProduct.select(config_id=this_config.id, filename=image+".fits", group="proc")
-            camera = imdp.options["camera"]
-            filt = imdp.option["filter"]
-            camfilt = camera+"_"+filt
-            ind = 4+2*countim
-            countim= countim+1
-            df.loc[ind:ind+1,'colnames'] = [image+"_counts",image+"_mag"]
-    fakeend = ind+2
-    # set first 11 column names after input columns
-    df.loc[fakeend:fakeend+10,'colnames'] = global_columns
+    # set first 11 column names
+    df.loc[:10,'colnames'] = global_columns
     # set rest of column names
     filters_all = []
     for k, v in colname_mappings.items():
@@ -296,7 +283,7 @@ def name_columns(colfile,infofile,filts):
         df.loc[indices_total,'colnames'] = filters.str.lower() + '_' + v.lower()
         df.loc[indices_indiv,'colnames'] = imgnames + '_' + v.lower()
     filters_final = np.unique(np.array(filters_all).ravel())
-    my_job.logprint('Filters found: {}'.format(filters_final))
+    print('Filters found: {}'.format(filters_final))
     return df, filters_final
 
 def add_wcs(df, photfile, my_config):
@@ -332,14 +319,14 @@ def add_wcs(df, photfile, my_config):
     return df
 
 
-def read_fakestars(my_config, fakefile, columns_df, filters):
-    """Reads in raw dolphot fakestars output (.phot.fake file) to a DataFrame with named
+def read_dolphot(my_config, photfile, columns_df, filters):
+    """Reads in raw dolphot output (.phot file) to a DataFrame with named
     columns, and optionally writes it to a HDF5 file.
 
     Inputs
     ------
     photile : path
-        path to raw dolphot fakestar output
+        path to raw dolphot output
     columns_df : DataFrame
         table of column names and indices, created by `name_columns`
     filters : list
@@ -387,7 +374,7 @@ def read_fakestars(my_config, fakefile, columns_df, filters):
     #print("columns are:")
     #print(df0.columns.tolist())  
     #df0 = cull_photometry(df0, filter_detectors,my_config)
-    df0 = cull_fakestars(df0, filters,my_config)
+    df0 = cull_photometry(df0, filters,my_config)
     my_config.parameters["det_filters"] = ','.join(filters)
     df0 = add_wcs(df0, photfile, my_config)
     df0.to_hdf(outfile, key='data', mode='a', format='table', 
@@ -403,66 +390,75 @@ def read_fakestars(my_config, fakefile, columns_df, filters):
 if __name__ == '__main__':
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
-    my_job.logprint("processing phot file...")
-    my_config = my_job.config
-    my_target = my_job.target
-    this_event = my_job.firing_event
+
+    this_event = my_job.firing_event  # parent event obj
     parent_job = this_event.parent_job
-    my_job.logprint(this_event)
-    my_job.logprint(this_event.options)
-    my_config = my_job.config
-    logpath = my_config.logpath
-    procpath = my_config.procpath
-    photfilename = my_target.name + ".phot"
-    photfiledp = wp.DataProduct.select(config_id=my_config.config_id,filename=photfilename, group="proc")
+
+    # config_id = this_event.options["config_id"]
 
 # * LOG EVENT INFORMATION
     my_job.logprint(f"This Event: {this_event}")
     my_job.logprint(f"This Event Options: {this_event.options}")
-    fake_dps = wp.DataProduct.select(config_id=my_config.config_id, subtype="fakestar_file")
 
-# * Call reference
-    ref_dp = wp.DataProduct(config_id=my_config.config_id, subtype="reference")
+# * Call drizzled image from astrodrozzle dataproduct
+    this_dp_id = this_event.options["dp_id"]
+    this_dp = wp.DataProduct(int(this_dp_id), group="proc")
     my_job.logprint(
-        f"Reference image: {ref_dp.filename}\n, Path: {ref_dp.target.datapath}\n This DP options{this_dp.options}\n")
+        f"Data Product: {this_dp.filename}\n, Path: {my_config.procpath}\n This DP options{this_dp.options}\n")
+    target = this_dp.target
 
+    my_config = this_dp.config
     my_job.logprint(
-        f"Target Name: {my_target.name}\n TargetPath: {my_target.datapath}\n")
+        f"Target Name: {target.name}\n TargetPath: {target.datapath}\n")
 
 
  
-    photfile = photfiledp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
-    fakefile = photfile + '.fake'
+    photfile = my_config.procpath+'/'+this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
     #photfile = my_config.procpath + '/' + this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
     colfile = photfile + '.columns'
-    infofile = photfile + '.info'
     my_job.logprint('Photometry file: {}'.format(photfile))
     my_job.logprint('Columns file: {}'.format(colfile))
-    my_job.logprint('Info file: {}'.format(infofile))
-    det_filters = my_config.parameters["det_filters"].split(',')
-    columns_df, filters = name_columns(colfile,infofile,det_filters)
-    my_job.logprint(f"columns_df is {columns_df}")
+    columns_df, filters = name_columns(colfile)
+    print("columns_df is ",columns_df)
     
     import time
     t0 = time.time()
-# * Concatenate all the fake star dolphot files into one
-    with open(fakefile, 'w') as totalfile:
-        for fakedp in fake_dps:
-            fname = fakedp.filename
-            with open(fname) as infile:
-                for line in infile:
-                    totalfile.write(line)
-    my_job.logprint(f"Concatenated fakestars into {fakefile}")
-    df = read_fakestars(my_config, fakefile, columns_df, filters)
+    df = read_dolphot(my_config, photfile, columns_df, filters)
+    outfile = this_dp.filename + '_full.hdf5'
     hd5_dp = wp.DataProduct(my_config, filename=outfile, 
                               group="proc", data_type="hdf5 file", subtype="catalog")     
     t1 = time.time()
     timedelta = t1 - t0
     print('Finished in {}'.format(str(timedelta)) )
-    next_event = my_job.child_event(
-    name="fake_hdf5_ready",
-    options={"dp_id": hd5_dp.dp_id}
-    )  # next event
-    next_event.fire()
-    time.sleep(150)
+    if my_config.parameters["run_single"]=="T":
+        tracking_job=wp.Job(this_event.options["tracking_job_id"])
+        to_run = this_event.options["to_run"]
+        comp_name = 'completed_' + my_target.name
+        update_option = tracking_job.options[comp_name]
+        update_option += 1
+        if update_option == to_run:
+            next_event = my_job.child_event(
+            name="singles_complete",
+            options={"dp_id": hd5_dp.dp_id}
+            )  # next event
+            next_event.fire()
+            time.sleep(150)
+ 
+    else:
+        next_event = my_job.child_event(
+        name="hdf5_ready",
+        options={"dp_id": hd5_dp.dp_id}
+        )  # next event
+        next_event.fire()
+        next_event = my_job.child_event(
+        name="spatial",
+        options={"dp_id": hd5_dp.dp_id}
+        )  # next event
+        next_event.fire()
+        next_event = my_job.child_event(
+        name="start",value="split_fakestars.py",
+        options={"target_id": my_target.target_id}
+        )  # next event
+        next_event.fire()
+        time.sleep(150)
 

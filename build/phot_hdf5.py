@@ -408,7 +408,7 @@ if __name__ == '__main__':
     this_dp_id = this_event.options["dp_id"]
     this_dp = wp.DataProduct(int(this_dp_id), group="proc")
     my_job.logprint(
-        f"Data Product: {this_dp.filename}\n, Path: {this_dp.target.datapath}\n This DP options{this_dp.options}\n")
+        f"Data Product: {this_dp.filename}\n, Path: {my_config.procpath}\n This DP options{this_dp.options}\n")
     target = this_dp.target
 
     my_config = this_dp.config
@@ -417,7 +417,7 @@ if __name__ == '__main__':
 
 
  
-    photfile = this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
+    photfile = my_config.procpath+'/'+this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
     #photfile = my_config.procpath + '/' + this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
     colfile = photfile + '.columns'
     my_job.logprint('Photometry file: {}'.format(photfile))
@@ -458,5 +458,11 @@ if __name__ == '__main__':
         name="spatial",
         options={"dp_id": hd5_dp.dp_id}
         )  # next event
+        next_event.fire()
+        next_event = my_job.child_event(
+        name="start",value="split_fakestars.py",
+        options={"target_id": my_target.target_id}
+        )  # next event
+        next_event.fire()
         time.sleep(150)
 

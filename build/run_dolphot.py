@@ -99,17 +99,21 @@ if __name__ == "__main__":
     signal.signal(signal.SIGALRM, handler)    
     signal.alarm(1000)
     try:
+        head_tail = os.path.split(dolphotout)
         phot_dp = wp.DataProduct(
-            my_config, filename=dolphotout, group="proc", subtype="dolphot output")
+            my_config, filename=head_tail[1], group="proc", subtype="dolphot output")
     except:
         ValueError("Failed to create phot file DP. Exiting.") 
     signal.alarm(0)
     my_job.logprint(
         f"Created dataproduct for {dolphotout}, {phot_dp}")
-    out_files = glob('*.phot.*')
+    out_files = glob(procpath+'/*.phot.*')
+    if len(out_files) < 5:
+        raise exception("too few output files")
     for file in out_files:
+        head_tail = os.path.split(file)
         dolphot_output_dp = wp.DataProduct(
-            my_config, filename=file, group="proc", subtype="dolphot output")
+            my_config, filename=head_tail[1], group="proc", subtype="dolphot output")
         my_job.logprint(
             f"Created dataproduct for {file}, {dolphot_output_dp}")
     if my_config.parameters["run_single"] == "T":

@@ -51,6 +51,11 @@ if __name__ == "__main__":
         config_id=my_config.config_id,
         subtype="DRIZZLED",
     )
+    if len(my_dps)==0:
+        my_dps = wp.DataProduct.select(
+           config_id=my_config.config_id,
+           subtype="reference",
+    )      
     # my_dps = wp.DataProduct.select(wp.si.DataProduct.filename.regexp_match("final*"), dpowner_id=my_job.config_id)
     # my_job.logprint(f"{my_dps}")
 
@@ -66,7 +71,6 @@ if __name__ == "__main__":
         )
     except:  # setting reference as longest exposure time
         ref_filt = "None"
-
     if "F" in ref_filt:
         for dp in my_dps:
             if ref_filt in dp.options["filter"]:
@@ -113,7 +117,10 @@ if __name__ == "__main__":
     all_dps = tagged_dps+reference_dp  # add reference dp to tagged dps
     my_job.logprint(f"ALL DPS {all_dps}")
     to_run = len(all_dps)
-
+    try:
+        test = my_config.parameters["run_single"]
+    except:
+        my_config.parameters["run_single"] = "F"
     for dp in all_dps:  # fire prep image for all tagged images and the reference image
         filename = dp.filename
         subtype = dp.subtype

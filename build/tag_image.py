@@ -59,7 +59,7 @@ def tag_event_dataproduct(this_event):
     # this_dp = wp.DataProduct(this_dp_id, filename=filename, group="proc")
     my_rawdp = wp.DataProduct(int(this_dp_id), group="raw")
     target = wp.Target(this_target_id)
-    proc_path = f"{target.datapath}/proc_default/"
+    proc_path = f"{my_config.procpath}/"
 
     #! Make copy from raw directory to proc directory
     my_procdp = my_rawdp.make_copy(path=proc_path, group="proc")
@@ -299,7 +299,7 @@ if __name__ == "__main__":
             threshold = my_config_param["deepcr_threshold"]
             mdl = deepCR(mask=deepcr_pth_mask, hidden=32)
             # file path to image being tagged currently
-            procdp_path = my_dp.target.datapath + "/proc_default/"
+            procdp_path = my_config.procpath + "/"
             my_job.logprint(f"\n {my_dp}, {type(my_dp)}, {procdp_path}")
 
             dp_filepath = procdp_path + "/" + my_dp.filename
@@ -362,7 +362,7 @@ if __name__ == "__main__":
                     mdl = deepCR(mask=deepcr_pth_mask, hidden=32)
 
                     #! Run DeepCR on each dataproducts
-                    procdp_path = dp.target.datapath + "/proc_default/"  # file path to image
+                    procdp_path = dp.config.procpath + "/"  # file path to image
                     # my_job.logprint(f"\n {dp}, {type(dp)}, {procdp_path}")
 
                     if dp.filename.split("_")[-1] == "flc.fits":

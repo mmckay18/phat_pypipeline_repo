@@ -125,12 +125,14 @@ if __name__ == "__main__":
     # Iterarte through target objects and create configuration for each target
     for target in my_input.targets:
         # * Create configeration for target and add parameters
-        my_config = target.configuration(
-            name="default", parameters={"target_id": target.target_id}
-        )
-
+        #my_config = target.configuration(
+        #    name="default", parameters={"target_id": target.target_id}
+        #)
+        my_config = target.configurations[0]
+        my_config.parameters['target_id'] = target.target_id
         my_job.logprint(f"{target}")
-        target_rawdata = f"{target.datapath}/raw_default/*.fits"
+        #target_rawdata = f"{target.datapath}/raw_default/*.fits"
+        target_rawdata = f"{my_config.rawpath}/*.fits"
         target_dp_list = glob.glob(target_rawdata)
         tot_untagged_im = len(
             target_dp_list

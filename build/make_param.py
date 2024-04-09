@@ -79,7 +79,7 @@ if __name__ == "__main__":
     my_target_path = my_target.datapath
 
     # path to target's conf directory
-    target_conf_path = my_target_path + "/conf_default/"
+    target_conf_path = my_config.confpath + "/"
     my_job.logprint(f"Target Conf Path: {target_conf_path}")
 
     # TODO: Make target file

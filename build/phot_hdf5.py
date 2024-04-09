@@ -315,9 +315,10 @@ def add_wcs(df, photfile, my_config):
     elif len(drzfiles) > 1:
         print('Multiple drizzled files found: {}'.format(drzfiles))
     else:
-        drzfile = str(drzfiles[0].filename)
+        drzfile = my_config.procpath+"/"+str(drzfiles[0].filename).strip()
         print('Using {} as astrometric reference'.format(drzfile))
         ra, dec = WCS(drzfile).all_pix2world(df.x.values, df.y.values, 0)
+        print(df.x.values, df.y.values,ra,dec)
         df.insert(4, 'ra', ra)
         df.insert(5, 'dec', dec)
     return df
@@ -461,7 +462,7 @@ if __name__ == '__main__':
         next_event.fire()
         next_event = my_job.child_event(
         name="start",value="split_fakestars.py",
-        options={"target_id": my_target.target_id}
+        options={"target_id": my_target.target_id,"phot_dp_id":this_dp_id}
         )  # next event
         next_event.fire()
         time.sleep(150)

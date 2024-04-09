@@ -64,10 +64,10 @@ if __name__ == "__main__":
 
 # Choosing the best reference image
     try:
-        ref_filt = my_config.parameters['reference_filter']
+        ref_filt = str(my_config.parameters['reference_filter'])
 
         my_job.logprint(
-            f"Reference image filter found, using {ref_filt} as reference image."
+            f"Reference image filter found, using {ref_filt} as reference filter."
         )
     except:  # setting reference as longest exposure time
         ref_filt = "None"

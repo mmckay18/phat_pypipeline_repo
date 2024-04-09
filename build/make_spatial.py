@@ -83,27 +83,27 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
     gst_criteria = ds['{}_gst'.format(red_filter)] & ds['{}_gst'.format(blue_filter)]
     name = path + "/" + targname + "_" + blue_filter + "_" + red_filter + "_" + "gst_spatial.png"
     ds_gst = ds[gst_criteria]
-    # haxx
-    xmin = np.nanmin(ds_gst['ra'].tolist())
-    xmax = np.nanmax(ds_gst['ra'].tolist())
-    ymin = np.nanmin(ds_gst['dec'].tolist())
-    ymax = np.nanmax(ds_gst['dec'].tolist())
+    
+    xmin = np.min(ds_gst['ra'].tolist())
+    xmax = np.max(ds_gst['ra'].tolist())
+    ymin = np.min(ds_gst['dec'].tolist())
+    ymax = np.max(ds_gst['dec'].tolist())
     meddec = (np.pi/180.0)*(ymax + ymin)/2.0
     cosdec = np.cos(meddec*np.pi/180.0)
+    ratio = cosdec*(xmax-xmin)/(ymax-ymin)
+    print("coords: ",xmax,xmin,ymax,ymin)
     print(blue_filter,red_filter," has ",ds_gst.length()," stars in map.")
     
     if ds_gst.length() >= 50000:
-        fig, ax = plt.subplots(1, figsize=(7.0/cosdec,5.5))
+        fig, ax = plt.subplots(1, figsize=(7.0*ratio,5.5))
         plt.rcParams.update({'font.size': 20})
-        plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
+        plt.subplots_adjust(left=0.05, right=0.97, top=0.95, bottom=0.15)
         #data_shape = int(np.sqrt(ds_gst.length()))
         data_shape = 200
-        ds_gst.plot('ra', 'dec', shape=data_shape,
-                    limits=[[xmin,xmax],[ymax,ymin]],
-                    **density_kwargs)
-        plt.rcParams['axes.linewidth'] = 5
-        plt.xticks(np.arange(int(xmin-0.5), int(xmax+0.5), 1.0),fontsize=20)
-        plt.yticks(np.arange(int(ymin-0.5), int(ymax+0.5), 1.0),fontsize=20)
+        ds_gst.plot('ra', 'dec', shape=data_shape,limits=[[xmin,xmax],[ymax,ymin]],**density_kwargs)
+        #plt.rcParams['axes.linewidth'] = 5
+        plt.xticks(np.arange(xmin, xmax,(xmax-xmin)/5.0),fontsize=14)
+        plt.yticks(np.arange(ymin, ymax,(ymax-ymin)/5.0),fontsize=14)
 
         ax.xaxis.set_tick_params(which='minor',direction='in', length=6, width=2, top=True, right=True)
         ax.yaxis.set_tick_params(which='minor',direction='in', length=6, width=2, top=True, right=True)
@@ -115,13 +115,13 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
         plt.ylabel(ylab,fontsize=20)
         plt.xlabel("Right Ascensiton (J2000)",fontsize=20)
     else:
-        fig, ax = plt.subplots(1, figsize=(5.5/cosdec,5.5), linewidth=2)
+        fig, ax = plt.subplots(1, figsize=(7.0*ratio,5.5), linewidth=2)
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
         ds_gst.scatter('ra', 'dec',  **scatter_kwargs)
-        plt.rcParams['axes.linewidth'] =5 
-        plt.xticks(np.arange(int(xmin-0.5), int(xmax+0.5), 1.0),fontsize=20)
-        plt.yticks(np.arange(int(ymin-0.5), int(ymax+0.5), 1.0),fontsize=20)
+        #plt.rcParams['axes.linewidth'] =5 
+        plt.xticks(np.arange(xmin, xmax,(xmax-xmin)/5.0),fontsize=14)
+        plt.yticks(np.arange(ymin, ymax,(ymax-ymin)/5.0),fontsize=14)
         ax.xaxis.set_tick_params(which='minor',direction='in', length=6, width=1, top=True, right=True)
         ax.yaxis.set_tick_params(which='minor',direction='in', length=6, width=1, top=True, right=True)
         ax.xaxis.set_tick_params(direction='in', length=8, width=2, top=True, right=True)
@@ -129,10 +129,11 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
         for axis in ['top','bottom','left','right']:
            ax.spines[axis].set_linewidth(2)
         plt.minorticks_on()
-    plt.xlim(int(xmin-0.5), int(xmax+0.5))
-    plt.ylim(int(ymin-0.5), int(ymax+0.5))
+    #plt.xlim(int(xmin-0.5), int(xmax+0.5))
+    #plt.ylim(int(ymin-0.5), int(ymax+0.5))
     plt.ylabel(ylab,fontsize=20)
     plt.xlabel("Right Ascensiton (J2000)",fontsize=20)
+    fig.tight_layout()
     fig.savefig(name)
     new_dp = wp.DataProduct(my_config, filename=name, 
                              group="proc", data_type="Map file", subtype="Map") 
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     my_job.logprint(
         f"Data Product: {this_dp.filename}\n, Path: {this_dp.target.datapath}\n This DP options{this_dp.options}\n")
 
-    photfile = this_dp.filename
+    photfile = my_config.procpath+"/"+this_dp.filename
 
     #try:
     #    # I have never gotten vaex to read an hdf5 file successfully
@@ -187,12 +188,12 @@ if __name__ == "__main__":
            my_job.logprint(filters[sort_inds[ind2]])  
            make_spatial(ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower())
        
-    next_event = my_job.child_event(
-    name="cmds_ready",
-    options={"target_id": my_target.target_id}
-    )  # next event
-    next_event.fire() 
-    time.sleep(150)
+    #next_event = my_job.child_event(
+    #name="cmds_ready",
+    #options={"target_id": my_target.target_id}
+    #)  # next event
+    #next_event.fire() 
+    #time.sleep(150)
  
 
     

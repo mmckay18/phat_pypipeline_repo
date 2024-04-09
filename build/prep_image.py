@@ -70,14 +70,15 @@ if __name__ == "__main__":
         f"Target Name: {target.name}\n TargetPath: {target.datapath}\n")
 
 # * Get Target config parameters
-    my_config = target.configuration(
-        name="default", parameters={"target_id": target.target_id}
-    )
+    #my_config = target.configuration(
+    #    name="default", parameters={"target_id": target.target_id}
+    #)
+    my_config = my_job.config
     config_parameters = my_config.parameters
     my_job.logprint(f"This Config Parameters: {config_parameters}")
 
 # * Set proc dataproduct file path # TODO: Better way to implement this for development
-    proc_path = this_dp.target.datapath + "/proc_default/"
+    proc_path = my_config.procpath + "/"
     dp_fullpath = proc_path + this_dp.filename
 
 # * Get dataproduct subtype for all dataproducts to pass on reference image
@@ -117,7 +118,7 @@ if __name__ == "__main__":
     my_job.logprint(f'mask stdout: {mask_output}')
 
     #! SPLITGROUPS - Splits the SCI images into their own fits files for HST images.
-    proc_path = this_dp.target.datapath + "/proc_default/"
+    proc_path = my_config.procpath + "/"
     my_job.logprint(f'Starting splitgroups on {dp_fullpath}')
     splitgroups_output = subprocess.run(
         [my_config.parameters['dolphot_path']+"splitgroups", dp_fullpath], capture_output=True, text=True, cwd=proc_path)

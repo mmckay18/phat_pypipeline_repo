@@ -52,16 +52,16 @@ if __name__ == "__main__":
     )  # Get target using the target id
 
     my_filter = this_event.options["filter"]  # Get filter
+    my_config = my_job.config  # Get configuration for the job
 
     my_job.logprint(
         f"Running Astrodrizzle task for {my_target.name} in filter {my_filter}.")
 
     my_target_path = my_target.datapath
-    target_proc_path = my_target_path + "/proc_default"
+    target_proc_path = my_config.procpath + "/"
     # makes the correct proc directory the working directory
     os.chdir(target_proc_path)
 
-    my_config = my_job.config  # Get configuration for the job
     # my_job.logprint(f"{my_config}")
 
     # Setting input parameters

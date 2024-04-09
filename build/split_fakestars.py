@@ -47,6 +47,9 @@ if __name__ == "__main__":
     #   my_job.logprint(my_config)
 
     # dataproducts for the drizzled images for my_target
+    this_dp_id = this_event.options["phot_dp_id"]
+    phot_dp = wp.DataProduct(int(this_dp_id), group="proc")
+
     conf_fs = f"{my_config.procpath}/*.fakelist"
     my_job.logprint(f"Checking {conf_fs}")
     fs_list = glob.glob(conf_fs)
@@ -70,38 +73,54 @@ if __name__ == "__main__":
     comp_name = "completed_" + my_target.name
     new_option = {comp_name: 0}
     my_job.options = new_option
+    totruns = 0
+    photfilename = phot_dp.filename
     for i in np.arange(totfiles):
-        filename = "fake_"+str(i+1)+".lst"
+        #filename = "fake_"+str(i+1)+".lst"
+        filename = photfilename+"_"+str(i+1)+".fake"
         filepath = my_config.procpath + "/" + filename
-        min = int(i*starsper)
-        max = min+int(starsper)
-        if max > len(fsarr):
-            max = len(fsarr)
-        newarr = fsarr[min:max,:]
-        #with open(filepath, 'w') as f:
-        #    f.write("\n".join(" ".join(map(str, x)) for x in (newarr))) 
-        np.savetxt(filepath, newarr, fmt="%s")
-        my_sub = my_config.dataproduct(
-            filename=filename, group="proc", subtype="sub_fakelist"
-        )
+        if os.path.isfile(filepath):
+           my_job.logprint(f"skipping {filepath} as already done...")
+           continue
+        else:
+            totruns += 1
+    for i in np.arange(totfiles):
+        filename = photfilename+"_"+str(i+1)+".fake"
+        filepath = my_config.procpath + "/" + filename
+        if os.path.isfile(filepath):
+           continue
+        else:
+            filename = "fake_"+str(i+1)+".lst"
+            filepath = my_config.procpath + "/" + filename
+            min = int(i*starsper)
+            max = min+int(starsper)
+            if max > len(fsarr):
+                max = len(fsarr)
+            newarr = fsarr[min:max,:]
+            #with open(filepath, 'w') as f:
+            #    f.write("\n".join(" ".join(map(str, x)) for x in (newarr))) 
+            np.savetxt(filepath, newarr, fmt="%s")
+            my_sub = my_config.dataproduct(
+                filename=filename, group="proc", subtype="sub_fakelist"
+            )
     
-        my_job.logprint(f"Firing new_fakestars event for {filename}")
-        # have to define dp_id outside of the event or else it sets it as the same for all dps
-        dp_id = my_sub.dp_id
-        my_event = my_job.child_event(
-            name="new_fakestars", tag=dp_id,
-            options={
-                'dp_id': dp_id,
-                'to_run': totfiles,
-                'compname': comp_name,
-                'config_id': my_config.config_id,
-                'account': "astro-ckpt",
-                'partition': "ckpt",
-                'walltime': "6:00:00",
-                'run_number': i,
-                'memory': "200G"
-            }
-        )
-        my_event.fire()
-        time.sleep(0.5)
+            my_job.logprint(f"Firing new_fakestars event for {filename}")
+            # have to define dp_id outside of the event or else it sets it as the same for all dps
+            dp_id = my_sub.dp_id
+            my_event = my_job.child_event(
+                name="new_fakestars", tag=dp_id,
+                options={
+                    'dp_id': dp_id,
+                    'to_run': totruns,
+                    'compname': comp_name,
+                '    config_id': my_config.config_id,
+                    'account': "astro-ckpt",
+                    'partition': "ckpt",
+                    'walltime': "6:00:00",
+                    'run_number': i+1,
+                    'memory': "200G"
+                }
+            )
+            my_event.fire()
+            time.sleep(0.5)
     time.sleep(150)

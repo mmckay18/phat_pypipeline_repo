@@ -48,6 +48,7 @@ if __name__ == "__main__":
     my_config = my_job.config
     my_target = my_job.target
     this_event = my_job.firing_event
+    parent_job = this_event.parent_job
     run_number = this_event.options["run_number"]
     to_run = this_event.options["to_run"]
     this_dp_id = this_event.options["dp_id"]
@@ -84,6 +85,8 @@ if __name__ == "__main__":
     wp.DataProduct(my_config, filename=fake_param_filename, group="conf", data_type="fakepars", subtype="fake_param")
     #grab all the dolphot data products, to use for making links with run number
     dolphot_dps = wp.DataProduct.select(config_id=my_config.config_id, subtype="dolphot output")
+    if len(dolphot_dps) < 5:
+        raise exception("only ",{len(dolphot_dps)}," dolphot products found")
     for dp in dolphot_dps:
         new_name = dp.filename.replace("phot", "phot_"+str(run_number))
         link_command = "ln -s "+dp.filename+" "+procpath+"/"+new_name
@@ -94,14 +97,26 @@ if __name__ == "__main__":
     dolphotout = procpath + "/" + my_target.name + ".phot" + "_" + str(run_number)
     logdp = my_job.logprint()
     logfile = logpath + "/" + logdp.filename
-    my_job.logprint(f"Running DOLPHOT on {fake_param} and {dolphotout}")
-    dolphot_command = "cd "+procpath+" && " + \
-        my_config.parameters["dolphot_path"]+"dolphot " + dolphotout + \
-        ' -p' + param_path + "/" +  fake_param_filename + " >> "+logfile
-    my_job.logprint(dolphot_command)
-    dolphot_output = os.system(dolphot_command)
+    newfakefile = dolphotout+".fake"
+
+    if os.path.isfile(newfakefile):
+        my_job.logprint(f"DOLPHOT already done for {fake_param} and {dolphotout}, continuing...")
+    else:
+        my_job.logprint(f"Running DOLPHOT on {fake_param} and {dolphotout}")
+        dolphot_command = "cd "+procpath+" && " + \
+            my_config.parameters["dolphot_path"]+"dolphot " + dolphotout + \
+            ' -p' + param_path + "/" +  fake_param_filename + " >> "+logfile
+        my_job.logprint(dolphot_command)
+        dolphot_output = os.system(dolphot_command)
     # check that this gets file called just dolphotout
     phot_dp = wp.DataProduct(my_config, filename=dolphotout+".fake", group="proc", subtype="fake_output")
+    
+    for dp in dolphot_dps:
+        new_name = dp.filename.replace("phot", "phot_"+str(run_number))
+        rm_command = "rm "+" "+procpath+"/"+new_name
+        my_job.logprint(f'removing link: {rm_command}')
+        os.system(rm_command) 
+        
 
     my_job.logprint(
         f"Created dataproduct for {dolphotout}.fake, {phot_dp}")

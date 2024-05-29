@@ -372,6 +372,7 @@ if __name__ == "__main__":
 # Create dataproduct for parameter file
     param_dp = wp.DataProduct(my_config, filename=my_target.name + '.param', relativepath=target_conf_path,
                               group="conf", data_type="text file", subtype="parameter")  # Create dataproduct owned by config for the parameter file
+    my_config.parameters["param_file"] = my_target.name + '.param'
     my_job.logprint(f"Parameter DP: {param_dp}, {param_dp.filename}")
     my_job.logprint(
         f"\nDOLPHOT parameter file complete for {my_target.name}, firing DOLPHOT task")

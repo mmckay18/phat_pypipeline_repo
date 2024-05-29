@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
-"""Ingests raw DOLPHOT output (an unzipped .phot file) and converts it
+"""Ingests raw DOLPHOT output (an unzipped .phot.fake file) and converts it
 to a dataframe, which is then optionally written to an HDF5 file.
-Column names are read in from the accompanying .phot.columns file.
+Output column names are read in from the accompanying .phot.columns file. Input columns must be determined from the parameter file.
 
 Authors
 -------
@@ -247,12 +247,14 @@ def make_header_table(my_config, fitsdir, search_string='*.chip?.fits'):
             df.loc[:,c] = df.loc[:,c].astype(str)
     return df
 
-def name_columns(colfile):
-    """Construct a table of column names for dolphot output, with indices
-    corresponding to the column number in dolphot output file.
+def name_columns(param_file,colfile):
+    """Construct a table of column names for dolphot AST output, with indices
+    corresponding to the column number in dolphot AST output file.
 
     Inputs
     ------
+    param_file : path
+        path to file containing the dolphot parameters
     colfile : path
         path to file containing dolphot column descriptions
 
@@ -266,8 +268,27 @@ def name_columns(colfile):
     df = pd.DataFrame(data=np.loadtxt(colfile, delimiter='. ', dtype=str),
                           columns=['index','desc']).drop('index', axis=1)
     df = df.assign(colnames='')
-    # set first 11 column names
-    df.loc[:10,'colnames'] = global_columns
+    # set inputcolumns
+    df.loc[:3,'colnames']=['extin','chipin','xin','yin']
+    params = np.loadtxt(param_file, delimiter='none', dtype=str)
+    colcount = 3
+    allfilts = 'xxx'
+    for i in range(len(params)):
+        imgnum,imname = params[i].split('=')
+        if ("chip" in imname and "img" in imgnum):
+           imdp = wp.DataProduct.select(dpowner_id=my_config.config_id, filename=imname+".fits") 
+           imfilt = imdp.options["filter"]
+           if imfilt in allfits:
+               colname = [imfilt+str(i)+"_counts_in",imfilt+str(i)+"_mag_in"]
+           else::
+               allfilts = allfilts+"imfilt"
+               colname = [imfilt+"_counts_in",imfilt+"_mag_in"]
+           colcount += 1
+           df.loc[colcount:colcount+1,'colnames'] = colname
+           colcount += 1
+    colcount += 1
+    # set first 11 output column names
+    df.loc[colcount:colcount+10,'colnames'] = global_columns
     # set rest of column names
     filters_all = []
     for k, v in colname_mappings.items():
@@ -319,13 +340,14 @@ def add_wcs(df, photfile, my_config):
     return df
 
 
-def read_dolphot(my_config, photfile, columns_df, filters):
-    """Reads in raw dolphot output (.phot file) to a DataFrame with named
+def read_dolphot_fake(my_config, fakefile, columns_df, filters):
+    """Reads in raw dolphot output (.phot.fake file) to a DataFrame with named
     columns, and optionally writes it to a HDF5 file.
 
     Inputs
     ------
-    photile : path
+    my_config : pipeline configuration for this reduction
+    fakefile : path
         path to raw dolphot output
     columns_df : DataFrame
         table of column names and indices, created by `name_columns`
@@ -354,13 +376,13 @@ def read_dolphot(my_config, photfile, columns_df, filters):
     colnames = columns_df.colnames
     usecols = columns_df.index
     # read in dolphot output
-    df = dd.read_csv(photfile, delim_whitespace=True, header=None,
+    df = dd.read_csv(fakefile, delim_whitespace=True, header=None,
                      usecols=usecols, names=colnames,
                      na_values=99.999).compute()
     #if to_hdf:
-    outfile = photfile + '.hdf5'
+    outfile = fakefile + '.hdf5'
     print('Reading in header information from individual images')
-    fitsdir = Path(photfile).parent
+    fitsdir = Path(fakefile).parent
     header_df = make_header_table(my_config, fitsdir)
     header_df.to_hdf(outfile, key='fitsinfo', mode='w', format='table',
                      complevel=9, complib='zlib')
@@ -368,7 +390,7 @@ def read_dolphot(my_config, photfile, columns_df, filters):
     lamfunc = lambda x: '-'.join(x[~(x.str.startswith('CLEAR')|x.str.startswith('nan'))])
     #filter_detectors = header_df.filter(regex='(DETECTOR)|(FILTER)').astype(str).apply(lamfunc, axis=1).unique()
     #cut_params = {'irsharp'   : 0.15, 'ircrowd'   : my, 'uvissharp' : 0.15, 'uviscrowd' : 1.30, 'wfcsharp'  : 0.20, 'wfccrowd'  : 2.25}
-    print('Writing photometry to {}'.format(outfile))
+    print('Writing ASTs to {}'.format(outfile))
     #df0 = df[colnames[colnames.str.find(r'.chip') == -1]]
     df0 = df[colnames[colnames.str.find(r'\ (') == -1]]
     #print("columns are:")
@@ -413,17 +435,17 @@ if __name__ == '__main__':
 
 
  
-    photfile = my_config.procpath+'/'+this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
-    #photfile = my_config.procpath + '/' + this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
-    colfile = photfile + '.columns'
+    fakefile = my_config.procpath+'/'+this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
+    colfile = my_config.parameters['colfile']
+    param_file = my_config.parameters['param_file']
     my_job.logprint('Photometry file: {}'.format(photfile))
     my_job.logprint('Columns file: {}'.format(colfile))
-    columns_df, filters = name_columns(colfile)
+    columns_df, filters = name_columns(param_file,colfile)
     print("columns_df is ",columns_df)
     
     import time
     t0 = time.time()
-    df = read_dolphot(my_config, photfile, columns_df, filters)
+    df = read_dolphot(my_config, fakefile, columns_df, filters)
     outfile = this_dp.filename + '_full.hdf5'
     hd5_dp = wp.DataProduct(my_config, filename=outfile, 
                               group="proc", data_type="hdf5 file", subtype="catalog")     

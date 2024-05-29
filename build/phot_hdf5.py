@@ -432,6 +432,8 @@ if __name__ == '__main__':
     outfile = this_dp.filename + '_full.hdf5'
     hd5_dp = wp.DataProduct(my_config, filename=outfile, 
                               group="proc", data_type="hdf5 file", subtype="catalog")     
+    my_config.parameters['photfile'] = outfile
+    my_config.parameters['colfile'] = outfile+".columns"
     t1 = time.time()
     timedelta = t1 - t0
     print('Finished in {}'.format(str(timedelta)) )

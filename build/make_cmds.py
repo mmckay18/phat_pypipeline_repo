@@ -185,7 +185,7 @@ if __name__ == "__main__":
     my_job.logprint(
         f"Data Product: {this_dp.filename}\n, Path: {this_dp.target.datapath}\n This DP options{this_dp.options}\n")
 
-    photfile = this_dp.filename
+    photfile = my_config.procpath  +  "/" + this_dp.filename
 
     #try:
     #    # I have never gotten vaex to read an hdf5 file successfully

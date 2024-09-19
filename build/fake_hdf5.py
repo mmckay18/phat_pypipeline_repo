@@ -280,7 +280,7 @@ def name_columns(param_file,colfile):
            imfilt = imdp.options["filter"]
            if imfilt in allfits:
                colname = [imfilt+str(i)+"_counts_in",imfilt+str(i)+"_mag_in"]
-           else::
+           else:
                allfilts = allfilts+"imfilt"
                colname = [imfilt+"_counts_in",imfilt+"_mag_in"]
            colcount += 1

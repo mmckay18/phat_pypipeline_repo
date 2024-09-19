@@ -29,7 +29,10 @@ from astropy.io import fits
 import glob
 import pandas as pd
 import time
+import numpy as np
+import shutil
 
+from contexttimer import Timer
 
 def register(task):
     """
@@ -79,7 +82,7 @@ def make_unsorted_df(my_input):
             PROP_ID = hdu[0].header["PROGRAM"].zfill(5)
         FILENAME = hdu[0].header["FILENAME"]
         # Create a unique target name and add the information to the list
-        TARGET_NAME = PROP_ID + "_" + TARGNAME
+        TARGET_NAME = PROP_ID + "_" + TARGNAME.replace(" ", "")
         hdu.close()
 
         rawdp_info = [FILENAME, PROP_ID, TARGNAME, TARGET_NAME]
@@ -97,82 +100,149 @@ def make_unsorted_df(my_input):
     TARGET_LIST_df = df["PROPOSID_TARGNAME"].unique()
     return df, list(TARGET_LIST_df)
 
+def discover_targets(pipeline, this_job):
+    for my_input in pipeline.inputs:
+        my_target = my_input.target()
+        tid = my_target.target_id
+        tname = my_target.name
+        comp_name = 'completed_' + my_target.name
+        print("COMP NAME", comp_name)
+        this_job.options = {comp_name: 0}
+        for conf in my_target.configurations:
+            #NEED TO CHANGE THIS LINE TO USE THE FILE AS A LIST OF IMAGES
+            target_dps = [dp for dp in conf.dataproducts if dp.group == 'raw']
+            filepath = conf.rawpath + '/' + my_target.name
+            #target_file_list = np.loadtxt(conf.dataproducts.filename)   #pseudocode...
+            #for filename in target_file_list:
+            #    _new_dp = wp.DataProduct(conf,filename=filename, group="raw", data_type="image")
+            for target_dp in target_dps:
+                print(f"inputname is {target_dp.filename}")
+                data = np.loadtxt(filepath, dtype=str, usecols=0)
+                for image in data:
+                    print(f"cp {image} {conf.rawpath}")
+                    shutil.copy(image,conf.rawpath)
+                    imagename = image.split('/')[-1]
+                    new_dp = wp.DataProduct(conf,relativepath=conf.rawpath,filename=imagename, group="raw", data_type="image")
+                    print('File ', new_dp.filename, ' added to ', my_target.name, ' in ',conf.rawpath, ' with ',comp_name)
+                    print('new DP has ID ', new_dp.dp_id)
+                    send(new_dp, conf, comp_name, len(data), this_job, tid, tname) # send image to next step
+
+def send(dp, conf, comp_name, total, job, tid, tname):
+    dpid = dp.dp_id
+    print(f"Sending {comp_name} annd {dpid}")
+    dpconfig = dp.config
+    confid = conf.config_id
+    dpconfigid = dpconfig.config_id
+    event = job.child_event('new_image', jargs='0', value='0', tag=dpid,
+            options={'dp_id': dpid, "dp_fname_path": dp.relativepath+"/"+dp.filename, 'target_id': tid, "target_name": tname, 'to_run': total, 'comp_name': comp_name, 'config_id': confid})
+    event.fire()
+
+def parse_all():
+    parser = wp.PARSER
+    return parser.parse_args()
+
 
 if __name__ == "__main__":
+    args = parse_all()
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
     my_job.logprint(f"{my_pipe.inputs}")
+    my_job.logprint(f"{my_pipe.inputs.name}")
     my_input = my_pipe.inputs[0]
+    print(my_input.name)
+    if my_input.name=="Unsorted": 
+        # Make a list of target names in Unsorted diectory proposal id and targetname
+        unsorted_df, unsorted_targetnames_list = make_unsorted_df(
+            my_pipe.inputs[0])
 
-    # Make a list of target names in Unsorted diectory proposal id and targetname
-    unsorted_df, unsorted_targetnames_list = make_unsorted_df(
-        my_pipe.inputs[0])
-
-    # Interate through target list and assigns the raw dataproduct to target object
-    for target_name in unsorted_targetnames_list:
-        sorted_df = unsorted_df[unsorted_df["PROPOSID_TARGNAME"]
-                                == target_name]
-        # * Get list of Filename for each target
-        rawdp_fn_list = sorted_df["FILENAME"].tolist()
-        my_job.logprint(f"Filename {rawdp_fn_list}")
-        # * Creates targets from the raw dataproducts in Unsorted directory
-        my_targets = my_input.target(
-            name=target_name, rawdps_to_add=rawdp_fn_list)
-        my_job.logprint(
-            f"{my_targets.name} {my_targets.target_id}, {my_targets.input_id}"
-        )
-
-    # Iterarte through target objects and create configuration for each target
-    for target in my_input.targets:
-        # * Create configeration for target and add parameters
-        #my_config = target.configuration(
-        #    name="default", parameters={"target_id": target.target_id}
-        #)
-        my_config = target.configurations[0]
-        my_config.parameters['target_id'] = target.target_id
-        my_job.logprint(f"{target}")
-        #target_rawdata = f"{target.datapath}/raw_default/*.fits"
-        target_rawdata = f"{my_config.rawpath}/*.fits"
-        target_dp_list = glob.glob(target_rawdata)
-        tot_untagged_im = len(
-            target_dp_list
-        )  # * Get the total number of files in a given target
-        my_job.logprint(
-            f"# of untagged images for {target.name}, {target.target_id}: {tot_untagged_im}"
-        )
-        # * Copy images associated with the dataproducts from raw default to the proc directory
-
-        # create job object options
-        comp_name = "completed_" + target.name
-        new_option = {comp_name: 0}
-        my_job.options = new_option
-
-        #! Iterate through target dataproducts and start tagging job
-        dp_id_list = []
-        for dp_fname_path in target_dp_list:
-            dp_fname = dp_fname_path.split("/")[-1]
-            my_rawdp = my_input.dataproduct(
-                filename=dp_fname, group="raw", data_type="image"
+        # Interate through target list and assigns the raw dataproduct to target object
+        for target_name in unsorted_targetnames_list:
+            sorted_df = unsorted_df[unsorted_df["PROPOSID_TARGNAME"]
+                                    == target_name]
+            # * Get list of Filename for each target
+            rawdp_fn_list = sorted_df["FILENAME"].tolist()
+            my_job.logprint(f"Filename {rawdp_fn_list}")
+            # * Creates targets from the raw dataproducts in Unsorted directory
+            my_targets = my_input.target(
+                name=target_name, rawdps_to_add=rawdp_fn_list)
+            my_job.logprint(
+                f"{my_targets.name} {my_targets.target_id}, {my_targets.input_id}"
             )
-            # Append current dataproduct id to list
-            dp_id_list.append(my_rawdp.dp_id)
-
-            # Fire next task (tag_image)
-            my_job.logprint("Firing Job")
-            my_event = my_job.child_event(
-                name="new_image",
-                tag=my_rawdp.dp_id,
-                options={
-                    "dp_id": my_rawdp.dp_id,
-                    "to_run": tot_untagged_im,
-                    "filename": my_rawdp.filename,
-                    "target_name": target.name,
-                    "target_id": target.target_id,
-                    "dp_fname_path": dp_fname_path,
-                    "config_id": my_config.config_id,
-                    "comp_name": "completed_" + target.name,
-                    "memory": "300G"
-                },
+        
+        # Iterate through target objects and create configuration for each target
+        for target in my_input.targets:
+            # * Create configeration for target and add parameters
+            #my_config = target.configuration(
+            #    name="default", parameters={"target_id": target.target_id}
+            #)
+            my_config = target.configurations[0]
+            my_config.parameters['target_id'] = target.target_id
+            my_job.logprint(f"{target}")
+            #target_rawdata = f"{target.datapath}/raw_default/*.fits"
+            target_rawdata = f"{my_config.rawpath}/*.fits"
+            target_dp_list = glob.glob(target_rawdata)
+            tot_untagged_im = len(
+                target_dp_list
+            )  # * Get the total number of files in a given target
+            my_job.logprint(
+                f"# of untagged images for {target.name}, {target.target_id}: {tot_untagged_im}"
             )
-            my_event.fire()
-            time.sleep(0.5)
+            # * Copy images associated with the dataproducts from raw default to the proc directory
+
+            # create job object options
+            comp_name = "completed_" + target.name
+            new_option = {comp_name: 0}
+            my_job.options = new_option
+
+            #! Iterate through target dataproducts and start tagging job
+            dp_id_list = []
+            tname = target.name
+            tid = target.target_id
+            cid = my_config.config_id
+        
+            for dp_fname_path in target_dp_list:
+                dp_fname = dp_fname_path.split("/")[-1]
+                with Timer() as t:
+               
+                    my_rawdp = my_input.dataproduct(
+                        filename=dp_fname, group="raw", data_type="image"
+                    )
+                    my_job.logprint(f"Time to complete DP: {t.elapsed} s")
+                # Append current dataproduct id to list
+            
+                dp_id = my_rawdp.dp_id
+                dp_id_list.append(dp_id)
+            
+                # Fire next task (tag_image)
+                my_job.logprint("Firing Job")
+                my_event = my_job.child_event(
+                    name="new_image",
+                    tag=dp_id,
+                    options={
+                        "dp_id": dp_id,
+                        "to_run": tot_untagged_im,
+                        "filename": dp_fname,
+                        "target_name": tname,
+                        "target_id": tid,
+                        "dp_fname_path": dp_fname_path,
+                        "config_id": cid,
+                        "comp_name": "completed_" + tname,
+                        "memory": "300G"
+                    },
+                )
+                my_job.logprint("DP file")
+                my_job.logprint(my_rawdp.filename)
+                my_job.logprint("Event ID")
+                my_job.logprint(my_event.event_id)
+                my_job.logprint("Cache sizes: event, DP, job")
+                my_job.logprint(wp.Event.__cache__.shape)
+                my_job.logprint(wp.DataProduct.__cache__.shape)
+                my_job.logprint(wp.Job.__cache__.shape)
+                my_job.logprint("Done with shapes")
+                with Timer() as t:
+               
+                    my_event.fire()
+                    my_job.logprint(f"Time to complete firing: {t.elapsed} s")
+                time.sleep(0.5)
+    else:
+         discover_targets(wp.Pipeline(), wp.Job(args.job_id))

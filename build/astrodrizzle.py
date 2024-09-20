@@ -139,6 +139,10 @@ if __name__ == "__main__":
     print("DPs are", len(my_dp))
     for dp in my_dp:
         my_job.logprint(f"testing {dp.filename}")
+        try:
+            check = dp.options["filter"]
+        except:
+            continue
         if (
             dp.options["filter"] == my_filter
         ):  # for the filter j, pulls out which dps have the same filter

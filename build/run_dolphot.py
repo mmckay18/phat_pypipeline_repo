@@ -73,27 +73,15 @@ if __name__ == "__main__":
     # # Run Dolphot
     logdp = my_job.logprint()
     logfile = logpath + "/" + logdp.filename
-    my_job.logprint(f"Running DOLPHOT on {param_dp.filename}")
-    dolphot_command = "cd "+procpath+" && " + \
-        my_config.parameters["dolphot_path"]+"dolphot " + dolphotout + \
-        ' -p' + param_path + "/" + param_filename + " >> "+logfile
-    my_job.logprint(dolphot_command)
-    dolphot_output = os.system(dolphot_command)
-    #    ["dolphot", dolphotout, '-p' + param_path + "/" + param_filename + " > " + logfilename], cwd=procpath)
-    #    ["dolphot", dolphotout, '-p' + param_path + "/" + param_filename], capture_output=True, text=True, cwd=procpath)
-    # with open(dolphotlog, 'w') as outlog:
-    #    outlog.write(f'{dolphot_output.stdout}')
-    # with open(dolphotouterrlog, 'w') as errlog:
-    #    errlog.write(f'{dolphot_output.stderr}')
-
-    # dolphot_output = subprocess.Popen(
-    #    [my_config.parameters["dolphot_path"]+"dolphot", dolphotout, '-p' + param_path + "/" + param_filename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, cwd=procpath)
-
-    # for line in dolphot_output.stdout:
-    #   # sys.stdout.write(line)
-    #   my_job.logprint(line)
-    # dolphot_output.wait()
-    # Create dataproducts for Dolphot output files
+    if os.path.isfile(dolphotout):
+        my_job.logprint(f"Not Running DOLPHOT on {param_dp.filename} because the phot file exists")
+    else:
+        my_job.logprint(f"Running DOLPHOT on {param_dp.filename}")
+        dolphot_command = "cd "+procpath+" && " + \
+            my_config.parameters["dolphot_path"]+"dolphot " + dolphotout + \
+            ' -p' + param_path + "/" + param_filename + " >> "+logfile
+        my_job.logprint(dolphot_command)
+        dolphot_output = os.system(dolphot_command)
 
     # check that this gets file called just dolphotout
     signal.signal(signal.SIGALRM, handler)    

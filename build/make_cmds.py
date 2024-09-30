@@ -87,13 +87,14 @@ def make_cmd(ds, path, targname, red_filter, blue_filter, y_filter, n_err=12,
     ylab = '{}'.format(y_filter.upper()) 
     ds[color] = ds[blue_vega]-ds[red_vega]
     gst_criteria = ds['{}_gst'.format(red_filter)] & ds['{}_gst'.format(blue_filter)]
+    #gst_criteria = ds['({}_gst == True) & ({}_gst == True)'.format(red_filter, blue_filter)]
     name = path + "/" + targname + "_" + blue_filter + "_" + red_filter + "_" + "gst_cmd.png"
     if y_filter not in [blue_filter, red_filter]:
         # idk why you would do this but it's an option
         gst_criteria = gst_criteria & ds['{}_gst'.format(y_filter)]
     # cut dataset down to gst stars
     # could use ds.select() but i don't like it that much
-    ds_gst = ds[gst_criteria]
+    ds_gst = ds[gst_criteria].extract()
     # haxx
     xmin = np.nanmin(ds_gst[color].tolist())
     xmax = np.nanmax(ds_gst[color].tolist())
@@ -139,7 +140,7 @@ def make_cmd(ds, path, targname, red_filter, blue_filter, y_filter, n_err=12,
         fig, ax = plt.subplots(1, figsize=(7.,5.5), linewidth=5)
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
-        ds_gst.scatter(color, y_vega,  **scatter_kwargs)
+        ds_gst.viz.scatter(color, y_vega,  **scatter_kwargs)
         plt.rcParams['axes.linewidth'] =5 
         plt.xticks(np.arange(int(xmin-0.5), int(xmax+0.5), 1.0),fontsize=20)
         plt.yticks(np.arange(int(ymin-0.5), int(ymax+0.5), 1.0),fontsize=20)
@@ -215,14 +216,18 @@ if __name__ == "__main__":
            ind2=i+1+j
            my_job.logprint(filters[sort_inds[i]])  
            my_job.logprint(filters[sort_inds[ind2]])  
-           make_cmd(ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower(),filters[sort_inds[ind2]].lower())
+           try:
+               make_cmd(ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower(),filters[sort_inds[ind2]].lower())
+           except:
+               my_job.logprint(f"{filters[sort_inds[i]]} and {filters[sort_inds[ind2]]} failed")
+               continue
        
     next_event = my_job.child_event(
     name="cmds_ready",
     options={"target_id": my_target.target_id}
     )  # next event
-    next_event.fire() 
-    time.sleep(150)
+    #next_event.fire() 
+    #time.sleep(150)
  
 
     

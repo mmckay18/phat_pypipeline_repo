@@ -71,6 +71,7 @@ if __name__ == "__main__":
         )
     except:  # setting reference as longest exposure time
         ref_filt = "None"
+    my_job.logprint(f"Config has reference filter {ref_filt}")
     if "F" in ref_filt:
         for dp in my_dps:
             if ref_filt in dp.options["filter"]:
@@ -94,6 +95,9 @@ if __name__ == "__main__":
         ref_dp = my_dps[max_exp_ind]
 
     # Update dp for reference image
+    my_job.logprint(f"Updating configuration to have {ref_dp.options['filter']} as reference")
+    my_config.parameters['reference_filter'] = str(ref_dp.options["filter"])
+    my_job.logprint(f"configuration reverence is now {my_config.parameters['reference_filter']}")
     new_ref_dp = wp.DataProduct(
         my_config, filename=ref_dp.filename, group="proc")
     new_ref_dp.subtype = "reference"
@@ -106,8 +110,11 @@ if __name__ == "__main__":
     comp_name = 'completed_' + my_target.name
     # images prepped to be updated when each job of prep_image finishes
     options = {comp_name: 0}
+    my_job.options[comp_name] = 0
     my_job.options = options
-
+    if  my_job.options[comp_name] > 0:
+        my_job.logprint("comp name is >0, exiting")
+        sdfwh
 # Firing the next event
     tagged_dps = wp.DataProduct.select(
         # config_id=my_config.config_id, data_type="SCIENCE", subtype="tagged")  # all tagged dps

@@ -131,7 +131,7 @@ if __name__ == "__main__":
         my_config.parameters["run_single"] = "F"
 
     #! make data products from splitgroups output <'....*chip1.fits'>
-    for splitgroup_output_file in glob.glob(proc_path + this_dp.filename[:-5] + '*chip*.fits'):
+    for splitgroup_output_file in glob.glob(proc_path + this_dp.filename[:-5] + '*chip?.fits'):
         sp_dp_filename = splitgroup_output_file.split("/")[-1]
         sp_dp_subtype = this_dp.subtype+"_"+"prepped"
         my_job.logprint(f'created dataproduct for {sp_dp_filename}')

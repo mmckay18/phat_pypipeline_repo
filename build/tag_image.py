@@ -422,7 +422,7 @@ if __name__ == "__main__":
                         "config_id": this_event.options["config_id"],
                         "to_run": len(adriz_filters),  # num of filter to run
                         "filter": str(i),
-                        "memory": "300G",
+                        "memory": "100G",
                         "comp_name": compname
                     },
                     tag=str(

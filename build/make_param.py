@@ -53,6 +53,7 @@ if __name__ == "__main__":
     #        pass
     ref_dp = wp.DataProduct.select(
         config_id=my_config.config_id, subtype="reference_prepped")
+    ref_filt = my_config.parameters["reference_filter"]
     tagged_dps = wp.DataProduct.select(
         config_id=my_config.config_id,
         data_type="image",
@@ -65,8 +66,12 @@ if __name__ == "__main__":
 
     # ref_dp = wp.DataProduct.select(dpowner_id=my_config.config_id, data_type="image")
     #                                subtype="dolphot input reference")  # reference image
-    ref_dp_list = [ref_dp[0]]  # making reference dp into a list
-    my_job.logprint(f"Reference DP: {ref_dp[0].filename}, {type(ref_dp[0])}")
+    count = 0
+    for cand_ref in ref_dp:
+        if cand_ref.options["filter"] == ref_filt:
+            ref_dp_list = [ref_dp[count]]
+        count += 1
+    my_job.logprint(f"Reference DP: {ref_dp_list[0].filename}, {type(ref_dp_list[0])}")
 
     # tagged_dps = wp.DataProduct.select(
     #     dpowner_id=my_config.config_id, data_type="image", subtype="dolphot input")  # all other images

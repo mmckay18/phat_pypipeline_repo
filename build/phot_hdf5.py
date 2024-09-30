@@ -219,7 +219,7 @@ def make_header_table(my_config, fitsdir, search_string='*.chip?.fits'):
         headers.update({fitsname:head})
         keys += [k for k in head.keys()]
     unique_keys = np.unique(keys).tolist()
-    remove_keys = ['COMMENT', 'HISTORY', '']
+    remove_keys = ['COMMENT', 'HISTORY', 'FW1ERROR', 'FW2ERROR', 'FWSERROR', 'STATFLAG', 'WFCMPRSD', '']
     for key in remove_keys:
         if key in unique_keys:
             unique_keys.remove(key)
@@ -267,7 +267,7 @@ def name_columns(colfile):
     filters : list
         List of filters included in output
     """
-    df = pd.DataFrame(data=np.loadtxt(colfile, delimiter='. ', dtype=str),
+    df = pd.DataFrame(data=np.genfromtxt(colfile, delimiter='. ', dtype=str),
                           columns=['index','desc']).drop('index', axis=1)
     df = df.assign(colnames='')
     # set first 11 column names
@@ -357,9 +357,12 @@ def read_dolphot(my_config, photfile, columns_df, filters):
     #    # cut individual chip columns before reading in .phot file
     #    columns_df = columns_df[columns_df.colnames.str.find('.chip') == -1]
     colnames = columns_df.colnames
-    usecols = columns_df.index
+    print("usecols is {columns_df.index.tolist()}")
+    usecols = columns_df.index.tolist()
+    print("usecols is {usecols}")
     # read in dolphot output
-    df = dd.read_csv(photfile, delim_whitespace=True, header=None,
+    #df = dd.read_csv(photfile, delim_whitespace=True, header=None,
+    df = dd.read_csv(photfile, sep='\s+', header=None,
                      usecols=usecols, names=colnames,
                      na_values=99.999).compute()
     #if to_hdf:
@@ -367,6 +370,7 @@ def read_dolphot(my_config, photfile, columns_df, filters):
     print('Reading in header information from individual images')
     fitsdir = Path(photfile).parent
     header_df = make_header_table(my_config, fitsdir)
+    print(f"header_df is {header_df}")
     header_df.to_hdf(outfile, key='fitsinfo', mode='w', format='table',
                      complevel=9, complib='zlib')
     # lambda function to construct detector-filter pairs

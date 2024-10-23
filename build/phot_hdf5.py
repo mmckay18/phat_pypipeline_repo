@@ -219,7 +219,7 @@ def make_header_table(my_config, fitsdir, search_string='*.chip?.fits'):
         headers.update({fitsname:head})
         keys += [k for k in head.keys()]
     unique_keys = np.unique(keys).tolist()
-    remove_keys = ['COMMENT', 'HISTORY', 'FW1ERROR', 'FW2ERROR', 'FWSERROR', 'STATFLAG', 'WFCMPRSD', '']
+    remove_keys = ['COMMENT', 'HISTORY', 'FW1ERROR', 'FW2ERROR', 'FWSERROR', 'STATFLAG', 'WFCMPRSD', 'WRTERR', '']
     for key in remove_keys:
         if key in unique_keys:
             unique_keys.remove(key)
@@ -313,7 +313,18 @@ def add_wcs(df, photfile, my_config):
     if len(drzfiles) == 0:
         print('No drizzled files found; skipping RA and Dec')
     elif len(drzfiles) > 1:
-        print('Multiple drizzled files found: {}'.format(drzfiles))
+        my_job.logprint('Multiple drizzled files found: {}'.format(drzfiles))
+        ref_filt = my_config.parameters["reference_filter"]
+        for cand_ref in drzfiles:
+            if cand_ref.options["filter"] == ref_filt:
+                drzfile = my_config.procpath+"/"+str(cand_ref.filename).strip()
+        my_job.logprint('Using {} as astrometric reference'.format(drzfile))
+        ra, dec = WCS(drzfile).all_pix2world(df.x.values, df.y.values, 0)
+        my_job.logprint(f"{df.x.values}, {df.y.values},{ra},{dec}")
+        df.insert(4, 'ra', ra)
+        df.insert(5, 'dec', dec)
+
+
     else:
         drzfile = my_config.procpath+"/"+str(drzfiles[0].filename).strip()
         print('Using {} as astrometric reference'.format(drzfile))
@@ -355,46 +366,76 @@ def read_dolphot(my_config, photfile, columns_df, filters):
     """
     #if not full:
     #    # cut individual chip columns before reading in .phot file
-    #    columns_df = columns_df[columns_df.colnames.str.find('.chip') == -1]
-    colnames = columns_df.colnames
-    print("usecols is {columns_df.index.tolist()}")
-    usecols = columns_df.index.tolist()
-    print("usecols is {usecols}")
-    # read in dolphot output
-    #df = dd.read_csv(photfile, delim_whitespace=True, header=None,
-    df = dd.read_csv(photfile, sep='\s+', header=None,
+    #columns_df = columns_df[columns_df.colnames.str.find('.chip') == -1]
+    try:
+         colnames = columns_df.colnames
+         print(f"usecols is {columns_df.index.tolist()}")
+         usecols = columns_df.index.tolist()
+         print(f"usecols is {usecols}")
+         # read in dolphot output
+         #df = dd.read_csv(photfile, delim_whitespace=True, header=None,
+         df = dd.read_csv(photfile, sep='\s+', header=None,
                      usecols=usecols, names=colnames,
                      na_values=99.999).compute()
-    #if to_hdf:
-    outfile = photfile + '.hdf5'
-    print('Reading in header information from individual images')
-    fitsdir = Path(photfile).parent
-    header_df = make_header_table(my_config, fitsdir)
-    print(f"header_df is {header_df}")
-    header_df.to_hdf(outfile, key='fitsinfo', mode='w', format='table',
-                     complevel=9, complib='zlib')
-    # lambda function to construct detector-filter pairs
-    lamfunc = lambda x: '-'.join(x[~(x.str.startswith('CLEAR')|x.str.startswith('nan'))])
-    #filter_detectors = header_df.filter(regex='(DETECTOR)|(FILTER)').astype(str).apply(lamfunc, axis=1).unique()
-    #cut_params = {'irsharp'   : 0.15, 'ircrowd'   : my, 'uvissharp' : 0.15, 'uviscrowd' : 1.30, 'wfcsharp'  : 0.20, 'wfccrowd'  : 2.25}
-    print('Writing photometry to {}'.format(outfile))
-    #df0 = df[colnames[colnames.str.find(r'.chip') == -1]]
-    df0 = df[colnames[colnames.str.find(r'\ (') == -1]]
-    #print("columns are:")
-    #print(df0.columns.tolist())  
-    #df0 = cull_photometry(df0, filter_detectors,my_config)
-    df0 = cull_photometry(df0, filters,my_config)
-    my_config.parameters["det_filters"] = ','.join(filters)
-    df0 = add_wcs(df0, photfile, my_config)
-    df0.to_hdf(outfile, key='data', mode='a', format='table', 
-               complevel=9, complib='zlib')
-    outfile_full = outfile.replace('.hdf5','_full.hdf5')
-    os.rename(outfile, outfile_full)
-    for f in filters:
-        print('Writing single-frame photometry table for filter {}'.format(f))
-        df.filter(regex='_{}_'.format(f)).to_hdf(outfile_full, key=f, 
-                      mode='a', format='table', complevel=9, complib='zlib')
+         #if to_hdf:
+         outfile = photfile + '.hdf5'
+         print('Reading in header information from individual images')
+         fitsdir = Path(photfile).parent
+         header_df = make_header_table(my_config, fitsdir)
+         print(f"header_df is {header_df}")
+         header_df.to_hdf(outfile, key='fitsinfo', mode='w', format='table',
+                          complevel=9, complib='zlib')
+         # lambda function to construct detector-filter pairs
+         lamfunc = lambda x: '-'.join(x[~(x.str.startswith('CLEAR')|x.str.startswith('nan'))])
+         #filter_detectors = header_df.filter(regex='(DETECTOR)|(FILTER)').astype(str).apply(lamfunc, axis=1).unique()
+         #cut_params = {'irsharp'   : 0.15, 'ircrowd'   : my, 'uvissharp' : 0.15, 'uviscrowd' : 1.30, 'wfcsharp'  : 0.20, 'wfccrowd'  : 2.25}
+         print('Writing photometry to {}'.format(outfile))
+         #df0 = df[colnames[colnames.str.find(r'.chip') == -1]]
+         df0 = df[colnames[colnames.str.find(r'\ (') == -1]]
+         #print("columns are:")
+         #print(df0.columns.tolist())  
+         #df0 = cull_photometry(df0, filter_detectors,my_config)
+         df0 = cull_photometry(df0, filters,my_config)
+         my_config.parameters["det_filters"] = ','.join(filters)
+         df0 = add_wcs(df0, photfile, my_config)
+         df0.to_hdf(outfile, key='data', mode='a', format='table', 
+                    complevel=9, complib='zlib')
+         outfile_full = outfile.replace('.hdf5','_full.hdf5')
+         os.rename(outfile, outfile_full)
+         outfile = outfile_full
+         for f in filters:
+             print('Writing single-frame photometry table for filter {}'.format(f))
+             df.filter(regex='_{}_'.format(f)).to_hdf(outfile_full, key=f, 
+                           mode='a', format='table', complevel=9, complib='zlib')
+    except:
+         columns_df = columns_df[columns_df.colnames.str.find('.chip') == -1]
+         colnames = columns_df.colnames
+         print(f"usecols is {columns_df.index.tolist()}")
+         usecols = columns_df.index.tolist()
+         print(f"usecols is {usecols}")
+         # read in dolphot output
+         df = dd.read_csv(photfile, sep='\s+', header=None,
+                     usecols=usecols, names=colnames,
+                     na_values=99.999).compute()
+         outfile = photfile + '.hdf5'
+         print('Reading in header information from individual images')
+         fitsdir = Path(photfile).parent
+         header_df = make_header_table(my_config, fitsdir)
+         print(f"header_df is {header_df}")
+         header_df.to_hdf(outfile, key='fitsinfo', mode='w', format='table',
+                          complevel=9, complib='zlib')
+         # lambda function to construct detector-filter pairs
+         lamfunc = lambda x: '-'.join(x[~(x.str.startswith('CLEAR')|x.str.startswith('nan'))])
+         print('Writing photometry to {}'.format(outfile))
+         df0 = df[colnames[colnames.str.find(r'\ (') == -1]]
+         df0 = cull_photometry(df0, filters,my_config)
+         my_config.parameters["det_filters"] = ','.join(filters)
+         df0 = add_wcs(df0, photfile, my_config)
+         df0.to_hdf(outfile, key='data', mode='a', format='table',
+                    complevel=9, complib='zlib')
+
     print('Finished writing HDF5 file')
+    return outfile
 
 if __name__ == '__main__':
     my_pipe = wp.Pipeline()
@@ -432,8 +473,9 @@ if __name__ == '__main__':
     
     import time
     t0 = time.time()
-    df = read_dolphot(my_config, photfile, columns_df, filters)
-    outfile = this_dp.filename + '_full.hdf5'
+    #df = read_dolphot(my_config, photfile, columns_df, filters)
+    outfile = read_dolphot(my_config, photfile, columns_df, filters)
+    #outfile = this_dp.filename + '_full.hdf5'
     hd5_dp = wp.DataProduct(my_config, filename=outfile, 
                               group="proc", data_type="hdf5 file", subtype="catalog")     
     my_config.parameters['photfile'] = outfile

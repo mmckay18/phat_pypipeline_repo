@@ -227,7 +227,7 @@ if __name__ == "__main__":
                         "dp_fname_path": dp_fname_path,
                         "config_id": cid,
                         "comp_name": "completed_" + tname,
-                        "memory": "300G"
+                        "memory": "3G"
                     },
                 )
                 my_job.logprint("DP file")

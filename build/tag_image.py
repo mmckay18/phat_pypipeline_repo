@@ -412,6 +412,11 @@ if __name__ == "__main__":
         #! Fire next task astrodrizzle
         my_job.logprint("FIRING NEXT ASTRODRIZZLE TASK")
         if len(adriz_filters) > 0:
+            $mem = "30G"
+            if len(adriz_filters) > 3:
+                $mem = "60G"
+            if len(adriz_filters) > 5:
+                $mem = "100G"
             for i in adriz_filters:
                 my_job.logprint(f"{i},{type(str(i))}")
                 my_event = my_job.child_event(
@@ -422,7 +427,7 @@ if __name__ == "__main__":
                         "config_id": this_event.options["config_id"],
                         "to_run": len(adriz_filters),  # num of filter to run
                         "filter": str(i),
-                        "memory": "100G",
+                        "memory": $mem,
                         "comp_name": compname
                     },
                     tag=str(

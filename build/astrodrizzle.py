@@ -282,7 +282,7 @@ if __name__ == "__main__":
             f"AstroDrizzle step complete for {my_target.name}, firing find reference task.")
         next_event = my_job.child_event(
             name="find_ref",
-            options={"target_id": this_event.options["target_id"]}
+            options={"target_id": this_event.options["target_id"], "memory": "3G"}
         )  # next event
         next_event.fire()
         time.sleep(150)

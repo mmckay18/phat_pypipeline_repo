@@ -142,7 +142,8 @@ if __name__ == "__main__":
                 'dp_id': dp_id,
                 'to_run': to_run,
                 'compname': comp_name,
-                'target_id': this_event.options['target_id']
+                'target_id': this_event.options['target_id'],
+                "memory": "5G"
             }
         )
         my_event.fire()

@@ -222,7 +222,7 @@ if __name__ == "__main__":
             # config_parameters[{'prep_image_dp_ids': prep_dp_id_list}]
             # my_job.logprint("Config Parameters: ", config_parameters)
             my_event = my_job.child_event(name="make_param", options={
-                "target_id": this_event.options["target_id"],
+                "target_id": this_event.options["target_id"],"memory": "2G"
                 # "list_prep_image_dp_ids": prep_dp_id_list,
             },
             )

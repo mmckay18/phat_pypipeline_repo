@@ -381,9 +381,20 @@ if __name__ == "__main__":
     my_job.logprint(f"Parameter DP: {param_dp}, {param_dp.filename}")
     my_job.logprint(
         f"\nDOLPHOT parameter file complete for {my_target.name}, firing DOLPHOT task")
+    $mem = "50G"
+    $wall = "100:00:00"
+    if $count > 50:
+        $mem = "100G"
+        $wall = "200:00:00"
+    if $count > 100:
+        $mem = "150G"
+        $wall = "250:00:00"
+    if $count > 200:
+        $mem = "250G"
+        $wall = "400:00:00"
     next_event = my_job.child_event(
         name="DOLPHOT",
-        options={"param_dp_id": param_dp.dp_id, "walltime": "150:00:00"}
+        options={"param_dp_id": param_dp.dp_id, "walltime": $wall, "memory": $mem}
     )  # next event
     next_event.fire()
     time.sleep(150)

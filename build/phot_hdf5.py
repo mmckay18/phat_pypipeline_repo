@@ -217,9 +217,13 @@ def make_header_table(my_config, fitsdir, search_string='*.chip?.fits'):
         fitspath = fitsfile.config.procpath + "/" + fitsname
         head = fits.getheader(fitspath, ignore_missing_end=True)
         headers.update({fitsname:head})
+        #keys += [k for k in head.keys()]
+        for k in head.keys():
+            if type(head[k]) is bool:
+                head.update({k:str(head[k])})
         keys += [k for k in head.keys()]
     unique_keys = np.unique(keys).tolist()
-    remove_keys = ['COMMENT', 'HISTORY', 'FW1ERROR', 'FW2ERROR', 'FWSERROR', 'STATFLAG', 'WFCMPRSD', 'WRTERR', '']
+    remove_keys = ['COMMENT', 'HISTORY', 'FW1ERROR', 'FW2ERROR', 'FWSERROR', 'STATFLAG', 'WFCMPRSD', 'WRTERR', 'BKGDTARG','SUBARRAY', 'BKGSUB', 'COMPRESS', 'CRMASK','']
     for key in remove_keys:
         if key in unique_keys:
             unique_keys.remove(key)

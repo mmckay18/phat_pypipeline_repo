@@ -479,8 +479,9 @@ if __name__ == '__main__':
     t0 = time.time()
     #df = read_dolphot(my_config, photfile, columns_df, filters)
     outfile = read_dolphot(my_config, photfile, columns_df, filters)
+    head_tail=os.path.split(outfile)
     #outfile = this_dp.filename + '_full.hdf5'
-    hd5_dp = wp.DataProduct(my_config, filename=outfile, 
+    hd5_dp = wp.DataProduct(my_config, filename=head_tail[1], 
                               group="proc", data_type="hdf5 file", subtype="catalog")     
     my_config.parameters['photfile'] = outfile
     my_config.parameters['colfile'] = outfile+".columns"

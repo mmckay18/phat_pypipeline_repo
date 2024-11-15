@@ -50,14 +50,15 @@ if __name__ == "__main__":
     my_dps = wp.DataProduct.select(
         config_id=my_config.config_id,
         subtype="DRIZZLED",
-    )
-    if len(my_dps)==0:
-        my_dps = wp.DataProduct.select(
+        )
+    my_dps2 = wp.DataProduct.select(
            config_id=my_config.config_id,
            subtype="reference",
-    )      
+        )
+    if len(my_dps2)>0:
+        my_dps.extend(my_dps2)
     # my_dps = wp.DataProduct.select(wp.si.DataProduct.filename.regexp_match("final*"), dpowner_id=my_job.config_id)
-    # my_job.logprint(f"{my_dps}")
+    my_job.logprint(f"{my_dps}")
 
     my_job.logprint(
         f"{len(my_dps)} drizzled images found for {my_target.name}.")
@@ -74,6 +75,7 @@ if __name__ == "__main__":
     my_job.logprint(f"Config has reference filter {ref_filt}")
     if "F" in ref_filt:
         for dp in my_dps:
+            my_job.logprint(f"Checking for {ref_filt} in {dp.filename}")
             if ref_filt in dp.options["filter"]:
                 ref_dp = dp
             else:
@@ -82,6 +84,7 @@ if __name__ == "__main__":
     try:
         filename = ref_dp.filename
     except:
+        my_job.logprint(f"Didn't find {ref_filt} in any drizzled image")
         exposures = []
         for dp in my_dps:
             if "LONG" in dp.options["channel"]:

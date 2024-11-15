@@ -186,8 +186,12 @@ if __name__ == "__main__":
            ind2=i+1+j
            my_job.logprint(filters[sort_inds[i]])  
            my_job.logprint(filters[sort_inds[ind2]])  
-           make_spatial(ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower())
-       
+           try:
+               make_spatial(ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower())
+           except:
+               my_job.logprint(f"{filters[sort_inds[i]]} and {filters[sort_inds[ind2]]} failed")
+               continue
+
     #next_event = my_job.child_event(
     #name="cmds_ready",
     #options={"target_id": my_target.target_id}

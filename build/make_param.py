@@ -394,7 +394,7 @@ if __name__ == "__main__":
         wall = "400:00:00"
     next_event = my_job.child_event(
         name="DOLPHOT",
-        options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem}
+        options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "slurm_partition": "cpu-g2-mem2x"}
     )  # next event
     next_event.fire()
     time.sleep(150)

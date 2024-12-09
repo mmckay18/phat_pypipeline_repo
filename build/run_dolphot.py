@@ -33,6 +33,7 @@ from glob import glob
 def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
     _temp = task.mask(source="*", name="DOLPHOT", value="*")
+    _temp = task.mask(source="*", name="DOLPHOT_warm", value="*")
 
 import signal
 def handler(signum, frame):
@@ -98,27 +99,48 @@ if __name__ == "__main__":
     out_files = glob(procpath+'/*.phot.*')
     if len(out_files) < 5:
         raise exception("too few output files")
-    for file in out_files:
-        head_tail = os.path.split(file)
-        dolphot_output_dp = wp.DataProduct(
-            my_config, filename=head_tail[1], group="proc", subtype="dolphot output")
-        my_job.logprint(
-            f"Created dataproduct for {file}, {dolphot_output_dp}")
-    if my_config.parameters["run_single"] == "T":
+
+    if "warm" in this_event.name:
+        warmstart_file = dolphotout+".warmstart"
+        catcom = "cat "+dolphotout+" | awk '{print $1,$2,$3,$4,$6}' >{warmstart_file}"
+        os.system(catcom)
+        for file in out_files:
+            mvcom = "mv "+file+" "+file+".prewarm"
+            os.system(mvcom)
+        head_tail = os.path.split(warmstart_file)
+        warmstart_dp = wp.DataProduct(
+            my_config, filename=head_tail[1], group="proc", subtype="warmstart_file")
+        my_job.logprint(f"Created dataproduct for {warmstart_file}")
         next_event = my_job.child_event(
-          name="dolphot_done",
-          options={"dp_id": phot_dp.dp_id, "memory": "50G", "to_run": this_event.options["to_run"], "tracking_job_id": this_event.options["tracking_job_id"]}
-        )  # next event
+            name="warmstart_done",
+              options={"dp_id": warmstart_dp.dp_id, "memory": "5G"}
+            )  # next event
         next_event.fire()
         time.sleep(150)
 
 
     else:
-        next_event = my_job.child_event(
-          name="dolphot_done",
-          options={"dp_id": phot_dp.dp_id, "memory": "150G"}
-        )  # next event
-        next_event.fire()
-        time.sleep(150)
+        for file in out_files:
+            head_tail = os.path.split(file)
+            dolphot_output_dp = wp.DataProduct(
+                my_config, filename=head_tail[1], group="proc", subtype="dolphot output")
+            my_job.logprint(
+                f"Created dataproduct for {file}, {dolphot_output_dp}")
+        if my_config.parameters["run_single"] == "T":
+            next_event = my_job.child_event(
+              name="dolphot_done",
+              options={"dp_id": phot_dp.dp_id, "memory": "50G", "to_run": this_event.options["to_run"], "tracking_job_id": this_event.options["tracking_job_id"]}
+            )  # next event
+            next_event.fire()
+            time.sleep(150)
+
+
+        else:
+            next_event = my_job.child_event(
+              name="dolphot_done",
+              options={"dp_id": phot_dp.dp_id, "memory": "150G"}
+            )  # next event
+            next_event.fire()
+            time.sleep(150)
 
     

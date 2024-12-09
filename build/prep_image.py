@@ -76,7 +76,11 @@ if __name__ == "__main__":
     my_config = my_job.config
     config_parameters = my_config.parameters
     my_job.logprint(f"This Config Parameters: {config_parameters}")
-
+    try:
+        warm = my_config.parameters["warmstart"]
+    except:
+        warm = 0
+    my_job.logprint(f"warm = {warm}")
 # * Set proc dataproduct file path # TODO: Better way to implement this for development
     proc_path = my_config.procpath + "/"
     dp_fullpath = proc_path + this_dp.filename
@@ -221,11 +225,15 @@ if __name__ == "__main__":
             # ! Attempting to read in a list of dps as a config parameter
             # config_parameters[{'prep_image_dp_ids': prep_dp_id_list}]
             # my_job.logprint("Config Parameters: ", config_parameters)
-            my_event = my_job.child_event(name="make_param", options={
-                "target_id": this_event.options["target_id"],"memory": "2G"
-                # "list_prep_image_dp_ids": prep_dp_id_list,
-            },
-            )
+            if warm == 0:
+                my_event = my_job.child_event(name="make_param", options={
+                    "target_id": this_event.options["target_id"],
+                    "memory": "2G"})
+            else:
+                my_event = my_job.child_event(name="make_warm1_param", options={
+                    "target_id": this_event.options["target_id"],
+                    "memory": "2G"})
+                
             my_event.fire()
             time.sleep(150)
 

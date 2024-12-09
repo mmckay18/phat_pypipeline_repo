@@ -1,4 +1,23 @@
-# phat_pypipeline_repo
+# Stellar Photometry Data Pipeline
+
+![Astronomy](https://img.shields.io/badge/Field-Astronomy-blue)
+![Last Commit](https://img.shields.io/github/last-commit/mmckay18/phat_pypipeline_repo)
+![Repo Size](https://img.shields.io/github/repo-size/mmckay18/phat_pypipeline_repo)
+![Contributors](https://img.shields.io/github/contributors/mmckay18/phat_pypipeline_repo)
+![Pull Requests](https://img.shields.io/github/issues-pr/mmckay18/phat_pypipeline_repo)
+![License](https://img.shields.io/github/license/mmckay18/phat_pypipeline_repo)
+![Issues](https://img.shields.io/github/issues/mmckay18/phat_pypipeline_repo)
+![Stars](https://img.shields.io/github/stars/mmckay18/phat_pypipeline_repo)
+![Forks](https://img.shields.io/github/forks/mmckay18/phat_pypipeline_repo)
+
+## Table of Contents
+
+- [Contributors](#contributors)
+- [Description](#description)
+- [Workflow](#workflow)
+- [Layout](#layout)
+- [Requirements](#requirements)
+- [Instructions](#instructions)
 
 # Contributors:
 
@@ -11,7 +30,7 @@
 
 # Description:
 
-Photometry pipeline for HST and JWST data products. The pipeline has a similar structure to AWS based photomerty pipeline by Ben Williams and Keith Rosema but simplifies it by being written in Python.
+This pipeline is designed for photometry of Hubble Space Telescope (HST) and James Webb Space Telescope (JWST) data products. It is inspired by the AWS-based photometry pipeline developed by Ben Williams and Keith Rosema but is simplified and implemented in Python for ease of use and accessibility.
 
 ## Workflow
 

@@ -419,8 +419,7 @@ def read_dolphot(my_config, photfile, columns_df, filters):
          print(f"usecols is {usecols}")
          # read in dolphot output
          df = dd.read_csv(photfile, sep='\s+', header=None,
-                     usecols=usecols, names=colnames,
-                     na_values=99.999).compute()
+                     usecols=usecols, names=colnames).compute()
          outfile = photfile + '.hdf5'
          print('Reading in header information from individual images')
          fitsdir = Path(photfile).parent

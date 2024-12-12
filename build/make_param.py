@@ -73,7 +73,7 @@ if __name__ == "__main__":
         for dp in tagged_dps1:
             if "LONG" in dp.options['channel']:
                 continue
-            if "IR" in dp.options['detector']:
+            if "IR" in dp.options['detector'] and "CAM" not in dp.options['detector']:
                 continue
             tagged_dps.append(dp)
         my_job.logprint(f"list ends with a length of {len(tagged_dps)}")

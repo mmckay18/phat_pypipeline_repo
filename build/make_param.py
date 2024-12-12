@@ -70,12 +70,12 @@ if __name__ == "__main__":
         count = 0
         tagged_dps1 = tagged_dps
         tagged_dps = []
-        for dp in tagged_dps:
+        for dp in tagged_dps1:
             if "LONG" in dp.options['channel']:
-                del tagged_dps
+                continue
             if "IR" in dp.options['detector']:
                 continue
-            tagged_dps = tagged_dps+dp
+            tagged_dps.append(dp)
         my_job.logprint(f"list ends with a length of {len(tagged_dps)}")
         
     my_target = wp.Target(this_event.options["target_id"])

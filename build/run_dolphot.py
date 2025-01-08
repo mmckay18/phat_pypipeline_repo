@@ -102,18 +102,25 @@ if __name__ == "__main__":
 
     if "warm" in this_event.name:
         warmstart_file = dolphotout+".warmstart"
-        catcom = "cat "+dolphotout+" | awk '{print $1,$2,$3,$4,$6}' >{warmstart_file}"
-        os.system(catcom)
+        prewarm_file = dolphotout+".prewarm"
+        if os.path.isfile(warmstart_file):
+            my_job.logprint(f"Not overwriting {warmstart_file}")
+        else:    
+            catcom = "cat "+dolphotout+" | awk '{print $1,$2,$3,$4,$11,$6}' >"+warmstart_file
+            os.system(catcom)
+            catcom2 = "mv "+dolphotout+" "+prewarm_file
+            os.system(catcom2)
         for file in out_files:
-            mvcom = "mv "+file+" "+file+".prewarm"
-            os.system(mvcom)
+            if "prewarm" not in file:
+                mvcom = "mv "+file+" "+file+".prewarm"
+                os.system(mvcom)
         head_tail = os.path.split(warmstart_file)
         warmstart_dp = wp.DataProduct(
             my_config, filename=head_tail[1], group="proc", subtype="warmstart_file")
         my_job.logprint(f"Created dataproduct for {warmstart_file}")
         next_event = my_job.child_event(
             name="warmstart_done",
-              options={"dp_id": warmstart_dp.dp_id, "memory": "5G"}
+            options={"target_id": my_target.target_id, "warmdpid": warmstart_dp.dp_id, "memory": "5G"}
             )  # next event
         next_event.fire()
         time.sleep(150)

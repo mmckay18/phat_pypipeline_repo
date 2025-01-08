@@ -198,15 +198,15 @@ if __name__ == "__main__":
     if count > 200:
         mem = "250G"
         wall = "400:00:00"
-    if wall == 1: 
+    if warm == 1: 
         next_event = my_job.child_event(
             name="DOLPHOT_warm",
-            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "slurm_partition": "cpu-g2-mem2x"}
+            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": "cpu-g2-mem2x"}
         )  # next event
     else:
         next_event = my_job.child_event(
             name="DOLPHOT",
-            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "slurm_partition": "cpu-g2-mem2x"}
+            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": "cpu-g2-mem2x"}
         )  # next event
     next_event.fire()
     time.sleep(150)

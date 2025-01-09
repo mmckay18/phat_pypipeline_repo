@@ -379,8 +379,7 @@ def read_dolphot(my_config, photfile, columns_df, filters):
          # read in dolphot output
          #df = dd.read_csv(photfile, delim_whitespace=True, header=None,
          df = dd.read_csv(photfile, sep='\s+', header=None,
-                     usecols=usecols, names=colnames,
-                     na_values=99.999).compute()
+                     usecols=usecols, names=colnames).compute()
          #if to_hdf:
          outfile = photfile + '.hdf5'
          print('Reading in header information from individual images')
@@ -479,6 +478,17 @@ if __name__ == '__main__':
     #df = read_dolphot(my_config, photfile, columns_df, filters)
     outfile = read_dolphot(my_config, photfile, columns_df, filters)
     head_tail=os.path.split(outfile)
+    outfile_stats = os.stat(outfile)
+    size = outfile_stats.st_size / (1024 * 1024 * 1024)
+    mem = 50
+    if size > 3:
+        mem = "100G"
+    if size > 5:
+        mem = "150G"
+    if size > 10:
+        mem = "200G"
+    if size > 15:
+        mem = "250G"
     #outfile = this_dp.filename + '_full.hdf5'
     hd5_dp = wp.DataProduct(my_config, filename=head_tail[1], 
                               group="proc", data_type="hdf5 file", subtype="catalog")     
@@ -504,12 +514,12 @@ if __name__ == '__main__':
     else:
         next_event = my_job.child_event(
         name="hdf5_ready",
-        options={"dp_id": hd5_dp.dp_id}
+        options={"dp_id": hd5_dp.dp_id, "memory": mem, "partition": "cpu-g2-mem2x"}
         )  # next event
         next_event.fire()
         next_event = my_job.child_event(
         name="spatial",
-        options={"dp_id": hd5_dp.dp_id}
+        options={"dp_id": hd5_dp.dp_id, "memory": mem, "partition": "cpu-g2-mem2x"}
         )  # next event
         next_event.fire()
         next_event = my_job.child_event(

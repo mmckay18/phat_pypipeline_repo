@@ -139,16 +139,28 @@ if __name__ == "__main__":
         my_job.logprint(f"Firing prep image task for {filename}")
         # have to define dp_id outside of the event or else it sets it as the same for all dps
         dp_id = dp.dp_id
-        my_event = my_job.child_event(
-            name="prep_image", tag=dp_id,
-            options={
-                'dp_id': dp_id,
-                'to_run': to_run,
-                'compname': comp_name,
-                'target_id': this_event.options['target_id'],
-                "memory": "5G"
-            }
-        )
+        if subtype=="reference":
+            my_event = my_job.child_event(
+                name="prep_image", tag=dp_id,
+                options={
+                    'dp_id': dp_id,
+                    'to_run': to_run,
+                    'compname': comp_name,
+                    'target_id': this_event.options['target_id'],
+                    "memory": "50G"
+                }
+            )
+
+        else:
+            my_event = my_job.child_event(
+                name="prep_image", tag=dp_id,
+                options={
+                    'dp_id': dp_id,
+                    'to_run': to_run,
+                    'compname': comp_name,
+                    'target_id': this_event.options['target_id'],
+                }
+            )
         my_event.fire()
         time.sleep(1)
     time.sleep(150)

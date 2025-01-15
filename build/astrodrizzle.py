@@ -25,6 +25,7 @@ import os
 from astropy.io import fits
 from drizzlepac import *
 from stsci.tools import teal
+import random
 import time
 
 teal.unlearn("astrodrizzle")
@@ -40,6 +41,10 @@ if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
     #   my_job.logprint(f"{my_job}")
+    
+    #add in a random sleep time to unsync it from parallel astrodrizzle jobs writing to the same dir
+    timeDelay = random.randrange(0, 60)
+    time.sleep(timeDelay)
 
     # Defining the target and filter
     this_event = my_job.firing_event

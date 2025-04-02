@@ -136,16 +136,28 @@ if __name__ == "__main__":
         if my_config.parameters["run_single"] == "T":
             next_event = my_job.child_event(
               name="dolphot_done",
-              options={"dp_id": phot_dp.dp_id, "memory": "50G", "to_run": this_event.options["to_run"], "tracking_job_id": this_event.options["tracking_job_id"]}
+              options={"dp_id": phot_dp.dp_id, "memory": "5G", "to_run": this_event.options["to_run"], "tracking_job_id": this_event.options["tracking_job_id"]}
             )  # next event
             next_event.fire()
             time.sleep(150)
 
 
         else:
+            outfile_stats = os.stat(dolphotout)
+            size = outfile_stats.st_size / (1024 * 1024 * 1024)
+            mem = "10G"
+            if size > 3:
+                mem = "100G"
+            if size > 5:
+                mem = "150G"
+            if size > 10:
+                mem = "200G"
+            if size > 15:
+                mem = "250G"
+
             next_event = my_job.child_event(
               name="dolphot_done",
-              options={"dp_id": phot_dp.dp_id, "memory": "150G"}
+              options={"dp_id": phot_dp.dp_id, "memory": mem}
             )  # next event
             next_event.fire()
             time.sleep(150)

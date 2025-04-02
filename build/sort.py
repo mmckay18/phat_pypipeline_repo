@@ -134,7 +134,7 @@ def send(dp, conf, comp_name, total, job, tid, tname):
     confid = conf.config_id
     dpconfigid = dpconfig.config_id
     event = job.child_event('new_image', jargs='0', value='0', tag=dpid,
-            options={'dp_id': dpid, "dp_fname_path": dp.relativepath+"/"+dp.filename, 'target_id': tid, "target_name": tname, 'to_run': total, 'comp_name': comp_name, 'config_id': confid, "memory": "3G"})
+            options={'dp_id': dpid, "dp_fname_path": dp.relativepath+"/"+dp.filename, 'target_id': tid, "target_name": tname, 'to_run': total, 'comp_name': comp_name, 'config_id': confid, "memory": "10G"})
     event.fire()
 
 def parse_all():
@@ -227,7 +227,7 @@ if __name__ == "__main__":
                         "dp_fname_path": dp_fname_path,
                         "config_id": cid,
                         "comp_name": "completed_" + tname,
-                        "memory": "3G"
+                        "memory": "10G"
                     },
                 )
                 my_job.logprint("DP file")

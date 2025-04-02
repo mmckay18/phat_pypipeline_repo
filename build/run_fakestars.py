@@ -54,85 +54,86 @@ if __name__ == "__main__":
     this_dp_id = this_event.options["dp_id"]
     this_dp = wp.DataProduct(int(this_dp_id))
     fakelist = this_dp.filename
+    logdp = my_job.logprint()
+    #touch = "touch "+logfile
+    #touch_out = os.system(touch)
     my_job.logprint(run_number)
     my_job.logprint(to_run)
     my_job.logprint(this_event.options)
     my_config = my_job.config
     logpath = my_config.logpath
-    procpath = my_config.procpath
-
-    # Get parameter file
-    param_dp_list = wp.DataProduct.select(config_id=my_config.config_id, subtype="parameter")
-    param_dp = param_dp_list[0]
-    my_job.logprint(f'{param_dp.filename} is the original parameter file')
-
-    param_path = param_dp.relativepath
-    param_filename = param_dp.filename
-    paramfile = param_path + "/" + param_filename
-    paramcontents = np.loadtxt(paramfile,dtype='str',delimiter=",")
-    #make new parameter file with the fake star parameters set
-    newsuf = "fakepar"+str(run_number)
-    fake_param_filename = param_filename.replace("param",newsuf)
-    print("name after ",fake_param_filename)
-    fake_param = paramfile.replace("param",newsuf)
-    with open(fake_param, 'w') as f:
-        for line in paramcontents:
-            f.write(line+"\n")
-        f.write("FakeStars="+fakelist+"\n")    
-        f.write("FakeMatch=2\n")    
-        f.write("FakePSF=1.5\n")
-    my_job.logprint(f'{fake_param} is the fakestar parameter file')  
-    wp.DataProduct(my_config, filename=fake_param_filename, group="conf", data_type="fakepars", subtype="fake_param")
-    #grab all the dolphot data products, to use for making links with run number
-    dolphot_dps = wp.DataProduct.select(config_id=my_config.config_id, subtype="dolphot output")
-    if len(dolphot_dps) < 5:
-        raise exception("only ",{len(dolphot_dps)}," dolphot products found")
-    for dp in dolphot_dps:
-        new_name = dp.filename.replace("phot", "phot_"+str(run_number))
-        link_command = "ln -s "+dp.filename+" "+procpath+"/"+new_name
-        my_job.logprint(f'making link: {link_command}')
-        os.system(link_command) 
-        
-    # # Run Dolphot
-    dolphotout = procpath + "/" + my_target.name + ".phot" + "_" + str(run_number)
-    logdp = my_job.logprint()
     logfile = logpath + "/" + logdp.filename
+    procpath = my_config.procpath
+    dolphotout = procpath + "/" + my_target.name + ".phot" + "_" + str(run_number)
     newfakefile = dolphotout+".fake"
-
     if os.path.isfile(newfakefile):
-        my_job.logprint(f"DOLPHOT already done for {fake_param} and {dolphotout}, continuing...")
+        my_job.logprint(f"DOLPHOT already done for {fake_param} and {dolphotout}, exiting...")
+
     else:
+    # Get parameter file
+        param_dp_list = wp.DataProduct.select(config_id=my_config.config_id, subtype="parameter")
+        param_dp = param_dp_list[0]
+        my_job.logprint(f'{param_dp.filename} is the original parameter file')
+
+        param_path = param_dp.relativepath
+        param_filename = param_dp.filename
+        paramfile = param_path + "/" + param_filename
+        paramcontents = np.loadtxt(paramfile,dtype='str',delimiter=",")
+        #make new parameter file with the fake star parameters set
+        newsuf = "fakepar"+str(run_number)
+        fake_param_filename = param_filename.replace("param",newsuf)
+        print("name after ",fake_param_filename)
+        fake_param = paramfile.replace("param",newsuf)
+        with open(fake_param, 'w') as f:
+            for line in paramcontents:
+                f.write(line+"\n")
+            f.write("FakeStars="+fakelist+"\n")    
+            f.write("FakeMatch=2\n")    
+            f.write("FakePSF=1.5\n")
+        my_job.logprint(f'{fake_param} is the fakestar parameter file')  
+        wp.DataProduct(my_config, filename=fake_param_filename, group="conf", data_type="fakepars", subtype="fake_param")
+        #grab all the dolphot data products, to use for making links with run number
+        dolphot_dps = wp.DataProduct.select(config_id=my_config.config_id, subtype="dolphot output")
+        if len(dolphot_dps) < 5:
+            raise exception("only ",{len(dolphot_dps)}," dolphot products found")
+        for dp in dolphot_dps:
+            new_name = dp.filename.replace("phot", "phot_"+str(run_number))
+            link_command = "ln -s "+dp.filename+" "+procpath+"/"+new_name
+            my_job.logprint(f'making link: {link_command}')
+            os.system(link_command) 
+        
+        # # Run Dolphot
         my_job.logprint(f"Running DOLPHOT on {fake_param} and {dolphotout}")
         dolphot_command = "cd "+procpath+" && " + \
             my_config.parameters["dolphot_path"]+"dolphot " + dolphotout + \
             ' -p' + param_path + "/" +  fake_param_filename + " >> "+logfile
         my_job.logprint(dolphot_command)
         dolphot_output = os.system(dolphot_command)
-    # check that this gets file called just dolphotout
-    phot_dp = wp.DataProduct(my_config, filename=dolphotout+".fake", group="proc", subtype="fake_output")
+        # check that this gets file called just dolphotout
+        phot_dp = wp.DataProduct(my_config, filename=dolphotout+".fake", group="proc", subtype="fake_output")
     
-    for dp in dolphot_dps:
-        new_name = dp.filename.replace("phot", "phot_"+str(run_number))
-        rm_command = "rm "+" "+procpath+"/"+new_name
-        my_job.logprint(f'removing link: {rm_command}')
-        os.system(rm_command) 
+        for dp in dolphot_dps:
+            new_name = dp.filename.replace("phot", "phot_"+str(run_number))
+            rm_command = "rm "+" "+procpath+"/"+new_name
+            my_job.logprint(f'removing link: {rm_command}')
+            os.system(rm_command) 
         
 
-    my_job.logprint(
-        f"Created dataproduct for {dolphotout}.fake, {phot_dp}")
-    compname = this_event.options["compname"]
-    update_option = parent_job.options[compname]
-    update_option += 1
-    to_run = this_event.options["to_run"]
-    my_job.logprint(f"parent_job options: {parent_job.options}")
-    my_job.logprint(f"{update_option}/{to_run} TAGGED")
+        my_job.logprint(
+            f"Created dataproduct for {dolphotout}.fake, {phot_dp}")
+        compname = this_event.options["compname"]
+        update_option = parent_job.options[compname]
+        update_option += 1
+        to_run = this_event.options["to_run"]
+        my_job.logprint(f"parent_job options: {parent_job.options}")
+        my_job.logprint(f"{update_option}/{to_run} TAGGED")
 
-    if update_option == to_run:
-        next_event = my_job.child_event(
-          name="fakestars_done",
-          options={"config_id": my_config.config_id, "memory": "150G"}
-        )  # next event
-        next_event.fire()
-        time.sleep(150)
+        if update_option == to_run:
+            next_event = my_job.child_event(
+              name="fakestars_done",
+              options={"config_id": my_config.config_id, "memory": "150G"}
+            )  # next event
+            next_event.fire()
+            time.sleep(150)
 
     

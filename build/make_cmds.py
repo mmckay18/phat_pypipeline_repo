@@ -37,6 +37,27 @@ def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
     _temp = task.mask(source="*", name="hdf5_ready", value="*")
 
+# global photometry values
+# first 11 columns in raw dolphot output
+global_columns = ['ext','chip','x','y','chi_gl','snr_gl','sharp_gl', 
+                  'round_gl','majax_gl','crowd_gl','objtype_gl']
+
+# dictionary mapping text in .columns file to column suffix
+colname_mappings = {
+    'counts,'                            : 'count',
+    'sky level,'                         : 'sky',
+    'Normalized count rate,'             : 'rate',
+    'Normalized count rate uncertainty,' : 'raterr',
+    'Instrumental VEGAMAG magnitude,'    : 'vega',
+    'Transformed UBVRI magnitude,'       : 'trans',
+    'Magnitude uncertainty,'             : 'err',
+    'Chi,'                               : 'chi',
+    'Signal-to-noise,'                   : 'snr',
+    'Sharpness,'                         : 'sharp',
+    'Roundness,'                         : 'round',
+    'Crowding,'                          : 'crowd',
+    'Photometry quality flag,'           : 'flag',
+}
 
 
 
@@ -46,6 +67,44 @@ def register(task):
 #    print('install seaborn you monster')
 
 # need better way to do this
+def name_columns(colfile):
+    """Construct a table of column names for dolphot output, with indices
+    corresponding to the column number in dolphot output file.
+
+    Inputs
+    ------
+    colfile : path
+        path to file containing dolphot column descriptions
+
+    Returns
+    -------
+    df : DataFrame
+        A table of column descriptions and their corresponding names.
+    filters : list
+        List of filters included in output
+    """
+    df = pd.DataFrame(data=np.genfromtxt(colfile, delimiter='. ', dtype=str),
+                          columns=['index','desc']).drop('index', axis=1)
+    df = df.assign(colnames='')
+    # set first 11 column names
+    df.loc[:10,'colnames'] = global_columns
+    # set rest of column names
+    filters_all = []
+    for k, v in colname_mappings.items():
+        indices = df[df.desc.str.find(k) != -1].index
+        desc_split = df.loc[indices,'desc'].str.split(", ")
+        # get indices for columns with combined photometry
+        indices_total = indices[desc_split.str.len() == 2]
+        # get indices for columns with single-frame photometry
+        indices_indiv = indices[desc_split.str.len() > 2]
+        filters = desc_split.loc[indices_total].str[-1].str.replace("'",'')
+        imgnames = desc_split.loc[indices_indiv].str[1].str.split(' ').str[0]
+        filters_all.append(filters.values)
+        df.loc[indices_total,'colnames'] = filters.str.lower() + '_' + v.lower()
+        df.loc[indices_indiv,'colnames'] = imgnames + '_' + v.lower()
+    filters_final = np.unique(np.array(filters_all).ravel())
+    print('Filters found: {}'.format(filters_final))
+    return df, filters_final
 
 def make_cmd(ds, path, targname, red_filter, blue_filter, y_filter, n_err=12,
              #density_kwargs={'f':'log10', 'colormap':'viridis', 'linewidth':2},
@@ -195,8 +254,11 @@ if __name__ == "__main__":
     import pandas as pd
     df = pd.read_hdf(photfile, key='data')
     ds = vaex.from_pandas(df)
-    #filters = my_config.parameters["filters"].split(',')
-    filters = my_config.parameters["det_filters"].split(',')
+    #filters = my_config.parameters["det_filters"].split(',')
+    colfile = my_config.parameters["colfile"]
+    my_job.logprint('Columns file: {}'.format(colfile))
+    columns_df, filters = name_columns(colfile)
+
     waves = []
     for filt in filters:
         pre, suf = filt.split('_')

@@ -119,6 +119,9 @@ if __name__ == "__main__":
     if "NIRCAM" in this_dp.options["detector"]:
         mask_output = subprocess.run(
             [my_config.parameters['dolphot_path']+"nircammask", dp_fullpath], capture_output=True, text=True)
+    if "NIRISS" in this_dp.options["detector"]:
+        mask_output = subprocess.run(
+            [my_config.parameters['dolphot_path']+"nirissmask", dp_fullpath], capture_output=True, text=True)
     my_job.logprint(f'mask stdout: {mask_output}')
 
     #! SPLITGROUPS - Splits the SCI images into their own fits files for HST images.
@@ -178,6 +181,13 @@ if __name__ == "__main__":
             calcsky_output = subprocess.run(
                 [my_config.parameters['dolphot_path']+"calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
             my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
+        elif this_dp.options["detector"] == "NIRISS":
+            my_job.logprint(
+                f'Starting calcsky on {this_dp.filename[:-5]}, {this_dp.options["detector"]}')
+            calcsky_output = subprocess.run(
+                [my_config.parameters['dolphot_path']+"calcsky", sp_dp.filename[:-5], "15", "35", "4", "2.25", "2.00"], capture_output=True, text=True, cwd=proc_path)
+            my_job.logprint(f'calcsky stdout: {calcsky_output}\n')
+    
     
         if run_single == "T":
             my_job.logprint(f'firing event for {sp_dp.filename}\n')

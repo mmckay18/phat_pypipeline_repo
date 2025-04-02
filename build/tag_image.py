@@ -100,7 +100,10 @@ def tag_event_dataproduct(this_event):
         TARGNAME = hdu[0].header["TARGPROP"]
         PROPOSALID = hdu[0].header["PROGRAM"]
         DETECTOR = hdu[0].header["INSTRUME"]
-        CHANNEL = hdu[0].header["CHANNEL"]
+        try:
+            CHANNEL = hdu[0].header["CHANNEL"]
+        except:
+            CHANNEL = "NIRISS"
         FILTER = hdu[0].header["FILTER"]
 
     hdu.close()

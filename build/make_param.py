@@ -125,9 +125,14 @@ if __name__ == "__main__":
             im_fullfile = dp.filename
             im_file = im_fullfile.split('.fits')[0]  # get rid of extension
             p.write(f'img{loc}_file = {im_file}\n')
-            im_pars = ["apsky", "shift", "xform",
-                       "raper", "rchi", "rsky0", "rsky1", "rpsf"]
-            def_vals = ["20 35", "0 0", "1 0 0", "2", "1.5", "15", "35", "15"]
+            if "JWST" in dp.options['telescope']:
+                im_pars = ["apsky", "shift", "xform",
+                           "raper", "rchi", "rsky0", "rsky1", "rsky2", "rpsf"]
+                def_vals = ["20 35", "0 0", "1 0 0", "2", "1.5", "15", "35", "3 10",  "15"]
+            else:
+                im_pars = ["apsky", "shift", "xform",
+                           "raper", "rchi", "rsky0", "rsky1", "rpsf"]
+                def_vals = ["20 35", "0 0", "1 0 0", "2", "1.5", "15", "35",  "15"]
             if 'reference' not in dp.subtype:
                 defined = []
                 count += 1
@@ -194,10 +199,10 @@ if __name__ == "__main__":
         wall = "200:00:00"
     if count > 100:
         mem = "150G"
-        wall = "250:00:00"
+        wall = "350:00:00"
     if count > 200:
         mem = "250G"
-        wall = "400:00:00"
+        wall = "500:00:00"
     if warm == 1: 
         next_event = my_job.child_event(
             name="DOLPHOT_warm",

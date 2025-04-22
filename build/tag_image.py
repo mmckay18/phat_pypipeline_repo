@@ -23,7 +23,7 @@ from astropy.io import fits
 import time
 import numpy as np
 from deepCR import deepCR
-
+import os
 
 def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
@@ -412,6 +412,9 @@ if __name__ == "__main__":
         my_job.logprint(
             f"{num_all_filters} filters found for target {this_event.options['target_name']}")
 
+        #! Define variable identifying the partition with most available memory
+        best_partition = os.popen("""echo $(sinfo -o "%P %m" | sort -k2 -nr | head -n 1 | awk '{print $1}')""").read().strip('\n')
+
         #! Fire next task astrodrizzle
         my_job.logprint("FIRING NEXT ASTRODRIZZLE TASK")
         if len(adriz_filters) > 0:
@@ -431,7 +434,8 @@ if __name__ == "__main__":
                         "to_run": len(adriz_filters),  # num of filter to run
                         "filter": str(i),
                         "memory": mem,
-                        "comp_name": compname
+                        "comp_name": compname,
+                        "partition": best_partition
                     },
                     tag=str(
                         i
@@ -443,7 +447,7 @@ if __name__ == "__main__":
                 f"AstroDrizzle step complete for {this_event.options['target_name']}, firing find reference task.")
             next_event = my_job.child_event(
                 name="find_ref",
-                options={"target_id": this_event.options["target_id"]}
+                options={"target_id": this_event.options["target_id"], "partition": best_partition}
             )  # next event
             next_event.fire()
 

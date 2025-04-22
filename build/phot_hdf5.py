@@ -312,39 +312,30 @@ def add_wcs(df, photfile, my_config):
         with new 'ra' and 'dec' columns added.
     """
     #drzfiles = list(Path(photfile).parent.glob('*_dr?.chip1.fits'))
-    if my_config.parameters['run_single'] == "F":
-        drzfiles = wp.DataProduct.select(config_id=my_config.config_id, subtype="reference_prepped") 
-        # neither of these should happen but just in case
-        if len(drzfiles) == 0:
-            print('No drizzled files found; skipping RA and Dec')
-        elif len(drzfiles) > 1:
-            my_job.logprint('Multiple drizzled files found: {}'.format(drzfiles))
-            ref_filt = my_config.parameters["reference_filter"]
-            for cand_ref in drzfiles:
-                if cand_ref.options["filter"] == ref_filt:
-                    drzfile = my_config.procpath+"/"+str(cand_ref.filename).strip()
-            my_job.logprint('Using {} as astrometric reference'.format(drzfile))
-            ra, dec = WCS(drzfile).all_pix2world(df.x.values, df.y.values, 0) #0-based coord system matches dolphot
-            my_job.logprint(f"{df.x.values}, {df.y.values},{ra},{dec}")
-            df.insert(4, 'ra', ra)
-            df.insert(5, 'dec', dec)
+    drzfiles = wp.DataProduct.select(config_id=my_config.config_id, subtype="reference_prepped") 
+    # neither of these should happen but just in case
+    if len(drzfiles) == 0:
+        print('No drizzled files found; skipping RA and Dec')
+    elif len(drzfiles) > 1:
+        my_job.logprint('Multiple drizzled files found: {}'.format(drzfiles))
+        ref_filt = my_config.parameters["reference_filter"]
+        for cand_ref in drzfiles:
+            if cand_ref.options["filter"] == ref_filt:
+                drzfile = my_config.procpath+"/"+str(cand_ref.filename).strip()
+        my_job.logprint('Using {} as astrometric reference'.format(drzfile))
+        ra, dec = WCS(drzfile).all_pix2world(df.x.values, df.y.values, 0)
+        my_job.logprint(f"{df.x.values}, {df.y.values},{ra},{dec}")
+        df.insert(4, 'ra', ra)
+        df.insert(5, 'dec', dec)
 
 
-        else:
-            drzfile = my_config.procpath+"/"+str(drzfiles[0].filename).strip()
-            print('Using {} as astrometric reference'.format(drzfile))
-            ra, dec = WCS(drzfile).all_pix2world(df.x.values, df.y.values, 0) #0-based coord system matches dolphot
-            print(df.x.values, df.y.values,ra,dec)
-            df.insert(4, 'ra', ra)
-            df.insert(5, 'dec', dec)  
-    if my_config.parameters['run_single'] == "T":
-        drzfile = photfile.split(".param")[0]
+    else:
+        drzfile = my_config.procpath+"/"+str(drzfiles[0].filename).strip()
         print('Using {} as astrometric reference'.format(drzfile))
         ra, dec = WCS(drzfile).all_pix2world(df.x.values, df.y.values, 0)
         print(df.x.values, df.y.values,ra,dec)
         df.insert(4, 'ra', ra)
         df.insert(5, 'dec', dec)
-
     return df
 
 
@@ -408,7 +399,7 @@ def read_dolphot(my_config, photfile, columns_df, filters):
          #print(df0.columns.tolist())  
          #df0 = cull_photometry(df0, filter_detectors,my_config)
          df0 = cull_photometry(df0, filters,my_config)
-         #my_config.parameters["det_filters"] = ','.join(filters)
+         my_config.parameters["det_filters"] = ','.join(filters)
          df0 = add_wcs(df0, photfile, my_config)
          df0.to_hdf(outfile, key='data', mode='a', format='table', 
                     complevel=9, complib='zlib')
@@ -440,7 +431,7 @@ def read_dolphot(my_config, photfile, columns_df, filters):
          print('Writing photometry to {}'.format(outfile))
          df0 = df[colnames[colnames.str.find(r'\ (') == -1]]
          df0 = cull_photometry(df0, filters,my_config)
-         #my_config.parameters["det_filters"] = ','.join(filters)
+         my_config.parameters["det_filters"] = ','.join(filters)
          df0 = add_wcs(df0, photfile, my_config)
          df0.to_hdf(outfile, key='data', mode='a', format='table',
                     complevel=9, complib='zlib')
@@ -477,12 +468,14 @@ if __name__ == '__main__':
     photfile = my_config.procpath+'/'+this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
     #photfile = my_config.procpath + '/' + this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
     colfile = photfile + '.columns'
-    my_config.parameters['colfile'] = colfile
     my_job.logprint('Photometry file: {}'.format(photfile))
     my_job.logprint('Columns file: {}'.format(colfile))
     columns_df, filters = name_columns(colfile)
     print("columns_df is ",columns_df)
     
+    #! Define variable identifying the partition with most available memory
+    best_partition = os.popen("""echo $(sinfo -o "%P %m" | sort -k2 -nr | head -n 1 | awk '{print $1}')""").read().strip('\n')
+
     import time
     t0 = time.time()
     #df = read_dolphot(my_config, photfile, columns_df, filters)
@@ -490,7 +483,7 @@ if __name__ == '__main__':
     head_tail=os.path.split(outfile)
     outfile_stats = os.stat(outfile)
     size = outfile_stats.st_size / (1024 * 1024 * 1024)
-    mem = "50G"
+    mem = 50
     if size > 3:
         mem = "100G"
     if size > 5:
@@ -503,6 +496,7 @@ if __name__ == '__main__':
     hd5_dp = wp.DataProduct(my_config, filename=head_tail[1], 
                               group="proc", data_type="hdf5 file", subtype="catalog")     
     my_config.parameters['photfile'] = outfile
+    my_config.parameters['colfile'] = outfile+".columns"
     t1 = time.time()
     timedelta = t1 - t0
     print('Finished in {}'.format(str(timedelta)) )
@@ -523,17 +517,17 @@ if __name__ == '__main__':
     else:
         next_event = my_job.child_event(
         name="hdf5_ready",
-        options={"dp_id": hd5_dp.dp_id, "memory": mem}
+        options={"dp_id": hd5_dp.dp_id, "memory": mem, "partition": best_partition}
         )  # next event
         next_event.fire()
         next_event = my_job.child_event(
         name="spatial",
-        options={"dp_id": hd5_dp.dp_id, "memory": mem}
+        options={"dp_id": hd5_dp.dp_id, "memory": mem, "partition": best_partition}
         )  # next event
         next_event.fire()
         next_event = my_job.child_event(
         name="start",value="split_fakestars.py",
-        options={"target_id": my_target.target_id,"phot_dp_id":this_dp_id}
+        options={"target_id": my_target.target_id,"phot_dp_id":this_dp_id,"partition":best_partition}
         )  # next event
         next_event.fire()
         time.sleep(150)

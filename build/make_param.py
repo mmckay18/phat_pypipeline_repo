@@ -18,7 +18,7 @@ This script relies on the 'wpipe' library, a Python package designed for efficie
 import wpipe as wp
 import time
 from astropy.io import fits
-
+import os
 
 def register(task):
     _temp = task.mask(source="*", name="start", value=task.name)
@@ -125,14 +125,9 @@ if __name__ == "__main__":
             im_fullfile = dp.filename
             im_file = im_fullfile.split('.fits')[0]  # get rid of extension
             p.write(f'img{loc}_file = {im_file}\n')
-            if "JWST" in dp.options['telescope']:
-                im_pars = ["apsky", "shift", "xform",
-                           "raper", "rchi", "rsky0", "rsky1", "rsky2", "rpsf"]
-                def_vals = ["20 35", "0 0", "1 0 0", "2", "1.5", "15", "35", "3 10",  "15"]
-            else:
-                im_pars = ["apsky", "shift", "xform",
-                           "raper", "rchi", "rsky0", "rsky1", "rpsf"]
-                def_vals = ["20 35", "0 0", "1 0 0", "2", "1.5", "15", "35",  "15"]
+            im_pars = ["apsky", "shift", "xform",
+                       "raper", "rchi", "rsky0", "rsky1", "rpsf"]
+            def_vals = ["20 35", "0 0", "1 0 0", "2", "1.5", "15", "35", "15"]
             if 'reference' not in dp.subtype:
                 defined = []
                 count += 1
@@ -185,6 +180,9 @@ if __name__ == "__main__":
             my_job.logprint("adding xytfile = {warmname}")
             p.write(f'xytfile = {warmname}')
 ##############################
+#! Define variable identifying the partition with most available memory
+    best_partition = os.popen("""echo $(sinfo -o "%P %m" | sort -k2 -nr | head -n 1 | awk '{print $1}')""").read().strip('\n')
+
 # Create dataproduct for parameter file
     param_dp = wp.DataProduct(my_config, filename=my_target.name + '.param', relativepath=target_conf_path,
                               group="conf", data_type="text file", subtype="parameter")  # Create dataproduct owned by config for the parameter file
@@ -194,24 +192,27 @@ if __name__ == "__main__":
         f"\nDOLPHOT parameter file complete for {my_target.name}, firing DOLPHOT task")
     mem = "50G"
     wall = "100:00:00"
+    if count < 10:
+        mem = "10G"
+        wall = "50:00:00"
     if count > 50:
         mem = "100G"
         wall = "200:00:00"
     if count > 100:
         mem = "150G"
-        wall = "350:00:00"
+        wall = "250:00:00"
     if count > 200:
         mem = "250G"
-        wall = "500:00:00"
+        wall = "400:00:00"
     if warm == 1: 
         next_event = my_job.child_event(
             name="DOLPHOT_warm",
-            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": "cpu-g2-mem2x"}
+            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": best_partition}
         )  # next event
     else:
         next_event = my_job.child_event(
             name="DOLPHOT",
-            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": "cpu-g2-mem2x"}
+            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": best_partition}
         )  # next event
     next_event.fire()
     time.sleep(150)

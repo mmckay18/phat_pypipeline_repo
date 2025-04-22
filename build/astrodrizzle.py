@@ -281,13 +281,16 @@ if __name__ == "__main__":
     my_job.logprint(update_option)
     my_job.logprint(to_run)
 
+    #! Define variable identifying the partition with most available memory
+    best_partition = os.popen("""echo $(sinfo -o "%P %m" | sort -k2 -nr | head -n 1 | awk '{print $1}')""").read().strip('\n')
+
     # Firing next task
     if update_option == to_run:
         my_job.logprint(
             f"AstroDrizzle step complete for {my_target.name}, firing find reference task.")
         next_event = my_job.child_event(
             name="find_ref",
-            options={"target_id": this_event.options["target_id"], "memory": "3G"}
+            options={"target_id": this_event.options["target_id"], "memory": "3G", "partition": best_partition}
         )  # next event
         next_event.fire()
         time.sleep(150)

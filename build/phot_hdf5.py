@@ -338,12 +338,13 @@ def add_wcs(df, photfile, my_config):
             df.insert(4, 'ra', ra)
             df.insert(5, 'dec', dec)  
     if my_config.parameters['run_single'] == "T":
-        drzfile = photfile.split(".param")[0]
-        print('Using {} as astrometric reference'.format(drzfile))
-        ra, dec = WCS(drzfile).all_pix2world(df.x.values, df.y.values, 0)
-        print(df.x.values, df.y.values,ra,dec)
-        df.insert(4, 'ra', ra)
-        df.insert(5, 'dec', dec)
+        #drzfile = photfile.split(".param")[0]
+        #print('Using {} as astrometric reference'.format(drzfile))
+        #ra, dec = WCS(drzfile).all_pix2world(df.x.values, df.y.values, 0)
+        #print(df.x.values, df.y.values,ra,dec)
+        #df.insert(4, 'ra', ra)
+        #df.insert(5, 'dec', dec)
+        print('No drizzled files found; skipping RA and Dec')
 
     return df
 

@@ -31,7 +31,7 @@ import pandas as pd
 import time
 import numpy as np
 import shutil
-
+import os
 from contexttimer import Timer
 
 def register(task):
@@ -150,6 +150,10 @@ if __name__ == "__main__":
     my_job.logprint(f"{my_pipe.inputs.name}")
     my_input = my_pipe.inputs[0]
     print(my_input.name)
+
+    #! Define variable identifying the partition with most available memory
+    best_partition = os.popen("""echo $(sinfo -o "%P %m" | sort -k2 -nr | head -n 1 | awk '{print $1}')""").read().strip('\n')
+
     if my_input.name=="Unsorted": 
         # Make a list of target names in Unsorted diectory proposal id and targetname
         unsorted_df, unsorted_targetnames_list = make_unsorted_df(
@@ -227,7 +231,8 @@ if __name__ == "__main__":
                         "dp_fname_path": dp_fname_path,
                         "config_id": cid,
                         "comp_name": "completed_" + tname,
-                        "memory": "10G"
+                        "memory": "10G",
+                        "partition": best_partition
                     },
                 )
                 my_job.logprint("DP file")

@@ -84,6 +84,9 @@ if __name__ == "__main__":
         my_job.logprint(dolphot_command)
         dolphot_output = os.system(dolphot_command)
 
+    #! Define variable identifying the partition with most available memory
+    best_partition = os.popen("""echo $(sinfo -o "%P %m" | sort -k2 -nr | head -n 1 | awk '{print $1}')""").read().strip('\n') 
+    
     # check that this gets file called just dolphotout
     signal.signal(signal.SIGALRM, handler)    
     signal.alarm(1000)
@@ -120,7 +123,7 @@ if __name__ == "__main__":
         my_job.logprint(f"Created dataproduct for {warmstart_file}")
         next_event = my_job.child_event(
             name="warmstart_done",
-            options={"target_id": my_target.target_id, "warmdpid": warmstart_dp.dp_id, "memory": "5G"}
+            options={"target_id": my_target.target_id, "warmdpid": warmstart_dp.dp_id, "memory": "5G", "partition": os.environ['BEST_PARTITION']}
             )  # next event
         next_event.fire()
         time.sleep(150)
@@ -136,28 +139,16 @@ if __name__ == "__main__":
         if my_config.parameters["run_single"] == "T":
             next_event = my_job.child_event(
               name="dolphot_done",
-              options={"dp_id": phot_dp.dp_id, "memory": "5G", "to_run": this_event.options["to_run"], "tracking_job_id": this_event.options["tracking_job_id"]}
+              options={"dp_id": phot_dp.dp_id, "memory": "50G", "to_run": this_event.options["to_run"], "tracking_job_id": this_event.options["tracking_job_id"], "partition": best_partition}
             )  # next event
             next_event.fire()
             time.sleep(150)
 
 
         else:
-            outfile_stats = os.stat(dolphotout)
-            size = outfile_stats.st_size / (1024 * 1024 * 1024)
-            mem = "10G"
-            if size > 3:
-                mem = "100G"
-            if size > 5:
-                mem = "150G"
-            if size > 10:
-                mem = "200G"
-            if size > 15:
-                mem = "250G"
-
             next_event = my_job.child_event(
               name="dolphot_done",
-              options={"dp_id": phot_dp.dp_id, "memory": mem}
+              options={"dp_id": phot_dp.dp_id, "memory": "150G", "partition": best_partition}
             )  # next event
             next_event.fire()
             time.sleep(150)

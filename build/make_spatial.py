@@ -110,7 +110,7 @@ def name_columns(colfile):
 
 def make_spatial(ds, path, targname, red_filter, blue_filter, 
              density_kwargs={'f':'log10', 'colormap':'viridis'},
-             scatter_kwargs={'c':'k', 'alpha':0.5, 's':1}):
+             scatter_kwargs={'c':'k', 'alpha':0.5, 's':1, 'linewidth':2}):
     """Plot a CMD with (blue_filter - red_filter) on the x-axis and 
     y_filter on the y-axis.
 
@@ -159,8 +159,10 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
         fig, ax = plt.subplots(1, figsize=(7.0*ratio,5.5))
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.05, right=0.92, top=0.95, bottom=0.15)
+        #data_shape = int(np.sqrt(ds_gst.length()))
         data_shape = 200
         ds_gst.plot('ra', 'dec', shape=data_shape,limits=[[xmax,xmin],[ymin,ymax]],**density_kwargs)
+        #plt.rcParams['axes.linewidth'] = 5
         plt.xticks(np.arange(xmin, xmax,(xmax-xmin)/5.0),fontsize=14)
         plt.yticks(np.arange(ymin, ymax,(ymax-ymin)/5.0),fontsize=14)
 
@@ -177,9 +179,8 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
         fig, ax = plt.subplots(1, figsize=(7.0*ratio,5.5), linewidth=2)
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
-        plt.xlim(xmax,xmin)
-        plt.ylim(ymin,ymax)
-        ds_gst.viz.scatter('ra', 'dec', **scatter_kwargs)
+        ds_gst.scatter('ra', 'dec', limits=[[xmax,xmin],[ymin,ymax]], **scatter_kwargs)
+        #plt.rcParams['axes.linewidth'] =5 
         plt.xticks(np.arange(xmin, xmax,(xmax-xmin)/5.0),fontsize=14)
         plt.yticks(np.arange(ymin, ymax,(ymax-ymin)/5.0),fontsize=14)
         ax.xaxis.set_tick_params(which='minor',direction='in', length=6, width=1, top=True, right=True)
@@ -252,8 +253,7 @@ if __name__ == "__main__":
            my_job.logprint(filters[sort_inds[ind2]])  
            try:
                make_spatial(ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower())
-           except Exception as e: 
-               print(e)
+           except:
                my_job.logprint(f"{filters[sort_inds[i]]} and {filters[sort_inds[ind2]]} failed")
                continue
 

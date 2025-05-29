@@ -22,6 +22,7 @@ import wpipe as wp
 from astropy.io import fits
 import numpy as np
 import time
+import os
 
 # Task will look at all drizzled images for a target and choose the best
 #  reference to use for DOLPHOT
@@ -109,6 +110,9 @@ if __name__ == "__main__":
     my_job.logprint(
         f"Reference is {new_ref_dp.filename} is subtype {new_ref_dp.subtype}")
 
+# Define variable identifying the partition with most available memory
+    best_partition = os.popen("""echo $(sinfo -o "%P %m" | sort -k2 -nr | head -n 1 | awk '{print $1}')""").read().strip('\n')
+
 # Set up count for prep_image
     comp_name = 'completed_' + my_target.name
     # images prepped to be updated when each job of prep_image finishes
@@ -147,7 +151,8 @@ if __name__ == "__main__":
                     'to_run': to_run,
                     'compname': comp_name,
                     'target_id': this_event.options['target_id'],
-                    "memory": "50G"
+                    "memory": "50G",
+                    "partition": best_partition
                 }
             )
 
@@ -159,6 +164,7 @@ if __name__ == "__main__":
                     'to_run': to_run,
                     'compname': comp_name,
                     'target_id': this_event.options['target_id'],
+                    'partition': best_partition
                 }
             )
         my_event.fire()

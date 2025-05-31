@@ -102,7 +102,6 @@ if __name__ == "__main__":
     out_files = glob(procpath+'/*.phot.*')
     if len(out_files) < 5:
         raise exception("too few output files")
-
     if "warm" in this_event.name:
         warmstart_file = dolphotout+".warmstart"
         prewarm_file = dolphotout+".prewarm"
@@ -123,7 +122,7 @@ if __name__ == "__main__":
         my_job.logprint(f"Created dataproduct for {warmstart_file}")
         next_event = my_job.child_event(
             name="warmstart_done",
-            options={"target_id": my_target.target_id, "warmdpid": warmstart_dp.dp_id, "memory": "5G", "partition": os.environ['BEST_PARTITION']}
+            options={"target_id": my_target.target_id, "warmdpid": warmstart_dp.dp_id, "memory": "5G", "partition": best_partition}
             )  # next event
         next_event.fire()
         time.sleep(150)

@@ -111,7 +111,7 @@ if __name__ == "__main__":
     with open(param_filepath, 'w') as p:  # create empty file
         nimg = len(all_dps)-1  # number of images
         p.write(f'Nimg={nimg}\n')  # write to file
-
+        
         # Define image specific parameters
         my_job.logprint(
             f'Checking for user specified individual parameters and defining any unspecified individual parameters')
@@ -179,6 +179,14 @@ if __name__ == "__main__":
             warmname = warmdp.filename
             my_job.logprint("adding xytfile = {warmname}")
             p.write(f'xytfile = {warmname}')
+        dolpath = my_config.parameters["dolphot_path"]
+        ncpus = "1"
+        if "dolphot3" in dolpath:
+            maxthreads = my_config.parameters["maxthreads"]
+            if nimg/2.0 < maxthreads:
+                maxthreads = nimg/2 + 1
+            p.write(f'MaxThreads={maxthreads}\n')  # write to file
+            ncpus = str(maxthreads)
 ##############################
 #! Define variable identifying the partition with most available memory
     best_partition = os.popen("""echo $(sinfo -o "%P %m" | sort -k2 -nr | head -n 1 | awk '{print $1}')""").read().strip('\n')
@@ -207,12 +215,12 @@ if __name__ == "__main__":
     if warm == 1: 
         next_event = my_job.child_event(
             name="DOLPHOT_warm",
-            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": best_partition}
+            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": best_partition, "ncpus": ncpus}
         )  # next event
     else:
         next_event = my_job.child_event(
             name="DOLPHOT",
-            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": best_partition}
+            options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": best_partition, "ncpus": ncpus}
         )  # next event
     next_event.fire()
     time.sleep(150)

@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     with open(param_filepath, 'w') as p:  # create empty file
         p.write(f'Nimg=1\n')  # write to file
-        p.write(f'img0_file = {im_file}\n')
+        #p.write(f'img0_file = {im_file}\n') #no reference for singles
 
         # Define image specific parameters
         my_job.logprint(
@@ -85,6 +85,12 @@ if __name__ == "__main__":
                 p.write(f'{globpar} = {glob_vals[paramcount]}\n')
                 my_job.logprint(f'{globpar} parameter set to default')
             paramcount += 1
+        dolpath = my_config.parameters["dolphot_path"]
+        ncpus = "1"
+        if "dolphot3" in dolpath:
+            maxthreads = 1
+            p.write(f'MaxThreads={maxthreads}\n')  # write to file
+
 # Create dataproduct for parameter file
     param_dp = wp.DataProduct(my_config, filename=dp.filename + '.param', relativepath=target_conf_path,group="conf", data_type="text file", subtype="parameter")  
     my_job.logprint(f"Parameter DP: {param_dp}, {param_dp.filename}")

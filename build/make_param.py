@@ -184,7 +184,7 @@ if __name__ == "__main__":
             warmdp = wp.DataProduct(int(warmdpid))
             warmname = warmdp.filename
             my_job.logprint("adding xytfile = {warmname}")
-            p.write(f'xytfile = {warmname}')
+            p.write(f'xytfile = {warmname}\n')
         dolpath = my_config.parameters["dolphot_path"]
         ncpus = "1"
         if "dolphot3" in dolpath:

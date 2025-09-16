@@ -75,19 +75,26 @@ if __name__ == "__main__":
     fake_param_filename = param_filename.replace("param",newsuf)
     print("name after ",fake_param_filename)
     fake_param = paramfile.replace("param",newsuf)
+
     with open(fake_param, 'w') as f:
         for line in paramcontents:
+            if "xytfile" in line:
+               continue
             f.write(line+"\n")
         f.write("FakeStars="+fakelist+"\n")    
         f.write("FakeMatch=2\n")    
         f.write("FakePSF=1.5\n")
+
     my_job.logprint(f'{fake_param} is the fakestar parameter file')  
     wp.DataProduct(my_config, filename=fake_param_filename, group="conf", data_type="fakepars", subtype="fake_param")
     #grab all the dolphot data products, to use for making links with run number
     dolphot_dps = wp.DataProduct.select(config_id=my_config.config_id, subtype="dolphot output")
     if len(dolphot_dps) < 5:
         raise exception("only ",{len(dolphot_dps)}," dolphot products found")
+
     for dp in dolphot_dps:
+        if "prewarm" in dp.filename:
+            continue
         new_name = dp.filename.replace("phot", "phot_"+str(run_number))
         link_command = "ln -s "+dp.filename+" "+procpath+"/"+new_name
         my_job.logprint(f'making link: {link_command}')
@@ -112,6 +119,8 @@ if __name__ == "__main__":
     phot_dp = wp.DataProduct(my_config, filename=dolphotout+".fake", group="proc", subtype="fake_output")
     
     for dp in dolphot_dps:
+        if "prewarm" in dp.filename:
+            continue
         new_name = dp.filename.replace("phot", "phot_"+str(run_number))
         rm_command = "rm "+" "+procpath+"/"+new_name
         my_job.logprint(f'removing link: {rm_command}')
@@ -121,10 +130,12 @@ if __name__ == "__main__":
     my_job.logprint(
         f"Created dataproduct for {dolphotout}.fake, {phot_dp}")
     compname = this_event.options["compname"]
-    update_option = parent_job.options[compname]
+    comp_jobid = int(this_event.options["comp_jobid"])
+    compjob = wp.Job(comp_jobid)
+    update_option = compjob.options[compname]
     update_option += 1
     to_run = this_event.options["to_run"]
-    my_job.logprint(f"parent_job options: {parent_job.options}")
+    my_job.logprint(f"comp_job options: {compjob.options}")
     my_job.logprint(f"{update_option}/{to_run} TAGGED")
 
     if update_option == to_run:

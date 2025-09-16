@@ -179,7 +179,10 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
         fig, ax = plt.subplots(1, figsize=(7.0*ratio,5.5), linewidth=2)
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
-        ds_gst.scatter('ra', 'dec', limits=[[xmax,xmin],[ymin,ymax]], **scatter_kwargs)
+        ds_gst.viz.scatter('ra', 'dec', **scatter_kwargs)
+        plt.xlim=(xmax,xmin)
+        plt.ylim=(ymin,ymax)
+
         #plt.rcParams['axes.linewidth'] =5 
         plt.xticks(np.arange(xmin, xmax,(xmax-xmin)/5.0),fontsize=14)
         plt.yticks(np.arange(ymin, ymax,(ymax-ymin)/5.0),fontsize=14)
@@ -253,7 +256,8 @@ if __name__ == "__main__":
            my_job.logprint(filters[sort_inds[ind2]])  
            try:
                make_spatial(ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower())
-           except:
+           except Exception as e:
+               my_job.logprint(f"An error occurred: {e}")
                my_job.logprint(f"{filters[sort_inds[i]]} and {filters[sort_inds[ind2]]} failed")
                continue
 

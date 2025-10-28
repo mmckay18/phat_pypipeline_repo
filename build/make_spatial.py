@@ -155,7 +155,7 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
     print("coords: ",xmax,xmin,ymax,ymin)
     print(blue_filter,red_filter," has ",ds_gst.length()," stars in map.")
     
-    if ds_gst.length() >= 50000:
+    if ds_gst.length() >= 20000:
         fig, ax = plt.subplots(1, figsize=(7.0*ratio,5.5))
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.05, right=0.92, top=0.95, bottom=0.15)

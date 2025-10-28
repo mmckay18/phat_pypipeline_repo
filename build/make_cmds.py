@@ -173,7 +173,7 @@ def make_cmd(ds, path, targname, red_filter, blue_filter, y_filter, n_err=12,
         ymin = 15.0
     print(blue_filter,red_filter," has ",ds_gst.length()," stars in CMD.")
 
-    if ds_gst.length() >= 50000:
+    if ds_gst.length() >= 20000:
         fig, ax = plt.subplots(1, figsize=(7.,5.5))
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)

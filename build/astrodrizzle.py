@@ -156,8 +156,14 @@ if __name__ == "__main__":
     inputall = target_im[0]  # the first image name in the array
     #! DeepCR
     config_param = my_config.parameters
-    if detector == "UVIS" and config_param["RUN_DEEPCR"] == "T":
-        input_dict["resetbits"] = config_param["deepcr_resetbits"]
+    try:
+        resetbits = config_param["deepcr_resetbits"]
+    except:
+        resetbits = 4096
+    if detector == "UVIS":
+        input_dict["resetbits"] = resetbits
+    if detector == "WFC":
+        input_dict["resetbits"] = resetbits
     if detector == "IR":
         input_dict["driz_cr"] = False
         input_dict["resetbits"] = 0
@@ -231,6 +237,7 @@ if __name__ == "__main__":
                 # input=inputall, context=True, build=True, preserve=False, driz_cr=False, blot=False, median=False, **ind_input_dict,
                 input=inputall, context=True, build=True, **ind_input_dict,
             )
+            my_job.logprint(''.join(["astrodrizzle input: ",inputall," , build=True , ",ind_input_dict]))
         my_job.logprint(
             f"AstroDrizzle complete for {my_target.name} in filter {my_filter}")
 

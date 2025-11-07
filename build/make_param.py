@@ -19,6 +19,9 @@ import wpipe as wp
 import time
 from astropy.io import fits
 import os
+from datetime import datetime, time, timedelta
+from dateutil.relativedelta import relativedelta, TU
+
 
 
 def register(task):
@@ -26,6 +29,84 @@ def register(task):
     _temp = task.mask(source="*", name="make_param", value="*")
     _temp = task.mask(source="*", name="make_warm1_param", value="*")
     _temp = task.mask(source="*", name="warmstart_done", value="*")
+
+def optimize_wall():
+    """
+    Calculates the number of hours until 9 AM on the second Tuesday of the current month.
+
+    Returns:
+        float: The number of hours remaining until the target time, or None if
+               the target time has already passed in the current month.
+    """
+    now = datetime.now()
+    year = now.year
+    month = now.month
+
+    # Find the first day of the month
+    first_day_of_month = datetime(year, month, 1)
+
+    # Find the first Tuesday of the month
+    # Monday is 0, Tuesday is 1, ..., Sunday is 6
+    days_until_first_tuesday = (1 - first_day_of_month.weekday() + 7) % 7
+    first_tuesday = first_day_of_month + timedelta(days=days_until_first_tuesday)
+
+    # Find the second Tuesday of the month
+    second_tuesday = first_tuesday + timedelta(weeks=1)
+
+    # Set the target time to 9 AM on the second Tuesday
+    target_time = second_tuesday.replace(hour=9, minute=0, second=0, microsecond=0)
+
+    # Calculate the time difference
+    if now < target_time:
+        time_difference = target_time - now
+        total_hours = time_difference.total_seconds() / 3600
+        return int(total_hours-1)
+    else:
+        print("9 AM on the second Tuesday of the month has already passed. Checking next month.")
+        hours_remaining = try2()
+        return int(hours_remaining-1)  # The second Tuesday at 9 AM has already passed this month
+
+def try2():
+    """
+    Calculates the number of hours from the current time until
+    9 am on the second Tuesday of the following month.
+
+    Returns:
+        float: The number of hours until the target time.
+    """
+    # 1. Get the current time
+    now = datetime.now()
+
+    # 2. Calculate the date of the second Tuesday of the next month
+    # Start by moving to the first day of the next month
+    next_month = now + relativedelta(months=1, day=1)
+
+    # Move to the second Tuesday of that month.
+    # TU is a constant for Tuesday. (TU(+1) is the first Tuesday, TU(+2) is the second)
+    target_date = next_month + relativedelta(weekday=TU(+2))
+
+    # 3. Set the time to 9 am on that date
+    target_datetime = target_date.replace(hour=9, minute=0, second=0, microsecond=0)
+
+    # If the calculated target time is in the past relative to the current time
+    # (this can happen if the current time is very late in the month and
+    # the second Tuesday has already passed in the next month's calculation
+    # due to timezones or an edge case in the logic, though the above logic
+    # generally avoids this), adjust to the month after.
+    # A safer approach is to ensure the target is in the future.
+    if target_datetime <= now:
+         # If for some reason the time is not in the future, advance by another month
+         target_datetime += relativedelta(months=1, weekday=TU(+2))
+         target_datetime = target_datetime.replace(hour=9, minute=0, second=0, microsecond=0)
+
+    # 4. Calculate the time difference (timedelta object)
+    time_difference = target_datetime - now
+
+    # 5. Get the total number of hours from the timedelta
+    # total_seconds() returns the difference in seconds
+    total_hours = time_difference.total_seconds() / 3600
+
+    return total_hours
 
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
@@ -206,20 +287,21 @@ if __name__ == "__main__":
         f"\nDOLPHOT parameter file complete for {my_target.name}, firing DOLPHOT task")
     mem = "50G"
 
-    wall = "100:00:00"
+    hours_to_main = optimize_wall()
+    wall = str(hours_to_main)+":00:00" 
     if count < 10:
         mem = "10G"
-        wall = "50:00:00"
+        wall = wall
 
     if count > 50:
         mem = "100G"
-        wall = "200:00:00"
+        wall = wall
     if count > 100:
         mem = "150G"
-        wall = "250:00:00"
+        wall = wall
     if count > 200:
         mem = "250G"
-        wall = "400:00:00"
+        wall = wall
     if warm == 1: 
         next_event = my_job.child_event(
             name="DOLPHOT_warm",

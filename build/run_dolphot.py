@@ -154,8 +154,8 @@ if __name__ == "__main__":
                 mem = "150G"
             if size > 10:
                 mem = "200G"
-            if size > 15:
-                mem = "250G"
+            if size > 30:
+                mem = "750G"
 
             next_event = my_job.child_event(
               name="dolphot_done",

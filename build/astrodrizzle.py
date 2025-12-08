@@ -237,7 +237,9 @@ if __name__ == "__main__":
                 # input=inputall, context=True, build=True, preserve=False, driz_cr=False, blot=False, median=False, **ind_input_dict,
                 input=inputall, context=True, build=True, **ind_input_dict,
             )
-            my_job.logprint(''.join(["astrodrizzle input: ",inputall," , build=True , ",ind_input_dict]))
+            my_job.logprint(''.join(["astrodrizzle input: ",inputall," , build=True , "]))
+            print("Input dictionary:")
+            print(ind_input_dict)
         my_job.logprint(
             f"AstroDrizzle complete for {my_target.name} in filter {my_filter}")
 

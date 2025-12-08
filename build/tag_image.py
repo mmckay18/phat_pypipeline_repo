@@ -418,11 +418,14 @@ if __name__ == "__main__":
         #! Fire next task astrodrizzle
         my_job.logprint("FIRING NEXT ASTRODRIZZLE TASK")
         if len(adriz_filters) > 0:
-            mem = "30G"
-            if len(adriz_filters) > 3:
+            if update_option > 0:
+                mem = "30G"
+            if update_option > 20:
                 mem = "60G"
-            if len(adriz_filters) > 5:
+            if update_option > 50:
                 mem = "100G"
+            if update_option > 100:
+                mem = "200G"
             for i in adriz_filters:
                 my_job.logprint(f"{i},{type(str(i))}")
                 my_event = my_job.child_event(

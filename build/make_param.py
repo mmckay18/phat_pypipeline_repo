@@ -16,9 +16,9 @@ This script relies on the 'wpipe' library, a Python package designed for efficie
 """
 
 import wpipe as wp
-import time
 from astropy.io import fits
 import os
+import time as sleeptime
 from datetime import datetime, time, timedelta
 from dateutil.relativedelta import relativedelta, TU
 
@@ -270,8 +270,8 @@ if __name__ == "__main__":
         ncpus = "1"
         if "dolphot3" in dolpath:
             maxthreads = my_config.parameters["maxthreads"]
-            if nimg/2.0 < maxthreads:
-                maxthreads = nimg/2 + 1
+            if int(nimg/2.0) < maxthreads:
+                maxthreads = int(nimg/2 + 1)
             p.write(f'MaxThreads={maxthreads}\n')  # write to file
             ncpus = str(maxthreads)
 
@@ -313,4 +313,4 @@ if __name__ == "__main__":
             options={"param_dp_id": param_dp.dp_id, "walltime": wall, "memory": mem, "partition": best_partition, "ncpus": ncpus}
         )  # next event
     next_event.fire()
-    time.sleep(150)
+    sleeptime.sleep(150)

@@ -169,6 +169,7 @@ if __name__ == "__main__":
         input_dict["resetbits"] = 0
         input_dict["median"] = False
         input_dict["blot"] = False
+        input_dict["skysub"] = False
     for ii in range(len(target_im) - 1):
         inputall = (
             inputall + "," + target_im[ii + 1]

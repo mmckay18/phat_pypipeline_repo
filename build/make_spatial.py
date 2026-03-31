@@ -20,7 +20,6 @@ import matplotlib
 matplotlib.use('Agg') # check this
 import matplotlib.pyplot as plt
 import numpy as np
-import vaex
 import wpipe as wp
 import dask.dataframe as dd
 import os
@@ -108,7 +107,7 @@ def name_columns(colfile):
     return df, filters_final
 
 
-def make_spatial(ds, path, targname, red_filter, blue_filter, 
+def make_spatial(df, path, targname, red_filter, blue_filter, 
              density_kwargs={'f':'log10', 'colormap':'viridis'},
              scatter_kwargs={'c':'k', 'alpha':0.5, 's':1, 'linewidth':2}):
     """Plot a CMD with (blue_filter - red_filter) on the x-axis and 
@@ -116,8 +115,8 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
 
     Inputs
     ------
-    ds : Dataset
-        Vaex dataset
+    df : Dataset
+        Pandas dataset
     red_filter : string
         filter name for "red" filter
     blue_filter : string
@@ -128,9 +127,9 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
         number of bins to calculate median photometric errors for
         default: 12
     density_kwargs : dict, optional
-        parameters to pass to ds.plot; see vaex documentation
+        parameters to pass to plt.hist2d; see documentation
     scatter_kwargs : dict, optional
-        parameters to pass to ds.scatter; see vaex documentation
+        parameters to pass to plt.scatter; see documentation
 
     Returns
     -------
@@ -141,64 +140,93 @@ def make_spatial(ds, path, targname, red_filter, blue_filter,
     some plots dude
     """
     ylab = 'Declination (J2000)'
-    gst_criteria = ds['{}_gst'.format(red_filter)] & ds['{}_gst'.format(blue_filter)]
-    name = path + "/" + targname + "_" + blue_filter + "_" + red_filter + "_" + "gst_spatial.png"
-    ds_gst = ds[gst_criteria]
+
+    # GST selection criteria
+    gst_col_red = f"{red_filter}_gst"
+    gst_col_blue = f"{blue_filter}_gst"
+    gst_criteria = df[gst_col_red] & df[gst_col_blue]
+    name = f"{path}/{targname}_{blue_filter}_{red_filter}_gst_spatial.png"
+
+    # filtered dataframe
+    df_gst = df[gst_criteria].copy()
     
-    xmin = np.min(ds_gst['ra'].tolist())
-    xmax = np.max(ds_gst['ra'].tolist())
-    ymin = np.min(ds_gst['dec'].tolist())
-    ymax = np.max(ds_gst['dec'].tolist())
+    # compute extents
+    xmin = np.min(df_gst['ra'].to_numpy())
+    xmax = np.max(df_gst['ra'].to_numpy())
+    ymin = np.min(df_gst['dec'].to_numpy())
+    ymax = np.max(df_gst['dec'].to_numpy())
+
     meddec = (np.pi/180.0)*(ymax + ymin)/2.0
     cosdec = np.cos(meddec)
-    ratio = cosdec*(xmax-xmin)/(ymax-ymin)
+    ratio = cosdec*(xmax-xmin)/(ymax-ymin) if (ymax - ymin) != 0 else 1.0
+
     print("coords: ",xmax,xmin,ymax,ymin)
-    print(blue_filter,red_filter," has ",ds_gst.length()," stars in map.")
+    print(blue_filter, red_filter, " has ", len(df_gst), " stars in map.")
     
-    if ds_gst.length() >= 20000:
-        fig, ax = plt.subplots(1, figsize=(7.0*ratio,5.5))
+    # plotting
+    if len(df_gst) >= 20000:
+        fig, ax = plt.subplots(1, figsize=(7.0 * ratio, 5.5))
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.05, right=0.92, top=0.95, bottom=0.15)
-        #data_shape = int(np.sqrt(ds_gst.length()))
-        data_shape = 200
-        ds_gst.plot('ra', 'dec', shape=data_shape,limits=[[xmax,xmin],[ymin,ymax]],**density_kwargs)
-        #plt.rcParams['axes.linewidth'] = 5
-        plt.xticks(np.arange(xmin, xmax,(xmax-xmin)/5.0),fontsize=14)
-        plt.yticks(np.arange(ymin, ymax,(ymax-ymin)/5.0),fontsize=14)
 
-        ax.xaxis.set_tick_params(which='minor',direction='in', length=6, width=2, top=True, right=True)
-        ax.yaxis.set_tick_params(which='minor',direction='in', length=6, width=2, top=True, right=True)
+        # density with hist2d
+        data_shape = 200
+        # build 2D histogram with same ranges, then reverse x-axis
+        h = plt.hist2d(df_gst['ra'].to_numpy(), df_gst['dec'].to_numpy(),
+                       bins=data_shape,
+                       range=[[xmin, xmax], [ymin, ymax]],
+                       cmap=density_kwargs.get('colormap', 'viridis'))
+        plt.colorbar()
+        # set ticks and labels BEFORE reversing axis limits
+        xticks = np.arange(xmin, xmax, (xmax - xmin) / 5.0) if xmax != xmin else np.array([xmin])
+        yticks = np.arange(ymin, ymax, (ymax - ymin) / 5.0) if ymax != ymin else np.array([ymin])
+        plt.xticks(xticks, fontsize=14)
+        plt.yticks(yticks, fontsize=14)
+
+        ax.xaxis.set_tick_params(which='minor', direction='in', length=6, width=2, top=True, right=True)
+        ax.yaxis.set_tick_params(which='minor', direction='in', length=6, width=2, top=True, right=True)
         ax.xaxis.set_tick_params(direction='in', length=8, width=2, top=True, right=True)
         ax.yaxis.set_tick_params(direction='in', length=8, width=2, top=True, right=True)
-        for axis in ['top','bottom','left','right']:
-           ax.spines[axis].set_linewidth(4)
+        for axis in ['top', 'bottom', 'left', 'right']:
+            ax.spines[axis].set_linewidth(4)
         plt.minorticks_on()
-        plt.ylabel(ylab,fontsize=20)
-        plt.xlabel("Right Ascensiton (J2000)",fontsize=20)
+        plt.ylabel(ylab, fontsize=20)
+        plt.xlabel("Right Ascension (J2000)", fontsize=20)
+
+        # Reverse X-axis
+        plt.xlim(xmax, xmin)
+
     else:
-        fig, ax = plt.subplots(1, figsize=(7.0*ratio,5.5), linewidth=2)
+        fig, ax = plt.subplots(1, figsize=(7.0 * ratio, 5.5), linewidth=2)
         plt.rcParams.update({'font.size': 20})
         plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
-        ds_gst.viz.scatter('ra', 'dec', **scatter_kwargs)
-        plt.xlim=(xmax,xmin)
-        plt.ylim=(ymin,ymax)
 
-        #plt.rcParams['axes.linewidth'] =5 
-        plt.xticks(np.arange(xmin, xmax,(xmax-xmin)/5.0),fontsize=14)
-        plt.yticks(np.arange(ymin, ymax,(ymax-ymin)/5.0),fontsize=14)
-        ax.xaxis.set_tick_params(which='minor',direction='in', length=6, width=1, top=True, right=True)
-        ax.yaxis.set_tick_params(which='minor',direction='in', length=6, width=1, top=True, right=True)
+        # scatter
+        ax.scatter(df_gst['ra'].to_numpy(), df_gst['dec'].to_numpy(), **scatter_kwargs)
+
+        # set limits to mirror original intent (note: original code assigned plt.xlim/ylim incorrectly as attributes;
+        # here we set them properly)
+        ax.set_xlim(xmax, xmin)  # reversed
+        ax.set_ylim(ymin, ymax)
+
+        xticks = np.arange(xmin, xmax, (xmax - xmin) / 5.0) if xmax != xmin else np.array([xmin])
+        yticks = np.arange(ymin, ymax, (ymax - ymin) / 5.0) if ymax != ymin else np.array([ymin])
+        plt.xticks(xticks, fontsize=14)
+        plt.yticks(yticks, fontsize=14)
+
+        ax.xaxis.set_tick_params(which='minor', direction='in', length=6, width=1, top=True, right=True)
+        ax.yaxis.set_tick_params(which='minor', direction='in', length=6, width=1, top=True, right=True)
         ax.xaxis.set_tick_params(direction='in', length=8, width=2, top=True, right=True)
         ax.yaxis.set_tick_params(direction='in', length=8, width=2, top=True, right=True)
-        for axis in ['top','bottom','left','right']:
-           ax.spines[axis].set_linewidth(2)
+        for axis in ['top', 'bottom', 'left', 'right']:
+            ax.spines[axis].set_linewidth(2)
         plt.minorticks_on()
-    #plt.xlim(int(xmin-0.5), int(xmax+0.5))
-    #plt.ylim(int(ymin-0.5), int(ymax+0.5))
-    plt.ylabel(ylab,fontsize=20)
-    plt.xlabel("Right Ascensiton (J2000)",fontsize=20)
+
+    plt.ylabel(ylab, fontsize=20)
+    plt.xlabel("Right Ascension (J2000)", fontsize=20)
     fig.tight_layout()
     fig.savefig(name)
+
     new_dp = wp.DataProduct(my_config, filename=name, 
                              group="proc", data_type="Map file", subtype="Map") 
 
@@ -222,13 +250,9 @@ if __name__ == "__main__":
 
     photfile = my_config.procpath+"/"+this_dp.filename
 
-    #try:
-    #    # I have never gotten vaex to read an hdf5 file successfully
-    #    ds = vaex.open(photfile)
-    #except:
     import pandas as pd
     df = pd.read_hdf(photfile, key='data')
-    ds = vaex.from_pandas(df)
+
     #filters = my_config.parameters["filters"].split(',')
     #filters = my_config.parameters["det_filters"].split(',')
     colfile = my_config.parameters["colfile"]
@@ -255,7 +279,7 @@ if __name__ == "__main__":
            my_job.logprint(filters[sort_inds[i]])  
            my_job.logprint(filters[sort_inds[ind2]])  
            try:
-               make_spatial(ds, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower())
+               make_spatial(df, procpath, my_target.name, filters[sort_inds[ind2]].lower(),filters[sort_inds[i]].lower())
            except Exception as e:
                my_job.logprint(f"An error occurred: {e}")
                my_job.logprint(f"{filters[sort_inds[i]]} and {filters[sort_inds[ind2]]} failed")

@@ -30,6 +30,7 @@ import traceback
 from astropy.io import fits
 from astropy.wcs import WCS
 from pathlib import Path
+import shutil
 
 
 
@@ -158,6 +159,21 @@ def cull_photometry(df, filter_detectors, my_config, snrcut=4.0):
            except:
                print("No parameter for nircam_crowd, setting to 0.5")
                my_config.parameters["nircam_crowd"] = 0.5 
+
+        if d == 'roman':
+           try:
+               test = my_config.parameters["nircam_sharp"]
+           except:
+               print("No parameter for roman_sharp, setting to 0.15")
+               my_config.parameters["roman_sharp"] = 0.15 
+               roman_sharp = 0.15 
+           try:
+               test = my_config.parameters["roman_crowd"]
+           except:
+               print("No parameter for roman_crowd, setting to 0.5")
+               my_config.parameters["roman_crowd"] = 0.5 
+               roman_crowd = 0.5
+
         try:
             print('Making ST and GST cuts for {}'.format(filt))
             # make boolean arrays for each set of culling parameters
@@ -246,7 +262,6 @@ def make_header_table(my_config, fitsdir, search_string='*.chip?.fits'):
             print('Unrecognized datatype "{}" for column {}; coercing to string'.format(dtype, c))
             df.loc[:,c] = df.loc[:,c].astype(str)
     return df
-
 def name_columns(param_file,colfile):
     """Construct a table of column names for dolphot AST output, with indices
     corresponding to the column number in dolphot AST output file.
@@ -265,56 +280,89 @@ def name_columns(param_file,colfile):
     filters : list
         List of filters included in output
     """
-    df = pd.DataFrame(data=np.loadtxt(colfile, delimiter='. ', dtype=str),
+    ds = pd.DataFrame(data=np.genfromtxt(colfile, delimiter='. ', dtype=str),
                           columns=['index','desc']).drop('index', axis=1)
-    df = df.assign(colnames='')
+    df2 = ds.assign(colnames='')
+    df = ds.assign(colnames='')
     # set inputcolumns
-    df.loc[:3,'colnames']=['extin','chipin','xin','yin']
-    params = np.loadtxt(param_file, delimiter='none', dtype=str)
+    #df.loc[:3,'colnames']=['extin','chipin','xin','yin']
+    cnames = ['extin','chipin','xin','yin']
+    print("param file ",param_file)
+    params = np.genfromtxt(param_file, delimiter=1000,dtype=str)
     colcount = 3
     allfilts = 'xxx'
     for i in range(len(params)):
         imgnum,imname = params[i].split('=')
-        if ("chip" in imname and "img" in imgnum):
-           imdp = wp.DataProduct.select(dpowner_id=my_config.config_id, filename=imname+".fits") 
-           imfilt = imdp.options["filter"]
-           if imfilt in allfits:
+        if ("chip" in imname and "img" in imgnum and "img0" not in imgnum):
+           print(imname.strip()+".fits")
+           #print("filename: ",my_config.procpath+"/"+imname.strip()+".fits")
+           imdp = wp.DataProduct.select(dpowner_id=my_config.config_id, filename=imname.strip()+".fits") 
+           print("len imdp: ",len(imdp))
+           imfilt = imdp[0].options["filter"]
+           #imfilt = imname.split('_')[2].split('.')[0]
+           if imfilt in allfilts:
                colname = [imfilt+str(i)+"_counts_in",imfilt+str(i)+"_mag_in"]
            else:
                allfilts = allfilts+"imfilt"
                colname = [imfilt+"_counts_in",imfilt+"_mag_in"]
            colcount += 1
-           df.loc[colcount:colcount+1,'colnames'] = colname
+           #df.loc[colcount:colcount+1,'colnames'] = colname
+           #df.[colcount:colcount+1,'colnames'] = colname
+           cnames.extend(colname)
            colcount += 1
     colcount += 1
+    #print("colnames before global : ", *df['colnames'])
+    print("colnames before global : ", *cnames)
+    totout = len(df['colnames'])
+    cnames.extend(range(totout))
+    print("colnames after extend : ", cnames)
     # set first 11 output column names
-    df.loc[colcount:colcount+10,'colnames'] = global_columns
+    #df.loc[colcount:colcount+10,'colnames'] = global_columns
+    cnames[colcount:colcount+11]=global_columns
+    #print("colnames after global : ", *df['colnames'])
+    print("colnames after global : ", cnames)
+    #colcount += 10
     # set rest of column names
+    print("COLCOUNT ",colcount)
     filters_all = []
     for k, v in colname_mappings.items():
-        indices = df[df.desc.str.find(k) != -1].index
-        desc_split = df.loc[indices,'desc'].str.split(", ")
+        indices = df2[df2.desc.str.find(k) != -1].index
+        desc_split = df2.loc[indices,'desc'].str.split(", ")
         # get indices for columns with combined photometry
-        indices_total = indices[desc_split.str.len() == 2]
+        indices_total = indices[desc_split.str.len() == 2] 
         # get indices for columns with single-frame photometry
         indices_indiv = indices[desc_split.str.len() > 2]
         filters = desc_split.loc[indices_total].str[-1].str.replace("'",'')
         imgnames = desc_split.loc[indices_indiv].str[1].str.split(' ').str[0]
         filters_all.append(filters.values)
-        df.loc[indices_total,'colnames'] = filters.str.lower() + '_' + v.lower()
-        df.loc[indices_indiv,'colnames'] = imgnames + '_' + v.lower()
+        #df.loc[indices_total+colcount,'colnames'] = filters.str.lower() + '_' + v.lower()
+        #df.loc[indices_indiv+colcount,'colnames'] = imgnames + '_' + v.lower()
+        newfiltcols=filters.str.lower() + '_' + v.lower()
+        my_list = newfiltcols
+        for k2, v2 in my_list.items():
+            #print ("k2",k2,"v2",v2)
+            #print("CEHCK ", cnames[colcount],cnames[k2+colcount],v2)
+            cnames[k2+colcount] = v2
+        newindcols = imgnames + '_' + v.lower()
+        my_list = newindcols
+        for k3, v3 in my_list.items():
+            print ("k3",k3,"v3",v3,colcount,len(cnames),k3+colcount)
+            #print("CEHCK ", cnames[k3+colcount],v3)
+            cnames[k3+colcount] = v3
+
+
     filters_final = np.unique(np.array(filters_all).ravel())
     print('Filters found: {}'.format(filters_final))
-    return df, filters_final
+    print("All columns :",cnames)
+    #return df, filters_final
+    return cnames, filters_final
 
-def add_wcs(df, photfile, my_config):
+def add_wcs(df, my_config):
     """Converts x and y columns to world coordinates using drizzled file
     that dolphot uses for astrometry
 
     Inputs
     ------
-    photfile : path
-        path to raw dolphot output
     df : DataFrame
         photometry table read in by read_dolphot
 
@@ -324,7 +372,6 @@ def add_wcs(df, photfile, my_config):
         A table of column descriptions and their corresponding names,
         with new 'ra' and 'dec' columns added.
     """
-    #drzfiles = list(Path(photfile).parent.glob('*_dr?.chip1.fits'))
     drzfiles = wp.DataProduct.select(config_id=my_config.config_id, subtype="reference_prepped") 
     # neither of these should happen but just in case
     if len(drzfiles) == 0:
@@ -338,7 +385,6 @@ def add_wcs(df, photfile, my_config):
         df.insert(4, 'ra', ra)
         df.insert(5, 'dec', dec)
     return df
-
 
 def read_dolphot_fake(my_config, fakefile, columns_df, filters):
     """Reads in raw dolphot output (.phot.fake file) to a DataFrame with named
@@ -358,7 +404,7 @@ def read_dolphot_fake(my_config, fakefile, columns_df, filters):
         in the function definition, but defaults to True when this script
         is called from the command line.
     full : bool, optional
-        Whether to include full photometry output in DataFrame. Defaults 
+        Whether to include full photometry output in DataFrame. Defaults
         to False.
 
     Returns
@@ -371,14 +417,30 @@ def read_dolphot_fake(my_config, fakefile, columns_df, filters):
         HDF5 file containing photometry table
     """
     #if not full:
-    #    # cut individual chip columns before reading in .phot file
+        # cut individual chip columns before reading in .phot file
     #    columns_df = columns_df[columns_df.colnames.str.find('.chip') == -1]
-    colnames = columns_df.colnames
-    usecols = columns_df.index
+    #colnames = columns_df.colnames
+    #non_duplicate_indices = colnames.index[~colnames.duplicated(keep='first')].tolist()
+    #colnames = colnames[non_duplicate_indices]
+    #usecols = list(columns_df.index[non_duplicate_indices])
+    #print("indeces ",*non_duplicate_indices)
+    #print("usecols ",*usecols)
+    colnames1 = columns_df
+    colnames = [name for name in colnames1 if '.chip' not in str(name)]
+
+    print("BEFORE UNIQUE: ",colnames)
+    unique_values, indices = np.unique(colnames, return_index=True)
+    unique_ordered_list = [colnames[i] for i in sorted(indices)]
+    colnames = unique_ordered_list
+    usecols = sorted(indices)
     # read in dolphot output
+    print("fakefile ",fakefile)
+    print("colnames ",colnames)
+    print("usecols ",usecols)
     df = dd.read_csv(fakefile, delim_whitespace=True, header=None,
                      usecols=usecols, names=colnames,
-                     na_values=99.999).compute()
+                     na_values=['-nan']).compute()
+                     #na_values=99.999).compute()
     #if to_hdf:
     outfile = fakefile + '.hdf5'
     print('Reading in header information from individual images')
@@ -392,22 +454,27 @@ def read_dolphot_fake(my_config, fakefile, columns_df, filters):
     #cut_params = {'irsharp'   : 0.15, 'ircrowd'   : my, 'uvissharp' : 0.15, 'uviscrowd' : 1.30, 'wfcsharp'  : 0.20, 'wfccrowd'  : 2.25}
     print('Writing ASTs to {}'.format(outfile))
     #df0 = df[colnames[colnames.str.find(r'.chip') == -1]]
-    df0 = df[colnames[colnames.str.find(r'\ (') == -1]]
+    #df0 = df[colnames[colnames.str.find(r'\ (') == -1]]
+    df0 = df[colnames]
     #print("columns are:")
-    #print(df0.columns.tolist())  
+    #print(df0.columns.tolist())
     #df0 = cull_photometry(df0, filter_detectors,my_config)
     df0 = cull_photometry(df0, filters,my_config)
-    my_config.parameters["det_filters"] = ','.join(filters)
-    df0 = add_wcs(df0, photfile, my_config)
-    df0.to_hdf(outfile, key='data', mode='a', format='table', 
+    #df0 = cull_photometry(df0, filters)
+    #my_config.parameters["det_filters"] = ','.join(filters)
+    df0 = add_wcs(df0, my_config)
+    #df0 = add_wcs(df0)
+    df0.to_hdf(outfile, key='data', mode='a', format='table',
                complevel=9, complib='zlib')
-    outfile_full = outfile.replace('.hdf5','_full.hdf5')
-    os.rename(outfile, outfile_full)
+    #outfile_full = outfile.replace('.hdf5','_full.hdf5')
+    #os.rename(outfile, outfile_full)
     for f in filters:
         print('Writing single-frame photometry table for filter {}'.format(f))
-        df.filter(regex='_{}_'.format(f)).to_hdf(outfile_full, key=f, 
+        #df.filter(regex='_{}_'.format(f)).to_hdf(outfile_full, key=f,
+        df.filter(regex='_{}_'.format(f)).to_hdf(outfile, key=f,
                       mode='a', format='table', complevel=9, complib='zlib')
     print('Finished writing HDF5 file')
+
 
 if __name__ == '__main__':
     my_pipe = wp.Pipeline()
@@ -422,65 +489,52 @@ if __name__ == '__main__':
     my_job.logprint(f"This Event: {this_event}")
     my_job.logprint(f"This Event Options: {this_event.options}")
 
-# * Call drizzled image from astrodrozzle dataproduct
-    this_dp_id = this_event.options["dp_id"]
-    this_dp = wp.DataProduct(int(this_dp_id), group="proc")
-    my_job.logprint(
-        f"Data Product: {this_dp.filename}\n, Path: {my_config.procpath}\n This DP options{this_dp.options}\n")
-    target = this_dp.target
+    my_target = my_job.target
 
-    my_config = this_dp.config
+    my_config = my_job.config
     my_job.logprint(
-        f"Target Name: {target.name}\n TargetPath: {target.datapath}\n")
+        f"Target Name: {my_target.name}\n TargetPath: {my_target.datapath}\n")
 
 
  
-    fakefile = my_config.procpath+'/'+this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
+    #fakefile = my_config.procpath+'/'+this_dp.filename #if args.filebase.endswith('.phot') else args.filebase + '.phot'
+    fake_dps = wp.DataProduct.select(config_id=str(my_config.config_id), subtype='fake_output')
+    output_file = my_config.procpath + "/" + my_target.name + ".phot.fake"
+    if os.path.isfile(output_file):
+        my_job.logprint(
+        f"output file {output_file} already exists... using it...\n")
+    else:
+        BUFFER_SIZE = 10 * 1024 * 1024 * 1024
+        with open(output_file, 'wb') as outfile:
+            #for fname in file_names:
+            for dps in fake_dps:
+                fname = dps.filename
+                #with open(fname, 'r') as infile:
+                with open(fname, 'rb') as infile:
+                    # Read everything and write to the output file
+                    #outfile.write(infile.read())
+                    shutil.copyfileobj(infile, outfile, BUFFER_SIZE)
     colfile = my_config.parameters['colfile']
-    param_file = my_config.parameters['param_file']
-    my_job.logprint('Photometry file: {}'.format(photfile))
+    param_file = my_config.confpath + "/" + my_config.parameters['param_file']
+    my_job.logprint('AST file: {}'.format(output_file))
     my_job.logprint('Columns file: {}'.format(colfile))
-    columns_df, filters = name_columns(param_file,colfile)
-    print("columns_df is ",columns_df)
+    cnames, filters = name_columns(param_file,colfile)
     
     import time
     t0 = time.time()
-    df = read_dolphot(my_config, fakefile, columns_df, filters)
-    outfile = this_dp.filename + '_full.hdf5'
-    hd5_dp = wp.DataProduct(my_config, filename=outfile, 
-                              group="proc", data_type="hdf5 file", subtype="catalog")     
+    #df = read_dolphot_fake(my_config, fakefile, columns_df, filters)
+    df = read_dolphot_fake(my_config,output_file, cnames, filters)
+    outfile = output_file + '.hdf5'
+    fake_hd5_dp = wp.DataProduct(my_config, filename=outfile, 
+                              group="proc", data_type="fake hdf5 file", subtype="fake_catalog")     
     t1 = time.time()
     timedelta = t1 - t0
     print('Finished in {}'.format(str(timedelta)) )
-    if my_config.parameters["run_single"]=="T":
-        tracking_job=wp.Job(this_event.options["tracking_job_id"])
-        to_run = this_event.options["to_run"]
-        comp_name = 'completed_' + my_target.name
-        update_option = tracking_job.options[comp_name]
-        update_option += 1
-        if update_option == to_run:
-            next_event = my_job.child_event(
-            name="singles_complete",
-            options={"dp_id": hd5_dp.dp_id}
-            )  # next event
-            next_event.fire()
-            time.sleep(150)
- 
-    else:
-        next_event = my_job.child_event(
-        name="hdf5_ready",
-        options={"dp_id": hd5_dp.dp_id}
-        )  # next event
-        next_event.fire()
-        next_event = my_job.child_event(
-        name="spatial",
-        options={"dp_id": hd5_dp.dp_id}
-        )  # next event
-        next_event.fire()
-        next_event = my_job.child_event(
-        name="start",value="split_fakestars.py",
-        options={"target_id": my_target.target_id}
-        )  # next event
-        next_event.fire()
-        time.sleep(150)
+    next_event = my_job.child_event(
+    name="fake_hdf5_ready",
+        options={"dp_id": fake_hd5_dp.dp_id}
+    )  # next event
+    next_event.fire()
+    time.sleep(150)
+
 

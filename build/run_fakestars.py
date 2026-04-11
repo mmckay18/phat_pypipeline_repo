@@ -141,7 +141,7 @@ if __name__ == "__main__":
     if update_option == to_run:
         next_event = my_job.child_event(
           name="fakestars_done",
-          options={"config_id": my_config.config_id, "memory": "150G"}
+          options={"config_id": my_config.config_id, "memory": "50G"}
         )  # next event
         next_event.fire()
         time.sleep(150)

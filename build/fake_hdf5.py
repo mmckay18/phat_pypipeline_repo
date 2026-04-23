@@ -262,7 +262,7 @@ def make_header_table(my_config, fitsdir, search_string='*.chip?.fits'):
             print('Unrecognized datatype "{}" for column {}; coercing to string'.format(dtype, c))
             df.loc[:,c] = df.loc[:,c].astype(str)
     return df
-def name_columns(param_file,colfile):
+def name_columns(param_file,colfile,this_config):
     """Construct a table of column names for dolphot AST output, with indices
     corresponding to the column number in dolphot AST output file.
 
@@ -298,7 +298,8 @@ def name_columns(param_file,colfile):
            #print("filename: ",my_config.procpath+"/"+imname.strip()+".fits")
            imdp = wp.DataProduct.select(dpowner_id=my_config.config_id, filename=imname.strip()+".fits") 
            print("len imdp: ",len(imdp))
-           imfilt = imdp[0].options["filter"]
+           imdet = imdp[0].options["detector"]
+           imfilt = imdet+"_"+imdp[0].options["filter"]
            #imfilt = imname.split('_')[2].split('.')[0]
            if imfilt in allfilts:
                colname = [imfilt+str(i)+"_counts_in",imfilt+str(i)+"_mag_in"]
@@ -353,6 +354,7 @@ def name_columns(param_file,colfile):
 
     filters_final = np.unique(np.array(filters_all).ravel())
     print('Filters found: {}'.format(filters_final))
+    this_config.parameters["det_filters"] = ",".join(filters_final)
     print("All columns :",cnames)
     #return df, filters_final
     return cnames, filters_final
@@ -518,7 +520,7 @@ if __name__ == '__main__':
     param_file = my_config.confpath + "/" + my_config.parameters['param_file']
     my_job.logprint('AST file: {}'.format(output_file))
     my_job.logprint('Columns file: {}'.format(colfile))
-    cnames, filters = name_columns(param_file,colfile)
+    cnames, filters = name_columns(param_file,colfile,my_config)
     
     import time
     t0 = time.time()
@@ -532,7 +534,7 @@ if __name__ == '__main__':
     print('Finished in {}'.format(str(timedelta)) )
     next_event = my_job.child_event(
     name="fake_hdf5_ready",
-        options={"dp_id": fake_hd5_dp.dp_id}
+        options={"dp_id": fake_hd5_dp.dp_id, "submission_type":"scheduler"}
     )  # next event
     next_event.fire()
     time.sleep(150)

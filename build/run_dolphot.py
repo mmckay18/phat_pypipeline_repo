@@ -66,15 +66,17 @@ if __name__ == "__main__":
     param_path = param_dp.relativepath
     param_filename = param_dp.filename
     if my_config.parameters["run_single"]=="T":
-        dolphotout =  procpath + "/" + param_filename + ".phot"
+        dolphotoutpath =  procpath + "/" + param_filename + ".phot"
+        dolphotout =  param_filename + ".phot"
     else:
-        dolphotout = procpath + "/" + my_target.name + ".phot"
+        dolphotoutpath = procpath + "/" + my_target.name + ".phot"
+        dolphotout = my_target.name + ".phot"
     dolphoterrlog = logpath + "/" + "dolphotout_stderr.log"
     dolphotlog = logpath + "/" + "dolphotout_stdout.log"
     # # Run Dolphot
     logdp = my_job.logprint()
     logfile = logpath + "/" + logdp.filename
-    if os.path.isfile(dolphotout):
+    if os.path.isfile(dolphotoutpath):
         my_job.logprint(f"Not Running DOLPHOT on {param_dp.filename} because the phot file exists")
     else:
         my_job.logprint(f"creating command DOLPHOT on {param_dp.filename}")

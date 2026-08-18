@@ -42,7 +42,7 @@ def _find_magin_column_for_filter(df, filter_name):
     the filter name (case-insensitive). If none contains the filter name,
     return the first column containing '_magin'.
     """
-    magin_cols = [c for c in df.columns if "_magin" in c]
+    magin_cols = [c for c in df.columns if "_magin" in str(c)]
     if not magin_cols:
         return None
     # try to find one that contains the filter name
@@ -103,6 +103,7 @@ def make_resid_plot(my_job,df, path, targname, filter, n_err=12,
     except Exception:
         my_job.logprint(f"No found input column for {vega}")
     
+    print("MADE IT TO 106")
     xlab = f"{filter.upper()} IN"
     ylab = "Out - In" 
     gst_col = f"{filter}_gst" 
@@ -120,6 +121,7 @@ def make_resid_plot(my_job,df, path, targname, filter, n_err=12,
     ymin = -1.0
     ymax = 1.0
 
+    print("MADE IT TO 123")
     # compute diff (out - in)
     if vega not in df_gst.columns:
         my_job.logprint(f"Vega column {vega} not found in data.")
@@ -137,7 +139,7 @@ def make_resid_plot(my_job,df, path, targname, filter, n_err=12,
     fig, ax = plt.subplots(1, figsize=(7., 5.5))
     plt.rcParams.update({'font.size': 20})
     plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.15)
-
+    print("MADE IT TO PLOTS")
     if len(df_gst) >= 50000:
         # density plot via hist2d
         data_shape = 200
@@ -264,7 +266,13 @@ if __name__ == "__main__":
     df = pd.read_hdf(photfile, key='data')
 
     #filters = my_config.parameters["filters"].split(',')
-    filters = my_config.parameters["det_filters"].split(',')
+    try:
+        filters = my_config.parameters["det_filters"].split(',')
+    except:
+        filters1 = my_config.parameters["det_filters1"].split(',')
+        filters2 = my_config.parameters["det_filters2"].split(',')
+        filters = filters1 + filters2
+    print("FILTERS: ",filters)
     waves = []
     for filt in filters:
         pre, suf = filt.split('_')
@@ -284,20 +292,24 @@ if __name__ == "__main__":
             ind2=i+1+j
             my_job.logprint(filters[sort_inds[i]])  
             my_job.logprint(filters[sort_inds[ind2]]) 
+            print("TRYING PLOT...")
+            #make_resid_plot(my_job, df, procpath, my_target.name,
+            #                filters[sort_inds[ind2]].lower(), n_err=12)
             try:
                 make_resid_plot(my_job, df, procpath, my_target.name,
                                 filters[sort_inds[ind2]].lower(), n_err=12)
             except Exception as e:
+                print("HIT EXCEPTION")
                 my_job.logprint(f"An error occurred: {e}")
                 my_job.logprint(f"{filters[sort_inds[i]]} and {filters[sort_inds[ind2]]} failed")
                 continue
        
-    next_event = my_job.child_event(
-    name="cmds_ready",
-    options={"target_id": my_target.target_id}
-    )  # next event
-    next_event.fire() 
-    time.sleep(150)
+    #next_event = my_job.child_event(
+    #name="cmds_ready",
+    #options={"target_id": my_target.target_id}
+    #)  # next event
+    #next_event.fire() 
+    #time.sleep(150)
  
 
     

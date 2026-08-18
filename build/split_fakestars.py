@@ -57,8 +57,11 @@ def split_file(this_event, my_config, my_job, my_target, starsper):
     fsarr = np.loadtxt(fullpath, dtype='str')
     totfiles = int(math.ceil(len(fsarr)/starsper))
     comp_name = "completed_" + my_target.name
+    my_job.logprint(f"Setting {comp_name} option to 0")
     new_option = {comp_name: 0}
     my_job.options = new_option
+    my_job.options[comp_name] = 0
+    my_job.logprint(f"The {comp_name} option is now {my_job.options[comp_name]}")
     totruns = 0
     photfilename = phot_dp.filename
     for i in np.arange(totfiles):
@@ -142,11 +145,11 @@ def send(this_event,my_config,my_job):
                     'compname': this_event.options['compname'],
                     'comp_jobid': this_event.options['comp_jobid'],
                     'config_id': my_config.config_id,
-                    'account': "astro-ckpt",
-                    'partition': "ckpt",
-                    'walltime': "6:00:00",
+                    'account': "astro",
+                    'partition': "cpu-g2",
+                    'walltime': "26:00:00",
                     'run_number': i+minlist,
-                    'memory': "300G"
+                    'memory': "280G"
                 }
             )
             my_event.fire()
@@ -159,7 +162,7 @@ def send(this_event,my_config,my_job):
 if __name__ == "__main__":
     my_pipe = wp.Pipeline()
     my_job = wp.Job()
-    starsper = 100.0
+    starsper = 15.0
 # Defining the target and dataproducts
     this_event = my_job.firing_event  # parent astrodrizzle event firing
     #   my_job.logprint(f"{parent_event}")

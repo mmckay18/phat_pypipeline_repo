@@ -231,7 +231,7 @@ def make_header_table(my_config, fitsdir, search_string='*.chip?.fits'):
         headers.update({fitsname:head})
         keys += [k for k in head.keys()]
     unique_keys = np.unique(keys).tolist()
-    remove_keys = ['COMMENT', 'HISTORY', '']
+    remove_keys = ['COMMENT', 'BKGDTARG', 'BKGSUB', 'COMPRESS', 'CRMASK', 'CROWDFLD', 'DATAPROB', 'HGA_MOVE', 'EXP_ONLY', 'HISTORY', 'INHERIT', 'INTARGET', 'PILIN', 'PODPSFF', 'STDCFFF', 'TARGOOPP', 'TSOVISIT', 'WRTERR', 'ZEROFRAM', 'FW1ERROR', 'FW2ERROR', 'FWSERROR', 'STATFLAG', 'WFCMPRSD', '']
     for key in remove_keys:
         if key in unique_keys:
             unique_keys.remove(key)
@@ -297,15 +297,17 @@ def name_columns(param_file,colfile,this_config):
            print(imname.strip()+".fits")
            #print("filename: ",my_config.procpath+"/"+imname.strip()+".fits")
            imdp = wp.DataProduct.select(dpowner_id=my_config.config_id, filename=imname.strip()+".fits") 
-           print("len imdp: ",len(imdp))
+           print("len imdp: ",len(imdp),imdp[0].options["detector"])
            imdet = imdp[0].options["detector"]
+           if imdet=="UVIS" or imdet=="IR":
+               imdet = "WFC3"
            imfilt = imdet+"_"+imdp[0].options["filter"]
            #imfilt = imname.split('_')[2].split('.')[0]
            if imfilt in allfilts:
-               colname = [imfilt+str(i)+"_counts_in",imfilt+str(i)+"_mag_in"]
+               colname = [imfilt.lower()+str(i)+"_counts_in",imfilt.lower()+str(i)+"_mag_in"]
            else:
                allfilts = allfilts+"imfilt"
-               colname = [imfilt+"_counts_in",imfilt+"_mag_in"]
+               colname = [imfilt.lower()+"_counts_in",imfilt.lower()+"_mag_in"]
            colcount += 1
            #df.loc[colcount:colcount+1,'colnames'] = colname
            #df.[colcount:colcount+1,'colnames'] = colname
@@ -354,7 +356,11 @@ def name_columns(param_file,colfile,this_config):
 
     filters_final = np.unique(np.array(filters_all).ravel())
     print('Filters found: {}'.format(filters_final))
-    this_config.parameters["det_filters"] = ",".join(filters_final)
+    try:
+        this_config.parameters["det_filters"] = ",".join(filters_final)
+    except:
+        this_config.parameters["det_filters1"] = ",".join(filters_final[0:10])
+        this_config.parameters["det_filters2"] = ",".join(filters_final[11:])
     print("All columns :",cnames)
     #return df, filters_final
     return cnames, filters_final
